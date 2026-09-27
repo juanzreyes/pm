@@ -6,15 +6,13 @@
 (function (root) {
   const EXACT = {
     'tu pollito Project Manager': 'your Project Manager chick',
-    '💬 Chat': '💬 Chat', '📊 Uso': '📊 Usage', '📋 Día': '📋 Day', '📬 Agenda': '📬 Agenda', '🐣 Perfil': '🐣 Profile',
+    '💬 Chat': '💬 Chat', '📋 Día': '📋 Day', '📬 Agenda': '📬 Agenda', '🐣 Perfil': '🐣 Profile',
     '¿Cuánto llevo?': 'How much have I used?', '⏳ Reinicio': '⏳ Reset', 'Hoy': 'Today', 'Tareas': 'Tasks',
-    'Actividad local en Claude Code': 'Local activity in Claude Code', '↻ Actualizar': '↻ Refresh', 'Actualizar': 'Refresh',
-    '🍅 Pomodoro': '🍅 Pomodoro', '25 min de concentración · 5 de descanso': '25 min focus · 5 min break',
-    '▶ Empezar pomodoro': '▶ Start pomodoro', '⏹ Detener': '⏹ Stop', '⏰ Recordatorios': '⏰ Reminders',
-    'Tip: pulsa': 'Tip: press', 'desde cualquier app para anotar tareas o recordatorios al vuelo ✍️': 'from any app to jot down tasks or reminders on the fly ✍️',
+    'Actividad local en Claude Code': 'Local activity in Claude Code', '↻ Actualizar': '↻ Refresh', '25 min de concentración · 5 de descanso': '25 min focus · 5 min break',
+    '▶ Empezar pomodoro': '▶ Start pomodoro', '⏹ Detener': '⏹ Stop', 'Tip: pulsa': 'Tip: press', 'desde cualquier app para anotar tareas o recordatorios al vuelo ✍️': 'from any app to jot down tasks or reminders on the fly ✍️',
     '☀️ Daily': '☀️ Daily', '🌇 Cierre': '🌇 Wrap-up', '📋 Copiar daily': '📋 Copy daily', '📊 Informe semanal': '📊 Weekly report',
     '👀 Productividad de hoy': "👀 Today's productivity", '⏱️ Tiempo por proyecto': '⏱️ Time per project', '💻 Git hoy': '💻 Git today',
-    'Últimos días': 'Last days', '📅 Reuniones de hoy': "📅 Today's meetings", '📧 Correo': '📧 Email', '🔗 Conectar': '🔗 Connect',
+    'Últimos días': 'Last days', '📅 Reuniones de hoy': "📅 Today's meetings", '🔗 Conectar': '🔗 Connect',
     '🔗 Calendario por enlace ICS': '🔗 Calendar via ICS link', '(tus reuniones de Teams):': '(your Teams meetings):',
     'Abre tu calendario en Outlook web:': 'Open your calendar in Outlook on the web:', 'cuenta de trabajo': 'work account', 'cuenta personal': 'personal account',
     '⚙️ Configuración →': '⚙️ Settings →', 'Calendario': 'Calendar', 'Calendarios compartidos': 'Shared calendars', 'En': 'Under',
@@ -24,18 +22,16 @@
     'Conectar': 'Connect', 'Desconectar calendario': 'Disconnect calendar', '🔗 Correo por IMAP (contraseña de aplicación)': '🔗 Email via IMAP (app password)',
     'Proveedor': 'Provider', 'Conectar correo': 'Connect email', 'Desconectar correo': 'Disconnect email',
     '🔒 Solo leo remitente y asunto de tus correos sin leer. La contraseña se guarda cifrada en tu PC.': '🔒 I only read the sender and subject of your unread emails. The password is stored encrypted on your PC.',
-    '⭐ XP': '⭐ XP', '💛 Felicidad': '💛 Happiness', '🌽 Pancita': '🌽 Tummy', '🌽 Dar de comer': '🌽 Feed', '💛 Acariciar': '💛 Pet',
-    'Nombre': 'Name', 'Guardar': 'Save', 'Rutina': 'Routine', 'Pregunta del daily': 'Daily check-in', 'Cierre del día': 'Day wrap-up',
+    '⭐ XP': '⭐ XP', '💛 Felicidad': '💛 Happiness', '🌽 Pancita': '🌽 Tummy', '🌽 Dar de comer': '🌽 Feed', 'Nombre': 'Name', 'Guardar': 'Save', 'Rutina': 'Routine', 'Pregunta del daily': 'Daily check-in', 'Cierre del día': 'Day wrap-up',
     'Solo de lunes a viernes': 'Weekdays only', 'Charlas espontáneas': 'Spontaneous chatter', 'Vigilar distracciones (YouTube, redes…)': 'Watch distractions (YouTube, social…)',
-    'Sonidos de pío 🔊': 'Chirp sounds 🔊', 'Iniciar con Windows': 'Start with Windows', '🔕 Silenciar 1 hora (reunión)': '🔕 Mute 1 hour (meeting)',
+    'Sonidos de pío 🔊': 'Chirp sounds 🔊', '🔕 Silenciar 1 hora (reunión)': '🔕 Mute 1 hour (meeting)',
     '🔔 Quitar silencio': '🔔 Unmute', '🔌 Integraciones': '🔌 Integrations', '🤖 Claude Code': '🤖 Claude Code',
     'Te aviso cuando Claude termine una tarea o necesite tu permiso, y muestro una burbuja mientras trabaja. Añade unos hooks a tu': 'I let you know when Claude finishes a task or needs your permission, and show a bubble while it works. Adds a few hooks to your',
-    '(con copia de seguridad).': '(with a backup).', 'Conectar con Claude Code': 'Connect Claude Code', '🔄 Reinstalar hooks': '🔄 Reinstall hooks', 'Quitar': 'Remove',
-    'PRs que esperan tu revisión, CI fallido, aprobaciones y comentarios. Crea un token personal': 'PRs waiting for your review, failed CI, approvals and comments. Create a personal token',
+    '(con copia de seguridad).': '(with a backup).', 'Conectar con Claude Code': 'Connect Claude Code', '🔄 Reinstalar hooks': '🔄 Reinstall hooks', 'PRs que esperan tu revisión, CI fallido, aprobaciones y comentarios. Crea un token personal': 'PRs waiting for your review, failed CI, approvals and comments. Create a personal token',
     'aquí': 'here', '(permisos': '(scopes', 'y': 'and', ') y pégalo. PM solo lo usa para leer; se guarda cifrado.': ') and paste it. PM only uses it to read; it is stored encrypted.',
     'Usar': 'Use', 'Quitar token': 'Remove token', '💻 Carpetas con tus repos de git': '💻 Folders with your git repos',
     'Una por línea. Busco repositorios hasta 2 niveles dentro.': 'One per line. I look for repositories up to 2 levels deep.', 'Guardar carpetas': 'Save folders',
-    '🧘 Salud': '🧘 Health', 'Pausa activa cada 50 min': 'Active break every 50 min', 'Descanso visual 20-20-20': '20-20-20 eye break', 'Recordar tomar agua': 'Water reminder',
+    'Pausa activa cada 50 min': 'Active break every 50 min', 'Descanso visual 20-20-20': '20-20-20 eye break', 'Recordar tomar agua': 'Water reminder',
     'Conexión con Claude': 'Claude connection', '🌐 Conectar con mi cuenta de Claude': '🌐 Connect my Claude account', '🔄 Volver a conectar': '🔄 Reconnect',
     'Cerrar sesión de Claude en PM': 'Sign PM out of Claude', 'Opciones avanzadas': 'Advanced options', 'También puedo usar la sesión de': 'I can also use the',
     'de este equipo o un token OAuth que pegues aquí (se guarda cifrado).': 'session on this PC, or an OAuth token pasted here (stored encrypted).',
@@ -52,14 +48,14 @@
     'Contraseña de APLICACIÓN (no la normal)': 'APP password (not your normal one)', 'Nombre del pollito': "Chick's name", 'Token (opcional)': 'Token (optional)',
     'Ej: Pollito, Kiwi, Sr. Pío…': 'E.g.: Chicky, Kiwi, Mr. Peep…', 'Terminé el login, revisé PRs…': 'Finished the login, reviewed PRs…', 'Una tarea…': 'A task…',
     'Recuérdame hacer pausas, avísame si me paso de límite…': 'Remind me to take breaks, warn me if I go over the limit…', 'Bloqueos, logros, pendientes…': 'Blockers, wins, pending…',
-    'Sin recordatorios pendientes': 'No pending reminders', 'Aún no hay tareas. Haz el daily o añade una 👇': 'No tasks yet. Do the daily or add one 👇',
-    'sin plan': 'no plan', '☀️ Hacer daily': '☀️ Do daily', '☀️ Editar daily': '☀️ Edit daily', 'Aquí verás cómo te fue cada día.': "Here you'll see how each day went.",
-    '🎨 Tema': '🎨 Theme', '🌐 Idioma': '🌐 Language', '🤖 IA (chat inteligente)': '🤖 AI (smart chat)', '🏅 Logros': '🏅 Achievements', '🛍️ Tienda': '🛍️ Shop',
-    '📈 Estadísticas': '📈 Statistics', '🌐 Mis sitios': '🌐 My sites', 'Comprar': 'Buy', 'Equipar': 'Wear', 'Quitarse': 'Take off', 'Puesto': 'Wearing',
+    'Aún no hay tareas. Haz el daily o añade una 👇': 'No tasks yet. Do the daily or add one 👇',
+    'sin plan': 'no plan', '☀️ Editar daily': '☀️ Edit daily', 'Aquí verás cómo te fue cada día.': "Here you'll see how each day went.",
+    '🎨 Tema': '🎨 Theme', '🌐 Idioma': '🌐 Language', '🤖 IA (chat inteligente)': '🤖 AI (smart chat)', '🛍️ Tienda': '🛍️ Shop',
+    '🌐 Mis sitios': '🌐 My sites', 'Comprar': 'Buy', 'Equipar': 'Wear', 'Quitarse': 'Take off', 'Puesto': 'Wearing',
     '🎮 Minijuego': '🎮 Mini-game', '✨ Mejorar con IA': '✨ Improve with AI', 'Horas trabajadas (30 días)': 'Hours worked (30 days)',
     'Trabajo vs distracción (14 días)': 'Work vs distraction (14 days)', 'Proyectos (30 días)': 'Projects (30 days)', 'Tokens de Claude por día (14 días)': 'Claude tokens per day (14 days)',
     'Tareas cumplidas vs planeadas (14 días)': 'Tasks done vs planned (14 days)', 'Trabajo': 'Work', 'Distracción': 'Distraction', 'Cumplidas': 'Done', 'Planeadas': 'Planned',
-    'Racha de dailies': 'Daily streak', 'Horas este mes': 'Hours this month', 'Pomodoros este mes': 'Pomodoros this month', 'Commits este mes': 'Commits this month',
+    'Racha de dailies': 'Daily streak', 'Pomodoros este mes': 'Pomodoros this month', 'Commits este mes': 'Commits this month',
     'Añadir': 'Add', 'Ocultarme al presentar o en pantalla completa': 'Hide when presenting or full screen', 'Buscar actualizaciones': 'Check for updates',
     // Minijuego
     '🎮 Atrapa el maíz': '🎮 Catch the corn', '🐣 ¡A comer!': '🐣 Snack time!', 'Mueve el pollito con el ratón o las flechas.': 'Move the chick with the mouse or arrow keys.',
@@ -113,7 +109,7 @@
     '🎮 Jugar': '🎮 Play', '⏭️ Saltar descanso': '⏭️ Skip break', '🍅 Otro pomodoro': '🍅 Another pomodoro', '👋 Aquí estoy': "👋 I'm here",
     '🌽 Dar maíz': '🌽 Give corn', '🧘 ¡Hecho!': '🧘 Done!', 'Luego': 'Later', '🥺 Perdón': '🥺 Sorry', '💛 Acariciar': '💛 Pet',
     '🛍️ Ver tienda': '🛍️ See shop', '🏅 Ver logros': '🏅 See achievements', '📊 Ver informe': '📊 See report', '✍️ Anotar tarea': '✍️ Add task',
-    '📊 Ver uso': '📊 See usage', '👍 Visto': '👍 Seen', '✅ Hecho': '✅ Done', '⏰ +10 min': '⏰ +10 min', '🔗 Abrir en GitHub': '🔗 Open on GitHub',
+    '📊 Ver uso': '📊 See usage', '👍 Visto': '👍 Seen', '⏰ +10 min': '⏰ +10 min', '🔗 Abrir en GitHub': '🔗 Open on GitHub',
     '🎧 Unirme': '🎧 Join', '👍 Ok': '👍 Ok', '🎧 Unirme ahora': '🎧 Join now', '🌐 Abrir': '🌐 Open',
     // Paleta de comandos
     '¿Qué quieres hacer? (pomodoro, informe, reunión…)': 'What do you want to do? (pomodoro, report, meeting…)', 'navegar': 'navigate', 'ejecutar': 'run', 'cerrar': 'close',
@@ -247,10 +243,69 @@
     'Copiar informe': 'Copy report', 'Abrir registro': 'Open log', 'Actualizar': 'Refresh', '✓ Copiado': '✓ Copied',
     '✅ Sin errores desde que arrancó. ¡Todo en orden!': '✅ No errors since startup. All good!',
     '🎯 ¡Fin del modo foco! Buen trabajo 💪': '🎯 Focus mode over! Great work 💪',
+    // Programación, organización y vida del pollito
+    '🧠 Priorizar': '🧠 Prioritize', '🧠 Pensando…': '🧠 Thinking…', '🤖 Cola para Claude': '🤖 Claude queue', '📋 Copiar siguiente': '📋 Copy next',
+    'Lo que le pedirás a Claude cuando termine…': "What you'll ask Claude when it finishes…",
+    '🌿 Tiempo por rama': '🌿 Time per branch', '🔍 Revisar antes de push': '🔍 Check before push', '🏁 Hitos': '🏁 Milestones',
+    'Entrega de la v2, demo al cliente…': 'v2 release, client demo…', 'Proyecto (opcional)': 'Project (optional)', 'Horas estimadas (opcional)': 'Estimated hours (optional)',
+    '✅ Hecho': '✅ Done', '↩ Reabrir': '↩ Reopen', 'hecho': 'done', '¡hoy!': 'today!', 'En plazo': 'On track', 'Va justo': 'Tight', 'Atrasado': 'Late', 'Hecho': 'Done',
+    '🎭 Personalidad': '🎭 Personality', '🏡 Casita': '🏡 Little house', '🥚 Colección': '🥚 Collection', '📜 Diario del pollito': "📜 Chick's diary",
+    '✍️ Escribir hoy': "✍️ Write today's", '✍️ Escribiendo…': '✍️ Writing…', '📆 Revisión de la semana': '📆 Weekly review', '✅ Cerrar la semana': '✅ Close the week',
+    '1. Así fue tu semana:': '1. This was your week:', '2. ¿Cómo quedaron tus objetivos?': '2. How did your goals go?',
+    '3. ¿Qué harás el lunes? (una por línea; te las pongo en el daily)': "3. What will you do on Monday? (one per line; I'll add them to your daily)",
+    '4. Una nota para tu yo del lunes (opcional)': '4. A note for Monday-you (optional)', 'Empieza por lo difícil 💪': 'Start with the hard stuff 💪',
+    'Motivador': 'Motivating', 'Sarcástico': 'Sarcastic', 'Zen': 'Zen', 'Sargento': 'Sergeant', 'Personalidad': 'Personality',
+    'Cambia cómo te habla, te felicita y te regaña (también la IA).': 'Changes how it talks, praises and scolds you (the AI too).',
+    'Modo música': 'Music mode', 'Distinguir música de voz': 'Tell music from speech',
+    'Mientras algo suena, escucho el sonido del PC (no el micrófono) para no bailar con vídeos o podcasts de gente hablando. Se analiza al momento en tu PC: no se graba ni se guarda nada.': "While something plays, I listen to the PC's sound (not the microphone) so I don't dance to videos or podcasts of people talking. It's analyzed on the spot on your PC: nothing is recorded or stored.", 'Si suena Spotify (o YouTube Music, Deezer…), bailo al ritmo.': 'When Spotify (or YouTube Music, Deezer…) is playing, I dance along.',
+    'Vigilante de tests y builds': 'Test & build watcher', 'Con la extensión de VS Code: te aviso si falla un test o build, y lo celebro cuando lo arreglas.': 'With the VS Code extension: I tell you when a test or build fails and celebrate when you fix it.',
+    'Contraseña de las copias': 'Backup password', 'Opcional: cifra las copias (AES-256). Sin ella no se podrán abrir, ¡no la olvides!': "Optional: encrypts backups (AES-256). They can't be opened without it, don't forget it!",
+    '🔐 Tus copias se guardan cifradas. Deja el campo vacío y guarda para quitar la contraseña.': '🔐 Your backups are encrypted. Leave it empty and save to remove the password.',
+    '🔐 Contraseña de las copias actualizada': '🔐 Backup password updated', 'Contraseña': 'Password',
+    '◐ Contraste': '◐ Contrast', 'Alto contraste': 'High contrast', 'Qué pasó (me escondí, me cerraron…)': 'What happened (hid, got closed…)',
+    'Nada que contar todavía.': 'Nothing to report yet.', 'Priorizar mi día (ordenar tareas y reservar bloques)': 'Prioritize my day (order tasks and book blocks)',
+    'Revisar antes de hacer push': 'Check before pushing', 'Cola de peticiones para Claude': 'Claude request queue',
+    'Copiar la siguiente petición de la cola de Claude': 'Copy the next request from the Claude queue', 'Hitos de proyectos': 'Project milestones',
+    'Revisión de la semana': 'Weekly review', 'Casita del pollito': "Chick's little house", 'Huevos y colección': 'Eggs and collection',
+    'Diario del pollito': "Chick's diary", 'Presupuesto de Claude': 'Claude budget', 'Poner límite': 'Set limit', 'Cambiar': 'Change',
+    '💰 Presupuesto semanal de Claude': '💰 Weekly Claude budget', '💰 Presupuesto semanal': '💰 Weekly budget',
+    'Te aviso al 80% y al 100%, y te digo qué proyecto gasta más.': "I'll warn you at 80% and 100%, and tell you which project spends the most.",
+    'Dividir en pasos': 'Split into steps', 'Añadir bloque con el teclado': 'Add block with the keyboard', 'Empieza': 'Starts', 'Termina': 'Ends',
+    'Casita vacía… ¡decórala con 🌽!': 'Empty house… decorate it with 🌽!', 'Sin huevos ahora': 'No eggs right now',
+    'Cada noche escribo lo que hicimos. ¡Mañana tendrás tu primera entrada! 📜': "Every night I write about our day. Tomorrow you'll have your first entry! 📜",
+    'Pon fechas de entrega a tus proyectos: te aviso a 7, 3 y 1 día, y si vas justo según tus horas.': "Set due dates for your projects: I'll remind you 7, 3 and 1 day before, and if you're running tight based on your hours.",
+    'No definiste objetivos esta semana. ¡El lunes te los propongo! 🎯': "You didn't set goals this week. I'll suggest some on Monday! 🎯",
+    '🏁 Hito guardado': '🏁 Milestone saved', 'Cargando…': 'Loading…', 'Conversación con el pollito': 'Conversation with the chick',
   };
 
   // Patrones: [expresión, reemplazo]. Se aplican en orden sobre textos que no están en EXACT.
+  /** @type {Array<[RegExp, any]>} */
   const RULES = [
+    [/🎵 ¡Temazo! Me pongo a bailar(?:: «(.+)»)? 💃/g, (m, t) => `🎵 What a tune! Time to dance${t ? `: «${t}»` : ''} 💃`],
+    [/🎶 ¡Esa me la sé!/g, '🎶 I know this one!'],
+    [/🎧 ¡Música! No puedo parar de mover las alas 🐥/g, "🎧 Music! I can't stop flapping my wings 🐥"],
+    [/🎵 Buen ritmo para trabajar 👌 ¡Vamos!/g, "🎵 Great rhythm to work to 👌 Let's go!"],
+    [/😰 Falló `(.+?)` en (.+?)(: |$| \(código (\d+)\))/g, (m, c, p, sep, code) => `😰 \`${c}\` failed in ${p}${code ? ` (exit code ${code})` : sep}`],
+    [/🎉 ¡Ya pasa `(.+?)` en (.+?)! Arreglado 💪 \+5 XP/g, '🎉 `$1` passes now in $2! Fixed 💪 +5 XP'],
+    [/📋 Mensaje de commit copiado:/g, '📋 Commit message copied:'],
+    [/Antes de hacer push en (.+?): /g, 'Before pushing in $1: '],
+    [/🤖 Claude terminó en (.+?)\. En tu cola tienes (\d+): /g, '🤖 Claude finished in $1. Your queue has $2: '],
+    [/🤖 En la cola de Claude \((\d+)\)\. Te la recuerdo cuando Claude termine\./g, "🤖 Added to the Claude queue ($1). I'll remind you when Claude finishes."],
+    [/📋 Siguiente petición copiada\. ¡Pégala en Claude!/g, '📋 Next request copied. Paste it into Claude!'],
+    [/💰 Llevas el (\d+)% de tu presupuesto semanal de Claude/g, "💰 You've used $1% of your weekly Claude budget"],
+    [/💸 ¡Te pasaste del presupuesto de Claude!/g, '💸 You went over your Claude budget!'],
+    [/🔥 "(.+)" lleva (\d+) días posponiéndose\. ¿Qué hacemos con ella\?/g, '🔥 "$1" has been postponed for $2 days. What do we do with it?'],
+    [/🧠 Día ordenado: empieza por "(.+?)"\./g, '🧠 Day sorted: start with "$1".'],
+    [/Te reservé (\d+) bloques? en tus huecos libres\./g, 'I booked $1 block(s) in your free slots.'],
+    [/🪜 "(.+)" dividida en (\d+) pasos\. ¡Paso a paso se llega! 🐣/g, '🪜 "$1" split into $2 steps. Step by step! 🐣'],
+    [/🏁 Faltan (\d+) días? para "(.+?)"/g, '🏁 $1 day(s) left until "$2"'],
+    [/🏁 ¡Hoy es la entrega de "(.+)"! 💪/g, '🏁 "$1" is due today! 💪'],
+    [/📆 ¡Viernes! ¿Hacemos la revisión de la semana\?.*/g, "📆 Friday! Shall we do the weekly review? It takes 2 minutes and Monday starts ready."],
+    [/🥚 ¡Encontré un huevo! Se abrirá tras (\d+) pomodoros más 🍅/g, "🥚 I found an egg! It'll hatch after $1 more pomodoros 🍅"],
+    [/🐣 ¡El huevo se abrió! Salió (.+?) \((común|rara|épica)\)/g, (m, e, r) => `🐣 The egg hatched! Out came ${e} (${{ común: 'common', rara: 'rare', épica: 'epic' }[r]})`],
+    [/¡NUEVO en tu colección!/g, 'NEW in your collection!'],
+    [/📜 Escribí en mi diario lo que hicimos hoy\. ¿Quieres leerlo\?/g, '📜 I wrote about our day in my diary. Want to read it?'],
+    [/🏡 ¡(.+?) nuevo(a?) para mi casita!/g, '🏡 New $1 for my little house!'],
     [/🎯 Modo foco (\d+) min: solo te molesto con lo urgente y te regaño al minuto si te distraes\. ¡Tú puedes! 💪/g, "🎯 Focus mode $1 min: I only interrupt for urgent things and I'll scold you after a minute if you get distracted. You got this! 💪"],
     [/🎯 ¡Fin del modo foco! Mientras tanto te guardé (\d+) avisos?\./g, '🎯 Focus mode over! I saved $1 notification(s) for you meanwhile.'],
     [/🎯 ¡Estás en modo foco! /g, "🎯 You're in focus mode! "],
@@ -383,10 +438,18 @@
     [/ min\b/g, ' min'],
   ];
 
+  const EXTRA = typeof module !== 'undefined' && module.exports ? require('./i18n-extra') : root.I18N_EXTRA;
   function tr(text, lang) {
-    if (lang !== 'en' || text == null) return text;
+    if (!lang || lang === 'es' || text == null) return text;
     const s = String(text);
     const trimmed = s.trim();
+    if (lang === 'pt' || lang === 'fr') {
+      const d = EXTRA && EXTRA[lang];
+      if (d && d[trimmed] !== undefined) return s.replace(trimmed, d[trimmed]);
+      if (lang === 'pt') return text; // el español se entiende bien en portugués
+      lang = 'en';
+    }
+    if (lang !== 'en') return text;
     if (EXACT[trimmed] !== undefined) return s.replace(trimmed, EXACT[trimmed]);
     let out = s;
     for (const [re, rep] of RULES) out = out.replace(re, rep);
@@ -395,7 +458,7 @@
 
   /** Traduce un árbol DOM in situ (textos, placeholder y title). */
   function translateDom(rootEl, lang) {
-    if (lang !== 'en' || !rootEl) return;
+    if (!lang || lang === 'es' || !rootEl) return;
     const walker = rootEl.ownerDocument.createTreeWalker(rootEl, 4 /* SHOW_TEXT */);
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);

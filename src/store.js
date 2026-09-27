@@ -70,8 +70,8 @@ function merge(base, extra) {
 }
 
 class Store {
-  constructor(dir) {
-    this.file = path.join(dir, 'pm-data.json');
+  constructor(dir, name = 'pm-data.json') {
+    this.file = path.join(dir, name);
     this.bak = this.file + '.bak';
     this.data = structuredClone(DEFAULTS);
     for (const f of [this.file, this.bak]) {
@@ -107,4 +107,4 @@ class Store {
   }
 }
 
-module.exports = { Store };
+module.exports = { Store, DEFAULTS };

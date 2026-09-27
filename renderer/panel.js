@@ -1,7 +1,7 @@
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 let state = null;
-const LOC = () => (state && state.lang === 'en' ? 'en' : 'es');
+const LOC = () => (state && state.lang) || 'es';
 let chatCount = -1;
 let suTasks = [];
 
@@ -80,7 +80,7 @@ function show(view) {
     startTour();
     return;
   }
-  if (view === 'prompts' || view === 'blocks' || view === 'whatsnew') {
+  if (view === 'prompts' || view === 'blocks' || view === 'whatsnew' || view === 'friday') {
     if (window.openExtra) window.openExtra(view);
     return;
   }
@@ -91,12 +91,31 @@ function show(view) {
     if (view === 'onboarding') openOnboarding();
     return;
   }
-  $$('nav button').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
+  $$('nav button').forEach((b) => {
+    const on = b.dataset.view === view;
+    b.classList.toggle('active', on);
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', String(on));
+    b.setAttribute('aria-controls', 'v-' + b.dataset.view);
+    b.tabIndex = on ? 0 : -1;
+  });
+  $$('.view').forEach((v) => v.setAttribute('role', 'tabpanel'));
   $$('.view').forEach((v) => v.classList.toggle('active', v.id === 'v-' + view));
   pm.viewChanged(view);
   if (view === 'chat') setTimeout(() => $('#chat-input').focus(), 50);
 }
 $$('nav button').forEach((b) => b.addEventListener('click', () => show(b.dataset.view)));
+// Pestañas con flechas (← →), como en cualquier app accesible.
+document.querySelector('nav').addEventListener('keydown', (e) => {
+  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  const tabs = $$('nav button');
+  const i = tabs.indexOf(document.activeElement);
+  if (i < 0) return;
+  const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length];
+  show(next.dataset.view);
+  next.focus();
+  e.preventDefault();
+});
 $('#close').addEventListener('click', () => pm.hidePanel());
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') pm.hidePanel();
@@ -118,9 +137,14 @@ function render() {
   renderGami();
   renderInbox();
   if (window.renderExtras) window.renderExtras();
-  document.documentElement.classList.toggle('dark', !!state.dark);
+  // Accesibilidad: todo botón con solo icono lleva nombre para el lector de pantalla.
+  for (const b of document.querySelectorAll('button:not([aria-label])')) {
+    const txt = b.textContent.replace(/[\p{Extended_Pictographic}\uFE0F\s✕＋↻▶⏹]/gu, '');
+    if (!txt && (b.title || b.dataset.q)) b.setAttribute('aria-label', b.title || b.dataset.q);
+  }
+  document.documentElement.classList.toggle('dark', !!state.dark); document.documentElement.classList.toggle('contrast', !!state.contrast);
   document.documentElement.classList.toggle('reduced', !!(state.settings && state.settings.reducedMotion));
-  if (state.lang === 'en') I18N.translateDom(document.getElementById('card'), 'en');
+  if (state.lang && state.lang !== 'es') I18N.translateDom(document.getElementById('card'), state.lang);
 }
 
 function moodLine() {
@@ -240,10 +264,10 @@ function renderDay() {
           <span class="grip" title="Arrastra para ordenar">${ICON('grip', 14)}</span>
           <button class="prio ${t.priority || ''}" data-prio="${i}" title="${t.priority ? PRIO_T[t.priority] : 'Sin prioridad'} (clic para cambiar)" aria-label="Prioridad"></button>
           <input type="checkbox" data-i="${i}" ${t.done ? 'checked' : ''} aria-label="Hecha"/>
-          <span class="t" data-edit="${i}" title="Doble clic para editar">${esc(t.text)}</span>
+          <span class="t" data-edit="${i}" title="Doble clic para editar">${esc(t.text)}</span>${!t.done && (state.taskAges || [])[i] >= 2 ? `<span class="age ${(state.taskAges[i] >= 4) ? 'hot' : ''}" title="Lleva ${state.taskAges[i]} días laborables posponiéndose">🔥${state.taskAges[i]}d</span>` : ''}
           <span class="ttime ${t.time ? '' : 'empty'}" data-time="${i}" title="Hora (crea un recordatorio)">${t.time ? '🕒 ' + esc(t.time) : '🕒'}</span>
           <span class="timer ${t.startedAt ? 'on' : ''} ${t.spent || t.est || t.startedAt ? '' : 'empty'}" data-timer="${i}" title="Clic: iniciar / pausar cronómetro · Doble clic: estimar minutos">${timerText(t)}</span>
-          <button data-del="${i}" title="Quitar" aria-label="Quitar">✕</button></li>`).join('')
+          ${!t.done && !/^↳/.test(t.text) ? `<button class="split" data-split="${i}" title="Dividir en pasos" aria-label="Dividir en pasos">🪜</button>` : ''}<button data-del="${i}" title="Quitar" aria-label="Quitar">✕</button></li>`).join('')
       : '<li class="empty">Aún no hay tareas. Haz el daily o añade una 👇</li>';
   }
 
@@ -887,7 +911,7 @@ function tourShow() {
       card.style.top = (below ? r.bottom + 12 : Math.max(10, r.top - 150)) + 'px';
     }
     $('#tour-step').textContent = `${tourI + 1} / ${TOUR.length}`;
-    $('#tour-text').textContent = state && state.lang === 'en' ? I18N.tr(st.text, 'en') : st.text;
+    $('#tour-text').textContent = state ? I18N.tr(st.text, state.lang) : st.text;
     $('#tour-prev').classList.toggle('hidden', tourI === 0);
     $('#tour-next').textContent = tourI === TOUR.length - 1 ? '¡Listo! 🎉' : 'Siguiente';
     card.classList.remove('hidden');
@@ -1096,7 +1120,7 @@ tasksEl.addEventListener('dblclick', (e) => {
 let toastTimer = null;
 let toastUndo = null;
 function toast(text, undo) {
-  $('#toast-text').textContent = state && state.lang === 'en' ? I18N.tr(text, 'en') : text;
+  $('#toast-text').textContent = state ? I18N.tr(text, state.lang) : text;
   $('#toast-undo').classList.toggle('hidden', !undo);
   toastUndo = undo || null;
   $('#toast').classList.remove('hidden');
@@ -1179,6 +1203,8 @@ function openStandup() {
     suTasks = prev && prev.review && prev.review.carry ? pt.filter((t) => !t.done).map((t) => t.text) : [];
     // Las recurrentes de hoy ya vienen puestas 🔁
     for (const t of state.recurringToday || []) if (!suTasks.includes(t)) suTasks.push(t);
+    // El lunes, lo que planeaste en la revisión del viernes 📆
+    for (const t of state.mondayPlan || []) if (!suTasks.includes(t)) suTasks.push(t);
     $('#su-help').value = '';
     $('#su-intro').textContent = prev ? `Te dejé lo que planeaste el ${dayLabel(prev.date)} para que lo ajustes.` : 'Cuéntame para organizar el día.';
     // Añade tus commits del último día laborable (git) a "¿Qué hiciste ayer?".

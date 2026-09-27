@@ -122,7 +122,7 @@ async function end() {
 
 // Pantalla inicial
 function translate() {
-  pm.getState().then((s) => { if (s.lang === 'en') I18N.translateDom(document.body, 'en'); }).catch(() => {});
+  pm.getState().then((s) => { if (s.lang && s.lang !== 'es') I18N.translateDom(document.body, s.lang); }).catch(() => {});
 }
 g.clearRect(0, 0, W, H);
 drawChick(W / 2);

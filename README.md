@@ -85,14 +85,44 @@ Widget de escritorio con un pollito tamagotchi que vive encima de todas tus vent
 - **🧩 Plantillas de día**: Día de foco, de reuniones o de bugs (bloques + tareas en un clic, saltando lo que choca con reuniones). Guarda tu día como plantilla.
 - **🔍 Búsqueda global**: la paleta (Ctrl+Alt+Espacio) busca también en tareas, recordatorios, notas, prompts, objetivos, avisos y el diario de Claude.
 - **🩺 Diagnóstico** (Ajustes → Diagnóstico): memoria, CPU, últimos errores y "Copiar informe" (sin datos personales). Los errores se guardan en `pm-errors.log`.
+- **🙈 Se esconde solo al presentar**: pantalla completa real (no ventanas maximizadas) y solo si es en su mismo monitor, o compartiendo en Teams. La bandeja dice por qué está escondido y permite "Mostrarme igualmente" o "No esconderme con esta app".
+- **Autorecuperación**: si la ventana del pollito o del panel se cae, se recarga sola. Cada cierre y cada vez que se esconde queda anotado en Ajustes → Diagnóstico.
 - **🎁 Novedades** al actualizar y elección de especie desde la bienvenida.
+
+### Programar, organizar y más vida (1.4)
+- **🧪 Vigilante de tests y builds** (extensión de VS Code 1.93+): si falla `npm test`, el build o el linter en la terminal, el pollito se pone nervioso y te ofrece un prompt para Claude o guardarlo como tarea; lo celebra cuando lo arreglas.
+- **📋 Mensaje de commit sugerido** (Conventional Commits; con IA si la tienes): desde el aviso de "sin commit", la paleta o VS Code.
+- **🔍 Revisión antes de push**: en tus commits sin subir busca claves y secretos, `.env`, marcas de conflicto, `console.log`, `debugger`, `.only` y TODOs nuevos.
+- **🌿 Tiempo por rama** y **🤖 cola de peticiones para Claude** ("para claude: …", Ctrl+Alt+Q en VS Code): cuando Claude termina, te da la siguiente.
+- **💰 Presupuesto semanal de Claude** con aviso al 80% y 100% y el proyecto que más gasta.
+- **🧠 Priorizar el día** (IA o reglas) con bloques en tus huecos libres · **🪜 dividir tareas** en pasos · **🔥 tareas que envejecen** (hazla, delégala o bórrala).
+- **🏁 Hitos por proyecto** con cuenta atrás y aviso si vas justo · **📆 revisión del viernes** con plan para el lunes (se añade solo al daily).
+- **🏡 Casita decorable**, **🥚 huevos coleccionables** (cada 4 pomodoros), **📜 diario del pollito**, **🎭 personalidades** (motivador, sarcástico, zen, sargento) y **🎵 modo música** (baila con auriculares con lo que suene en cualquier app, y distingue música de voz escuchando el sonido del PC: no baila con vídeos de gente hablando).
+- **Calidad**: tests automáticos (`npm test`), copias cifradas con contraseña (AES-256), portugués y francés, alto contraste y navegación con teclado, y menos memoria (ventanas auxiliares que se liberan solas y diario de Claude incremental).
+
+### Versión pro (1.5)
+- **🧩 MCP del pollito**: Ajustes → Integraciones → "El pollito dentro de Claude". Claude Code (HTTP local con clave) y Claude Desktop (puente `mcp/bridge.js`) obtienen herramientas `pm_status`, `pm_list_tasks`, `pm_add_task`, `pm_complete_task`, `pm_add_reminder`, `pm_queue_add`, `pm_add_note`, `pm_log_progress`, `pm_start_focus`, `pm_milestones`, `pm_weekly_report` y `pm_project_memory`.
+- **📟 Línea de estado de Claude Code** (guarda y restaura la tuya si ya tenías) · **🎬 sesiones en vivo** (pestaña Uso) · **🧠 memoria de proyecto** en `CLAUDE.md`.
+- **🔄 Sincronizar entre PCs** (Ajustes → Privacidad y datos), **📝 Markdown/Obsidian**, **📅 bloques a .ics**, **👤 perfiles** y **⌨️ comando `pm`** (`pm status`, `pm add`, `pm done`, `pm focus`, `pm queue`…).
+- **⚡ Modo ahorro** (por defecto): sin aceleración gráfica, el panel se libera tras 3 min oculto y el audio se apaga en silencio (~240 MB en vez de ~400 MB y menos CPU).
+- **🔒 Seguridad**: `sandbox` en todas las ventanas, mensajes IPC solo desde páginas propias, sin navegación ni ventanas emergentes, permisos denegados salvo el portapapeles.
+- **🧯 Modo seguro**: si dos arranques seguidos fallan, ofrece arrancar con lo mínimo o restaurar la última copia.
+- **🍎 Mac**: `npm run dist:mac` en un Mac (vigilante con AppleScript; el título de la ventana necesita el permiso de Accesibilidad). No probado todavía en macOS.
+
+### Calidad
+```bash
+npm run typecheck   # chequeo de tipos del JavaScript (TypeScript, sin compilar)
+npm test            # lógica: recordatorios, sincronización, MCP, copias, organización…
+npm run test:ui     # interfaz: abre la app real con datos de prueba (Playwright + Electron)
+npm run test:all    # las tres cosas
+```
 
 ### Extensión para VS Code
 En `vscode-extension/`: el pollito en la barra de estado de VS Code (% de sesión, pomodoro, cronómetro, tareas y avisos), menú rápido al hacer clic y `Ctrl+Alt+N` para anotar. Habla solo con la app en `127.0.0.1:47823`.
 ```bash
 cd vscode-extension
 npx @vscode/vsce package --allow-missing-repository --skip-license
-code --install-extension pm-pollito-1.0.0.vsix
+code --install-extension pm-pollito-1.1.0.vsix
 ```
 
 ## Instalador para Windows
@@ -190,6 +220,20 @@ renderer/stats.js  gráficos de estadísticas (SVG propio)
 renderer/game.*    minijuego
 scripts/make-icon.js genera el icono de la app
 src/extras.js      diario de Claude, prompts, portapapeles, bloques, objetivos, hábitos, notas, paseos, monitores, copias e informe mensual
+main.js            arranque, estado compartido (contexto M), avisos, ventanas principales
+src/main/          el proceso principal por partes: ipc, commands, windows, tray, agenda, watcher,
+                   wellbeing, pro (sync, exportar, perfiles, CLI, MCP) y safemode
+src/mcp.js         servidor MCP (JSON-RPC) · mcp/bridge.js puente stdio para Claude Desktop
+src/claudeIntegrations.js  instala MCP y línea de estado (con copia de seguridad)
+src/sessions.js    sesiones de Claude en vivo · src/projmem.js memoria de proyecto (CLAUDE.md)
+src/audioclass.js  ¿música o voz? (clasificador de audio sin IA) · src/main/audio.js escucha del sonido del PC
+src/sync.js        sincronizar entre PCs · src/exporters.js Markdown e .ics · src/profiles.js perfiles
+cli/pm.js          comando pm
+src/devtools.js    vigilante de tests/builds, commit sugerido, revisión antes de push, tiempo por rama
+src/planner.js     cola de Claude, presupuesto, priorizar, dividir, tareas que envejecen, hitos, viernes
+src/petlife.js     casita, huevos y colección, diario, personalidades, modo música
+src/i18n-extra.js  portugués y francés
+tests/             tests automáticos (npm test)
 src/diag.js        registro de errores (pm-errors.log) y métricas
 src/journal.js     peticiones a Claude Code por proyecto (~/.claude/projects)
 src/backup.js      copia de seguridad en carpeta sincronizada

@@ -4,7 +4,7 @@
   const pad = (n) => String(n).padStart(2, '0');
   const toMin = (s) => { const [h, m] = String(s).split(':').map(Number); return h * 60 + (m || 0); };
   const fromMin = (m) => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
-  const tr = (el) => { if (state && state.lang === 'en' && el) I18N.translateDom(el, 'en'); };
+  const tr = (el) => { if (state && state.lang && state.lang !== 'es' && el) I18N.translateDom(el, state.lang); };
 
   // ================= DÍA =================
   function renderBlocksNext() {
@@ -61,6 +61,12 @@
     if (!card) return;
     if (e.target.closest('.h-del')) { if (confirm('¿Quitar este hábito?')) pm.habitDelete(card.dataset.id); return; }
     pm.habitStep(card.dataset.id, 1);
+  });
+  $('#habits').addEventListener('keydown', (e) => {
+    const card = e.target.closest('.habit');
+    if (!card || !['-', '+', 'Subtract', 'Add'].includes(e.key)) return;
+    e.preventDefault();
+    pm.habitStep(card.dataset.id, e.key === '-' || e.key === 'Subtract' ? -1 : 1);
   });
   $('#habits').addEventListener('contextmenu', (e) => {
     const card = e.target.closest('.habit');
@@ -219,6 +225,8 @@
     const now = new Date(), nm = now.getHours() * 60 + now.getMinutes();
     if (nm >= DAY_START && nm < DAY_END) html += `<div class="bl-now" style="top:${(nm - DAY_START) * PX}px"></div>`;
     tl.innerHTML = html;
+    const sel = $('#bl-kb-task');
+    if (document.activeElement !== sel) sel.innerHTML = tasks.map((t, i) => (t.done ? '' : `<option value="${i}">${esc(t.text.slice(0, 40))}</option>`)).join('') + '<option value="-1">＋ Bloque libre</option>';
     tr($('#o-blocks'));
   }
   const minAt = (clientY) => {
@@ -269,6 +277,16 @@
     saveBlocks();
   });
   $('#bl-close').addEventListener('click', () => $('#o-blocks').classList.add('hidden'));
+  // Añadir un bloque sin ratón: tarea + hora de inicio y fin.
+  $('#bl-kb').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const i = Number($('#bl-kb-task').value);
+    const start = $('#bl-kb-start').value, end = $('#bl-kb-end').value;
+    if (!start || !end || toMin(end) <= toMin(start)) return toast('La hora de fin debe ser después del inicio ⏰');
+    const title = i >= 0 ? (tasksList()[i] || {}).text : ($('#bl-free').value.trim() || 'Foco profundo');
+    blocksDraft.push({ start, end, title, task: i >= 0 ? i : undefined });
+    saveBlocks();
+  });
 
   // ================= MODO FOCO =================
   let focusTimer = null;

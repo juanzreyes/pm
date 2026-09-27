@@ -2,6 +2,7 @@
 // El pollito puede actuar con herramientas: añadir/completar tareas, crear recordatorios
 // y empezar un pomodoro.
 const AnthropicMod = require('@anthropic-ai/sdk');
+/** @type {any} */
 const Anthropic = AnthropicMod.default || AnthropicMod;
 
 const MODELS = {
@@ -130,7 +131,7 @@ function create(io) {
     const params = {
       model,
       max_tokens: 4000,
-      system: systemPrompt(io.name(), lang),
+      system: systemPrompt(io.name(), lang) + (io.persona ? ' ' + io.persona() : ''),
       tools: TOOLS,
       messages,
     };

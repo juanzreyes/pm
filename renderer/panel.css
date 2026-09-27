@@ -484,3 +484,76 @@ html.dark .tpl { background: #2a2622; }
 .wn > span { font-size: 22px; }
 .wn p { font-size: 12px; color: var(--muted); margin-top: 2px; }
 #tpl-form { flex-direction: row; } #tpl-form input { flex: 1; }
+
+/* ---------- priorizar, edad de tareas, cola, presupuesto, dev, hitos ---------- */
+#tasks .age { font-size: 10px; font-weight: 800; color: var(--orange); margin-left: 4px; white-space: nowrap; }
+#tasks .age.hot { color: var(--red); animation: agePulse 1.6s ease-in-out infinite; }
+@keyframes agePulse { 50% { opacity: .5; } }
+#tasks li button.split { border: 0; background: transparent; cursor: pointer; font-size: 12px; opacity: 0; transition: opacity .15s; padding: 0 2px; }
+#tasks li:hover button.split, #tasks li button.split:focus-visible { opacity: 1; }
+.qi { display: flex; align-items: flex-start; gap: 6px; padding: 4px 0; border-bottom: 1px dashed var(--line); }
+.qi:last-child { border-bottom: 0; }
+.qi .qn { font-weight: 800; color: var(--orange); min-width: 14px; }
+.qi .qt { flex: 1; word-break: break-word; }
+.budget-box .bar { margin-top: 2px; }
+#budget-input { width: 90px; }
+#devbox button { margin-top: 4px; }
+.ms-list { display: flex; flex-direction: column; gap: 6px; }
+.ms { background: var(--bg); border: 1.5px solid var(--line); border-left-width: 5px; border-radius: 12px; padding: 7px 9px; display: flex; flex-direction: column; gap: 4px; }
+.ms.ok { border-left-color: var(--green); } .ms.risk { border-left-color: var(--orange); } .ms.late { border-left-color: var(--red); } .ms.done { opacity: .6; }
+.bar.thin { height: 6px; border-width: 1px; margin: 0; }
+.ms-form { display: flex; flex-direction: column; gap: 5px; margin-top: 6px; }
+.ms-form #ms-project { flex: 1; min-width: 0; }
+.ms-form #ms-due { width: 128px; }
+.fr-scroll { overflow-y: auto; display: flex; flex-direction: column; gap: 6px; flex: 1; min-height: 0; }
+.fr-report { white-space: pre-wrap; font: 11.5px/1.45 "Cascadia Code", Consolas, monospace; background: var(--bg); border: 1.5px solid var(--line); border-radius: 12px; padding: 8px; max-height: 170px; overflow: auto; }
+#o-friday .goal { margin-bottom: 4px; }
+
+/* ---------- casita, colección y diario ---------- */
+.room { position: relative; height: 170px; flex-shrink: 0; border-radius: 16px; overflow: hidden; border: 2px solid var(--line); }
+.room .wall { position: absolute; inset: 0 0 38% 0; background: linear-gradient(#fdf1d8, #f7e3bd); background-image: repeating-linear-gradient(90deg, transparent 0 22px, rgba(255, 255, 255, .35) 22px 24px), linear-gradient(#fdf1d8, #f7e3bd); }
+.room .floor { position: absolute; inset: 62% 0 0 0; background: repeating-linear-gradient(90deg, #d9a86c 0 38px, #cf9c5f 38px 40px); }
+.room .furn { position: absolute; transform: translate(-50%, -50%); font-size: 30px; filter: drop-shadow(0 2px 1px rgba(0, 0, 0, .15)); }
+.room .furn.rug { font-size: 0; width: 46%; height: 12%; background: radial-gradient(#e76f51 0 40%, #f4a261 41% 60%, #e9c46a 61%); border-radius: 50%; }
+.room .room-pet { position: absolute; transform: translate(-50%, -50%); font-size: 34px; z-index: 5; animation: roomBob 2.4s ease-in-out infinite; }
+.room .room-pet.dance { animation: roomDance .5s ease-in-out infinite alternate; }
+.room .shelf-items { position: absolute; transform: translate(-50%, -50%); font-size: 12px; letter-spacing: -2px; z-index: 2; }
+.room .room-empty { position: absolute; left: 50%; top: 35%; transform: translate(-50%, -50%); font-size: 12px; color: var(--muted); font-weight: 700; }
+@keyframes roomBob { 0%, 100% { transform: translate(-50%, -50%); } 50% { transform: translate(-40%, -54%); } }
+@keyframes roomDance { from { transform: translate(-50%, -50%) rotate(-10deg); } to { transform: translate(-50%, -58%) rotate(10deg); } }
+.home-shop { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.home-shop .hs { display: flex; flex-direction: column; align-items: center; gap: 1px; width: 52px; padding: 4px 0; background: #fff; border: 1.5px solid var(--line); border-radius: 10px; font-size: 20px; cursor: pointer; color: var(--ink); }
+.home-shop .hs small { font-size: 9.5px; font-weight: 800; color: var(--muted); }
+.home-shop .hs:hover:not([disabled]) { border-color: var(--orange); }
+.home-shop .hs[disabled] { opacity: .45; cursor: not-allowed; }
+.egg { position: relative; display: inline-block; font-size: 20px; margin-right: 4px; }
+.egg i { position: absolute; left: 0; bottom: -3px; height: 3px; background: var(--orange); border-radius: 99px; }
+.col-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; margin-top: 6px; }
+.ci { text-align: center; font-size: 18px; padding: 3px 0; border-radius: 8px; background: #fff; border: 1.5px solid var(--line); }
+.ci.rare { border-color: #7aa2ff; } .ci.epic { border-color: #c77dff; box-shadow: 0 0 6px #c77dff66; }
+.ci.missing { opacity: .35; font-size: 13px; }
+.diary { display: flex; flex-direction: column; gap: 6px; }
+.diary .entry { background: #fffaf0; border: 1.5px solid var(--line); border-radius: 12px; padding: 8px 10px; font-family: "Segoe Print", "Comic Sans MS", cursive; font-size: 12px; line-height: 1.45; }
+html.dark .home-shop .hs, html.dark .ci { background: #2a2622; }
+html.dark .diary .entry { background: #2d2820; }
+html.dark .room .wall { background: linear-gradient(#3a3226, #2e281f); }
+
+.bl-kb { flex-direction: row !important; }
+.bl-kb select { flex: 1; min-width: 0; font: inherit; font-size: 12px; padding: 4px 6px; border: 2px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); }
+.bl-kb input[type=time] { width: 86px; padding: 4px 6px; }
+html.dark .bl-kb select { background: #1c1916; }
+/* Habits: también con teclado (+ / −) */
+/* Filas de tareas: solo el texto crece; reloj, hora, edad y agarre ocupan lo justo */
+#tasks li > span:not(.t) { flex: none; }
+#tasks li > span.t { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.view > .box, .view > .ms-list, .view > .diary, .view > .home-shop, .view > .species { flex-shrink: 0; }
+
+/* ---------- sesiones de Claude en vivo ---------- */
+.live-box .ses { border-top: 1px dashed var(--line); padding-top: 5px; display: flex; flex-direction: column; gap: 2px; }
+.live-box .ses.working b { color: var(--green); }
+.live-box .ses.waiting b { color: var(--orange); }
+.live-box .ses.stuck b { color: var(--red); }
+/* Controles vacíos de la tarea: no ocupan sitio hasta pasar el ratón (o enfocarlos con teclado) */
+#tasks li:not(:hover):not(:focus-within) .ttime.empty,
+#tasks li:not(:hover):not(:focus-within) .timer.empty,
+#tasks li:not(:hover):not(:focus-within) button.split { display: none; }

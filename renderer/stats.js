@@ -175,7 +175,7 @@
       chart('Coste equivalente en la API por día (14 días)', null, simpleBars(d14, (d) => d.cost, (v) => '$' + (v < 10 ? v.toFixed(1) : Math.round(v)), 'USD')) +
       chart('Proyectos (30 días)', null, projects(s.projects));
     lang = (await pm.getState()).lang || 'es';
-    if (lang === 'en') I18N.translateDom(ov, 'en');
+    if (lang && lang !== 'es') I18N.translateDom(ov, lang);
   }
   let lang = 'es';
   const TIP_EN = [[/ de trabajo$/, ' of work'], [/Trabajo /, 'Work '], [/Distracción /, 'Distraction '], [/ tareas$/, ' tasks']];

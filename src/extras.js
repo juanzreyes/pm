@@ -20,7 +20,7 @@ function weekKey(d = new Date()) {
   const day = t.getUTCDay() || 7;
   t.setUTCDate(t.getUTCDate() + 4 - day);
   const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
-  return `${t.getUTCFullYear()}-W${pad(Math.ceil(((t - y0) / 864e5 + 1) / 7))}`;
+  return `${t.getUTCFullYear()}-W${pad(Math.ceil(((t.getTime() - y0.getTime()) / 864e5 + 1) / 7))}`;
 }
 
 const DEFAULT_PROMPTS = [
@@ -143,6 +143,7 @@ function create(ctx) {
     return true;
   }
   function deletePrompt(id) {
+    (S().tombstones = S().tombstones || {})[id] = Date.now(); // para que no reaparezca al sincronizar
     S().prompts = promptsList().filter((x) => x.id !== id);
     ctx.store.save();
     ctx.broadcast();
@@ -244,6 +245,7 @@ function create(ctx) {
   }
   function deleteGoal(id) {
     const wk = weekKey();
+    (S().tombstones = S().tombstones || {})[id] = Date.now();
     S().weeks[wk].goals = goals().filter((x) => x.id !== id);
     ctx.store.save();
     ctx.broadcast();
@@ -303,6 +305,7 @@ function create(ctx) {
     return true;
   }
   function deleteHabit(id) {
+    (S().tombstones = S().tombstones || {})[id] = Date.now();
     S().habits = habits().filter((x) => x.id !== id);
     ctx.store.save();
     ctx.broadcast();
@@ -405,7 +408,7 @@ function create(ctx) {
   }
   function backupNow(manual = false) {
     try {
-      const file = backup.write(backupDir(), S(), ctx.version);
+      const file = backup.write(backupDir(), S(), ctx.version, 6, ctx.backupPassword ? ctx.backupPassword() : '');
       S().lastBackupAt = Date.now();
       S().lastBackupFile = file;
       ctx.store.save();
@@ -417,6 +420,7 @@ function create(ctx) {
     }
   }
   function backupTick() {
+    if (process.env.PM_TEST) return; // los tests no escriben en tu OneDrive
     if (S().settings.autoBackup === false) return;
     if (Date.now() - (S().lastBackupAt || 0) >= 7 * 864e5) backupNow(false);
   }
@@ -464,6 +468,7 @@ function create(ctx) {
 
   // ================= TAREAS RECURRENTES =================
   // days: 0 = domingo … 6 = sábado.
+  /** @type {Array<[RegExp, number[]]>} */
   const DAY_WORDS = [
     [/^(d[ií]as?|diari[oa]|day|daily)$/i, [0, 1, 2, 3, 4, 5, 6]],
     [/^(d[ií]as? laborables?|laborables?|entre semana|weekdays?|workdays?)$/i, [1, 2, 3, 4, 5]],
@@ -496,6 +501,7 @@ function create(ctx) {
     return true;
   }
   function deleteRecurring(id) {
+    (S().tombstones = S().tombstones || {})[id] = Date.now();
     S().recurring = recurringList().filter((x) => x.id !== id);
     ctx.store.save();
     ctx.broadcast();
@@ -575,6 +581,7 @@ function create(ctx) {
     return true;
   }
   function deleteTemplate(id) {
+    (S().tombstones = S().tombstones || {})[id] = Date.now();
     S().templates = templates().filter((x) => x.id !== id);
     ctx.store.save();
     ctx.broadcast();
@@ -634,7 +641,7 @@ function create(ctx) {
       goals: goals(),
       habits: habits().map((h) => ({ ...h, today: ((ctx.today().habits || {})[h.id]) || 0, streak: habitStreak(h.id, h.target) })),
       notes: ctx.today().notes || '',
-      backup: { dir: backupDir(), lastAt: S().lastBackupAt || 0, auto: S().settings.autoBackup !== false },
+      backup: { dir: backupDir(), lastAt: S().lastBackupAt || 0, auto: S().settings.autoBackup !== false, encrypted: !!S().settings.backupPass },
       multiMonitor: ctx.screen.getAllDisplays().length > 1,
       recurring: recurringList().map((r) => ({ ...r, label: RULE_LABEL(r.days) })),
       recurringToday: recurringToday(),

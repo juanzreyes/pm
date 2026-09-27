@@ -91,10 +91,91 @@ async function capture() {
   setTimeout(refresh, 400);
 }
 
+// ---------- Vigilante de tests y builds ----------
+// Con la integración de shell de VS Code (1.93+) sabemos qué comando corrió, su código de salida
+// y su salida. Solo se envía al pollito (127.0.0.1) y solo para tests/builds/linters.
+const WATCH = /\b(test|tests|jest|vitest|mocha|pytest|unittest|rspec|phpunit|build|compile|tsc|lint|eslint|ruff|mypy|flake8|cargo|go (test|build|vet)|mvn|gradle|dotnet (build|test)|make|cmake|ninja|npm run|yarn|pnpm|bun (test|run))\b/i;
+const outputs = new WeakMap();
+const firstFolder = () => {
+  const f = vscode.workspace.workspaceFolders || [];
+  return f.length ? f[0] : null;
+};
+function watchTerminals(context) {
+  const on = () => vscode.workspace.getConfiguration('pmPollito').get('watchBuilds', true);
+  if (vscode.window.onDidStartTerminalShellExecution) {
+    context.subscriptions.push(vscode.window.onDidStartTerminalShellExecution(async (e) => {
+      const cmd = e.execution.commandLine && e.execution.commandLine.value;
+      if (!on() || !cmd || !WATCH.test(cmd)) return;
+      const buf = { text: '' };
+      outputs.set(e.execution, buf);
+      try {
+        for await (const chunk of e.execution.read()) buf.text = (buf.text + chunk).slice(-8000); // solo el final
+      } catch { /* terminal cerrada */ }
+    }));
+  }
+  if (vscode.window.onDidEndTerminalShellExecution) {
+    context.subscriptions.push(vscode.window.onDidEndTerminalShellExecution((e) => {
+      const cmd = e.execution.commandLine && e.execution.commandLine.value;
+      if (!on() || !cmd || !WATCH.test(cmd) || e.exitCode === undefined) return;
+      const folder = firstFolder();
+      const cwd = e.execution.cwd ? e.execution.cwd.fsPath : folder ? folder.uri.fsPath : '';
+      // Espera un poco a que llegue el final de la salida.
+      setTimeout(() => {
+        const out = (outputs.get(e.execution) || { text: '' }).text;
+        request('POST', '/dev-event', { command: cmd, exitCode: e.exitCode, cwd, output: out });
+      }, 300);
+    }));
+  }
+  context.subscriptions.push(vscode.tasks.onDidEndTaskProcess((e) => {
+    if (!on() || e.exitCode === undefined) return;
+    const t = e.execution.task;
+    const cmd = [t.source, t.name, t.definition && (t.definition.script || t.definition.command)].filter(Boolean).join(' ');
+    if (!WATCH.test(cmd)) return;
+    const folder = t.scope && t.scope.uri ? t.scope.uri.fsPath : firstFolder() ? firstFolder().uri.fsPath : '';
+    request('POST', '/dev-event', { command: cmd, exitCode: e.exitCode, cwd: folder, output: '' });
+  }));
+}
+
+// ---------- Cola de peticiones para Claude ----------
+async function queueForClaude() {
+  const ed = vscode.window.activeTextEditor;
+  const sel = ed && !ed.selection.isEmpty ? ed.document.getText(ed.selection) : '';
+  const text = await vscode.window.showInputBox({
+    title: '🤖 Añadir a la cola de Claude',
+    prompt: sel ? 'Se adjuntará el código seleccionado' : 'Lo que quieres pedirle a Claude cuando termine lo actual',
+    ignoreFocusOut: true,
+  });
+  if (!text) return;
+  const folder = firstFolder();
+  const project = folder ? folder.name : '';
+  const fence = '```';
+  const full = sel ? `${text}\n\n${fence}\n${sel.slice(0, 3000)}\n${fence}` : text;
+  const r = await request('POST', '/capture', { text: `para claude[${project}]: ${full}` });
+  if (r && r.ok) vscode.window.setStatusBarMessage('🤖 En la cola de Claude', 2500);
+  else vscode.window.showWarningMessage('PM Pollito no está abierto.');
+}
+
+async function commitHere() {
+  const folder = firstFolder();
+  if (!folder) return vscode.window.showWarningMessage('Abre una carpeta con un repositorio git.');
+  const r = await request('POST', '/capture', { text: `__commit__${folder.uri.fsPath}` });
+  if (!r) vscode.window.showWarningMessage('PM Pollito no está abierto.');
+  else vscode.window.setStatusBarMessage('🐣 Mensaje de commit en el portapapeles', 3000);
+}
+async function pushCheckHere() {
+  const folder = firstFolder();
+  if (!folder) return vscode.window.showWarningMessage('Abre una carpeta con un repositorio git.');
+  const r = await request('POST', '/capture', { text: `__pushcheck__${folder.uri.fsPath}` });
+  if (!r) vscode.window.showWarningMessage('PM Pollito no está abierto.');
+}
+
 async function menu() {
   const s = last;
   const items = [
     { label: '✍️ Anotar tarea o recordatorio', run: capture },
+    { label: '🤖 Añadir a la cola de Claude', run: queueForClaude },
+    { label: '🔍 Revisar antes de hacer push', run: pushCheckHere },
+    { label: '📋 Sugerir mensaje de commit', run: commitHere },
     s && s.pomo ? { label: '⏹️ Detener pomodoro', run: () => command('pomo.stop') } : { label: '🍅 Empezar pomodoro (25 min)', run: () => command('pomo.start') },
     { label: '📊 Ver consumo de Claude', run: () => command('panel.usage') },
     { label: '📋 Ver mis tareas del día', run: () => command('panel.day') },
@@ -117,7 +198,11 @@ function activate(context) {
     vscode.commands.registerCommand('pmPollito.capture', capture),
     vscode.commands.registerCommand('pmPollito.pomodoro', () => command(last && last.pomo ? 'pomo.stop' : 'pomo.start')),
     vscode.commands.registerCommand('pmPollito.usage', () => command('panel.usage')),
+    vscode.commands.registerCommand('pmPollito.queue', queueForClaude),
+    vscode.commands.registerCommand('pmPollito.pushCheck', pushCheckHere),
+    vscode.commands.registerCommand('pmPollito.commitMessage', commitHere),
   );
+  watchTerminals(context);
   refresh();
   // Estado cada 10 s; el reloj del pomodoro/cronómetro se repinta cada segundo.
   timer = setInterval(refresh, 10000);

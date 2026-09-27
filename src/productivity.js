@@ -57,6 +57,7 @@ function create(ctx) {
       pomo = { phase: 'break', endsAt: Date.now() + mins * 60e3, round: pomo.round, long };
       ctx.say(`🍅 ¡Pomodoro completado! (${day.pomodoros} hoy · +10 XP)\nDescanso de ${mins} min: levántate y estírate 🧘`, 'celebrate', 12000);
       ctx.notify('🍅 ¡Pomodoro completado!', `Descanso de ${mins} minutos. ¡Estírate!`, () => ctx.command('panel', 'day#pomo-box'));
+      if (ctx.onPomodoroDone) ctx.onPomodoroDone();
     } else {
       pomo = null;
       ctx.say('⏰ ¡Se acabó el descanso! ¿Otro pomodoro? Escríbeme "pomodoro" o clic derecho → 🍅', 'alarm-soft', 12000);
@@ -83,6 +84,7 @@ function create(ctx) {
     return item;
   }
   function removeReminder(id) {
+    (S().tombstones = S().tombstones || {})[id] = Date.now(); // para que no reaparezca al sincronizar
     S().reminders = (S().reminders || []).filter((r) => r.id !== id);
     ctx.store.save();
     ctx.broadcast();
@@ -182,6 +184,7 @@ function create(ctx) {
     const day = ctx.today();
     day.projects = day.projects || {};
     day.projects[name] = (day.projects[name] || 0) + dt;
+    if (ctx.trackBranch) ctx.trackBranch(name, dt);
   }
 
   // ================= GIT =================
@@ -209,6 +212,7 @@ function create(ctx) {
     const now = Date.now();
     const warnings = [];
     const statuses = await Promise.all(repos.map((r) => git.status(r)));
+    if (ctx.onGitStatuses) ctx.onGitStatuses(statuses.filter(Boolean), repos);
     for (const st of statuses) {
       if (!st || !st.changed) continue;
       const activeRecently = now - st.lastChangeAt < 2 * 3600e3;
@@ -217,7 +221,7 @@ function create(ctx) {
         warnings.push({ repo: st.repo, text: `${st.changed} archivos sin commit desde hace ${fmtDur(sinceCommit / 1000)}` });
         if (!gitWarned[st.repo] || now - gitWarned[st.repo] > 2 * 3600e3) {
           gitWarned[st.repo] = now;
-          if (!ctx.isMuted() && !ctx.getMeeting()) ctx.say(`💾 Llevas ${fmtDur(sinceCommit / 1000)} sin commit en ${st.repo} (${st.changed} archivos) 😬 ¡Guarda tu trabajo!`, 'alert', 11000, { target: { cmd: 'open.project', arg: st.path }, actions: [{ label: '📂 Abrir proyecto', cmd: 'open.project', arg: st.path }] });
+          if (!ctx.isMuted() && !ctx.getMeeting()) ctx.say(`💾 Llevas ${fmtDur(sinceCommit / 1000)} sin commit en ${st.repo} (${st.changed} archivos) 😬 ¡Guarda tu trabajo!`, 'alert', 11000, { target: { cmd: 'open.project', arg: st.path }, actions: [{ label: '📋 Mensaje de commit', cmd: 'commit.suggest', arg: st.path }, { label: '📂 Abrir proyecto', cmd: 'open.project', arg: st.path }] });
         }
       }
       if (/^(main|master)$/.test(st.branch) && now - st.lastChangeAt < 3600e3) {
@@ -272,6 +276,7 @@ function create(ctx) {
     return m || 'quiere tu atención';
   }
   function onClaudeEvent(ev) {
+    if (ctx.onClaudeRaw) ctx.onClaudeRaw(ev);
     const name = ev.hook_event_name;
     const sid = ev.session_id || 'default';
     const proj = ev.cwd ? path.basename(ev.cwd) : 'Claude Code';
@@ -285,7 +290,8 @@ function create(ctx) {
       const day = ctx.today();
       day.claudeTasks = (day.claudeTasks || 0) + 1;
       ctx.store.save();
-      if (secs >= 20) {
+      const queued = ctx.onClaudeDone ? ctx.onClaudeDone(proj) : false;
+      if (secs >= 20 && !queued) {
         if (looking) ctx.animate('hop');
         else ctx.say(`✅ ¡Claude terminó en ${proj}! (${fmtDur(secs)}) Ve a revisar 👀`, 'celebrate', 12000, {
           target: { cmd: 'open.project', arg: ev.cwd },

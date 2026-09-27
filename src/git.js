@@ -91,4 +91,12 @@ function lastWorkday(now = new Date()) {
   return { from: d.getTime(), to: end.getTime() };
 }
 
-module.exports = { discover, commits, status, lastWorkday };
+/** Commits locales aún sin subir: { ahead, range, head } o null si no hay rama remota. */
+async function unpushed(repo) {
+  const up = await git(repo, ['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']);
+  if (!up) return null;
+  const [ahead, head] = await Promise.all([git(repo, ['rev-list', '--count', '@{u}..HEAD']), git(repo, ['rev-parse', 'HEAD'])]);
+  return { ahead: Number(ahead) || 0, range: '@{u}..HEAD', head, upstream: up };
+}
+
+module.exports = { discover, commits, status, lastWorkday, unpushed, run: git };

@@ -19,6 +19,14 @@ public class PmWin {
   [DllImport("user32.dll")] public static extern IntPtr MonitorFromWindow(IntPtr h, uint f);
   [DllImport("user32.dll")] public static extern bool GetMonitorInfo(IntPtr m, ref MONITORINFO mi);
   [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetClassName(IntPtr h, StringBuilder s, int n);
+  // Canción de Spotify (su ventana se titula "Artista - Canción" mientras suena; "Spotify…" en pausa).
+  public static string SpotifyTitle() {
+    foreach (var p in System.Diagnostics.Process.GetProcessesByName("Spotify")) {
+      var t = p.MainWindowTitle;
+      if (!string.IsNullOrEmpty(t) && t.Contains(" - ") && !t.StartsWith("Spotify")) return t;
+    }
+    return "";
+  }
   [DllImport("user32.dll")] public static extern bool IsZoomed(IntPtr h);
   [DllImport("user32.dll")] public static extern int GetWindowLong(IntPtr h, int i);
   // ¿La ventana activa está en pantalla completa de verdad? (presentación, vídeo o juego)
@@ -64,6 +72,26 @@ public class PmWin {
 }
 "@
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
+# Controles multimedia de Windows: qué suena en cualquier app (Spotify, navegador, Apple Music…).
+$media = $null
+try {
+  Add-Type -AssemblyName System.Runtime.WindowsRuntime
+  $asTaskGeneric = ([System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object { $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.GetParameters()[0].ParameterType.Name -like 'IAsyncOperation*' })[0]
+  function Await($op, [Type]$t) { $task = $asTaskGeneric.MakeGenericMethod($t).Invoke($null, @($op)); [void]$task.Wait(2000); $task.Result }
+  [void][Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager, Windows.Media.Control, ContentType = WindowsRuntime]
+  $media = Await ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]::RequestAsync()) ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager])
+} catch { $media = $null }
+function NowPlaying() {
+  if (-not $media) { return @('', '') }
+  foreach ($s in $media.GetSessions()) {
+    $pi = $s.GetPlaybackInfo()
+    if ([string]$pi.PlaybackStatus -ne 'Playing' -or [string]$pi.PlaybackType -eq 'Video') { continue }
+    $pr = Await ($s.TryGetMediaPropertiesAsync()) ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties])
+    $t = if ($pr.Artist) { $pr.Artist + ' - ' + $pr.Title } else { [string]$pr.Title }
+    return @($t, [string]$s.SourceAppUserModelId)
+  }
+  return @('', '')
+}
 $micBases = @(
   'HKCU:\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone',
   'HKCU:\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone\NonPackaged'
@@ -95,13 +123,17 @@ while ($true) {
   try { $tt = [PmWin]::TeamsTitles() } catch {}
   $fs = ''
   try { $fs = [PmWin]::FullscreenMonitor($h) } catch {}
-  [Console]::Out.WriteLine((@{ t = $sb.ToString(); p = $pn; i = [int]($idle / 1000); m = ($mic -join '|'); tt = $tt; f = $fs } | ConvertTo-Json -Compress))
+  $mu = ''; $ms = ''
+  try { $np = NowPlaying; $mu = $np[0]; $ms = $np[1] } catch {}
+  if (-not $mu) { try { $mu = [PmWin]::SpotifyTitle(); if ($mu) { $ms = 'Spotify' } } catch {} }
+  [Console]::Out.WriteLine((@{ t = $sb.ToString(); p = $pn; i = [int]($idle / 1000); m = ($mic -join '|'); tt = $tt; f = $fs; mu = $mu; ms = $ms } | ConvertTo-Json -Compress))
   [Console]::Out.Flush()
   Start-Sleep -Seconds 5
 }
 `;
 
 // [etiqueta, expresión] — se busca en "proceso título" en minúsculas.
+/** @type {Array<[string, RegExp]>} */
 const DISTRACTIONS = [
   ['YouTube', /youtube/],
   ['Netflix', /netflix/],
@@ -164,7 +196,43 @@ function meetingFrom(sample) {
 }
 
 /** Arranca el vigilante. Llama a onSample({t, p, i, m, tt}) cada ~5 s. Devuelve una función para pararlo. */
+// ---------- macOS: app y ventana activas con AppleScript (JXA), inactividad con ioreg ----------
+// El título de la ventana necesita el permiso de Accesibilidad; sin él, solo se ve el nombre de la app.
+const MAC_JXA = `
+var se = Application('System Events');
+var out = { p: '', t: '', mu: '' };
+try {
+  var p = se.processes.whose({ frontmost: true })[0];
+  out.p = p.name();
+  try { out.t = p.windows[0].name(); } catch (e) {}
+} catch (e) {}
+try {
+  var sp = Application('Spotify');
+  if (sp.running() && sp.playerState() === 'playing') out.mu = sp.currentTrack.artist() + ' - ' + sp.currentTrack.name();
+} catch (e) {}
+JSON.stringify(out);`;
+function startMac(onSample) {
+  const { execFile } = require('child_process');
+  let stopped = false;
+  const tick = () => {
+    if (stopped) return;
+    execFile('osascript', ['-l', 'JavaScript', '-e', MAC_JXA], { timeout: 4000 }, (err, out) => {
+      let s = {};
+      try { s = JSON.parse(String(out || '{}').trim()); } catch { /* sin permiso */ }
+      execFile('/bin/sh', ['-c', "ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {print int($NF/1000000000); exit}'"], { timeout: 3000 }, (e2, idle) => {
+        if (!stopped && s.p) {
+          try { onSample({ t: s.t || '', p: String(s.p).toLowerCase(), i: Number(String(idle).trim()) || 0, m: '', tt: '', f: '', mu: s.mu || '' }); } catch { /* muestra rara */ }
+        }
+        if (!stopped) setTimeout(tick, 5000);
+      });
+    });
+  };
+  tick();
+  return () => { stopped = true; };
+}
+
 function start(onSample) {
+  if (process.platform === 'darwin') return startMac(onSample);
   let child = null;
   let stopped = false;
   let buf = '';

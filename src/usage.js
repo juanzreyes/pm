@@ -62,8 +62,7 @@ async function fetchLimits(token) {
     if (!res.ok) {
       let msg = text;
       try { msg = JSON.parse(text).error.message; } catch { /* texto plano */ }
-      const err = new Error(msg || `HTTP ${res.status}`);
-      err.status = res.status;
+      const err = Object.assign(new Error(msg || `HTTP ${res.status}`), { status: res.status });
       throw err;
     }
     return parseLimits(JSON.parse(text));
@@ -163,6 +162,7 @@ function parseFile(p) {
 
 // ---------- coste equivalente en la API (US$ por millón de tokens: entrada / salida) ----------
 // Con un plan Pro/Max no pagas esto; sirve para saber cuánto "vale" lo que usas y en qué proyecto.
+/** @type {Array<[RegExp, number, number]>} */
 const PRICES = [
   [/fable|mythos/, 10, 50],
   [/opus-5-5/, 4, 20],
@@ -244,4 +244,4 @@ function localStats() {
   return { ...buckets, byDay, lastActivity: lastActivity || null, available: fs.existsSync(root) };
 }
 
-module.exports = { readClaudeCodeSession, fetchLimits, parseLimits, localStats };
+module.exports = { readClaudeCodeSession, fetchLimits, parseLimits, localStats, parseFile };

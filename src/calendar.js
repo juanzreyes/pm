@@ -1,6 +1,7 @@
 // Calendario desde un enlace ICS publicado (Outlook / Microsoft 365 / Google Calendar).
 // Así el pollito sabe cuándo tienes reunión de Teams, Meet o Zoom, sin pedirte contraseñas.
-const ICAL = require('ical.js');
+/** @type {any} */
+const ICAL = require('ical.js'); // build CommonJS: las clases van en la raíz
 
 const JOIN_PATTERNS = [
   ['Teams', /https:\/\/teams\.(?:microsoft|live)\.com\/(?:l\/meetup-join|meet)\/[^\s"'<>)\\]+/i],

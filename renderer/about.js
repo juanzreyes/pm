@@ -10,7 +10,7 @@ document.getElementById('upd').addEventListener('click', async () => {
 });
 
 pm.getState().then((s) => {
-  document.documentElement.classList.toggle('dark', !!s.dark);
+  document.documentElement.classList.toggle('dark', !!s.dark); document.documentElement.classList.toggle('contrast', !!s.contrast);
   document.getElementById('ver').textContent = `${s.lang === 'en' ? 'version' : 'versión'} ${s.version}${s.packaged ? '' : ' (dev)'}`;
-  if (s.lang === 'en') I18N.translateDom(document.body, 'en');
+  if (s.lang && s.lang !== 'es') I18N.translateDom(document.body, s.lang);
 });

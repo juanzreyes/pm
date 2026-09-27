@@ -73,3 +73,11 @@ details.opt summary { cursor: pointer; font-weight: 700; }
 .dg { background: var(--card, #fffdf6); border: 1.5px solid var(--line, #efe2bf); border-radius: 12px; padding: 7px 10px; font-size: 12px; }
 .dg summary { cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dg pre { white-space: pre-wrap; word-break: break-word; font-size: 11px; margin-top: 6px; max-height: 180px; overflow: auto; }
+#s-personality { font: inherit; font-size: 13px; padding: 6px 8px; border: 2px solid var(--line, #efe2bf); border-radius: 12px; background: var(--card, #fff); color: inherit; }
+#bk-pass { width: 150px; }
+
+#pm-repo { flex: 1; font: inherit; font-size: 13px; padding: 6px 8px; border: 2px solid var(--line, #efe2bf); border-radius: 12px; background: var(--card, #fff); color: inherit; }
+
+#prof-sel { font: inherit; font-size: 13px; padding: 6px 8px; border: 2px solid var(--line, #efe2bf); border-radius: 12px; background: var(--card, #fff); color: inherit; }
+#prof-name { flex: 1; min-width: 120px; }
+.emoji-in { width: 46px; text-align: center; }

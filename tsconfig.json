@@ -1,0 +1,17 @@
+{
+  // Chequeo de tipos del JavaScript (sin compilar nada): npm run typecheck
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "target": "ES2022",
+    "module": "nodenext",
+    "lib": ["ES2022", "DOM"],
+    "types": ["node"],
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "include": ["main.js", "preload.js", "src/**/*.js", "mcp/*.js", "cli/*.js"]
+}

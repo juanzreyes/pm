@@ -63,7 +63,7 @@ function seg(el, value) {
 function render() {
   if (!state) return;
   const s = state.settings;
-  document.documentElement.classList.toggle('dark', !!state.dark);
+  document.documentElement.classList.toggle('dark', !!state.dark); document.documentElement.classList.toggle('contrast', !!state.contrast);
   document.documentElement.classList.toggle('reduced', !!s.reducedMotion);
 
   // General
@@ -74,6 +74,12 @@ function render() {
   $('#s-workdays').checked = !!s.workdaysOnly;
   $('#s-chatter').checked = !!s.chatter;
   $('#s-focus-blocks').checked = s.focusDuringBlocks !== false;
+  $('#s-personality').value = s.personality || 'motivador';
+  $('#s-music').checked = s.musicMode !== false;
+  $('#s-musicdetect').checked = s.musicDetect !== false;
+  $('#s-musicdetect').disabled = s.musicMode === false;
+  $('#s-builds').checked = s.buildWatch !== false;
+  $('#bk-pass-info').textContent = s.hasBackupPass ? '🔐 Tus copias se guardan cifradas. Deja el campo vacío y guarda para quitar la contraseña.' : 'Opcional: cifra las copias (AES-256). Sin ella no se podrán abrir, ¡no la olvides!';
   $('#s-focus-pomo').checked = s.focusDuringPomodoro !== false;
   $('#mute').textContent = state.muted ? '🔔 Quitar silencio' : '🔕 Silenciar 1 hora';
 
@@ -119,6 +125,24 @@ function render() {
   const gh = state.github || {};
   $('#cc-status').textContent = cc.installed ? (cc.working ? '🤖 trabajando…' : '✅ conectado') : 'sin conectar';
   $('#cc-install').textContent = cc.installed ? '🔄 Reinstalar hooks' : 'Conectar con Claude Code';
+  // Perfiles, sincronización, exportar, CLI, memoria
+  const pr = state.profiles || { list: [] };
+  if (document.activeElement !== $('#prof-sel')) $('#prof-sel').innerHTML = pr.list.map((p) => `<option value="${p.id}" ${p.id === pr.activeId ? 'selected' : ''}>${p.emoji} ${p.name}${p.id === pr.activeId ? ' (actual)' : ''}</option>`).join('');
+  const sy = state.sync || {};
+  $('#sync-on').checked = !!sy.enabled;
+  $('#sync-info').textContent = `📁 ${sy.dir || ''}` + (sy.lastAt ? ` · última: ${new Date(sy.lastAt).toLocaleString()}` : '');
+  const ex = state.exportsInfo || {};
+  $('#md-auto').checked = !!ex.autoMarkdown;
+  if (ex.markdownDir) $('#md-info').textContent = `📁 ${ex.markdownDir}` + (ex.lastMarkdownAt ? ` · última: ${new Date(ex.lastMarkdownAt).toLocaleString()}` : '');
+  $('#cli-on').checked = !!state.cli;
+  $('#s-lowmem').checked = s.lowMemory !== false;
+  const it = state.integrations || {};
+  $('#mcp-code').checked = !!it.mcpCode;
+  $('#mcp-desktop').checked = !!it.mcpDesktop;
+  $('#mcp-desktop-row').classList.toggle('hidden', !it.desktopAvailable);
+  $('#mcp-statusline').checked = !!(it.statusline && it.statusline.installed);
+  $('#sl-info').textContent = it.statusline && it.statusline.other ? '⚠️ Ya tienes otra línea de estado: la guardo y la restauro si lo quitas.' : 'Abajo en Claude Code: 🐣 42% · 🍅 12:30 · ✅ 3/7';
+  $('#mcp-status').textContent = it.mcpCode || it.mcpDesktop ? 'conectado' : 'no conectado';
   $('#cc-uninstall').classList.toggle('hidden', !cc.installed);
   $('#gh-status').textContent = gh.status === 'ok' ? '✅ @' + gh.login : gh.hasToken ? '⚠️ error' : 'sin conectar';
   $('#gh-remove').classList.toggle('hidden', !gh.hasToken);
@@ -155,6 +179,16 @@ $('#s-autostart').addEventListener('change', (e) => pm.updateSettings({ autoStar
 $('#s-morning').addEventListener('change', (e) => e.target.value && pm.updateSettings({ morningTime: e.target.value }));
 $('#s-evening').addEventListener('change', (e) => e.target.value && pm.updateSettings({ eveningTime: e.target.value }));
 $('#s-workdays').addEventListener('change', (e) => pm.updateSettings({ workdaysOnly: e.target.checked }));
+$('#s-personality').addEventListener('change', (e) => pm.updateSettings({ personality: e.target.value }));
+$('#s-music').addEventListener('change', (e) => pm.updateSettings({ musicMode: e.target.checked }));
+$('#s-musicdetect').addEventListener('change', (e) => pm.updateSettings({ musicDetect: e.target.checked }));
+$('#s-builds').addEventListener('change', (e) => pm.updateSettings({ buildWatch: e.target.checked }));
+$('#bk-pass-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  await pm.setBackupPass($('#bk-pass').value);
+  $('#bk-pass').value = '';
+  $('#data-msg').textContent = '🔐 Contraseña de las copias actualizada';
+});
 $('#s-focus-blocks').addEventListener('change', (e) => pm.updateSettings({ focusDuringBlocks: e.target.checked }));
 $('#s-focus-pomo').addEventListener('change', (e) => pm.updateSettings({ focusDuringPomodoro: e.target.checked }));
 
@@ -319,3 +353,50 @@ document.addEventListener('click', (e) => {
 pm.onState((s) => { state = s; render(); });
 pm.getState().then((s) => { state = s; render(); showSection(current); });
 if (current === 'diag') renderDiag();
+
+// ----- MCP, línea de estado y memoria de proyecto -----
+for (const [id, what] of [['#mcp-code', 'mcpCode'], ['#mcp-desktop', 'mcpDesktop'], ['#mcp-statusline', 'statusline']]) {
+  $(id).addEventListener('change', async (e) => {
+    const r = await pm.setIntegration(what, e.target.checked);
+    $('#mcp-msg').textContent = r.ok ? (e.target.checked ? '✅ Listo. Reinicia Claude para que lo vea.' : 'Quitado.') : '❌ ' + r.error;
+  });
+}
+pm.gitRepos().then((list) => {
+  $('#pm-repo').innerHTML = list.map((r) => `<option value="${r.path.replace(/"/g, '&quot;')}">${r.name}</option>`).join('') || '<option value="">(no encontré repos git)</option>';
+});
+$('#pm-mem').addEventListener('click', async () => {
+  const repo = $('#pm-repo').value;
+  if (!repo) return;
+  const r = await pm.updateProjectMemory(repo);
+  $('#pm-mem-msg').textContent = r.ok ? '✅ Actualizado: ' + r.file : '❌ ' + r.error;
+});
+
+// ----- perfiles, sincronización, exportar, CLI, memoria -----
+$('#prof-go').addEventListener('click', () => {
+  const id = $('#prof-sel').value;
+  if (id && id !== (state.profiles || {}).activeId && confirm('Cambiar de perfil reinicia PM. ¿Seguimos?')) pm.profileSwitch(id);
+});
+$('#prof-add').addEventListener('click', async () => {
+  const name = $('#prof-name').value.trim();
+  if (!name) return $('#prof-name').focus();
+  await pm.profileAdd(name, $('#prof-emoji').value);
+  $('#prof-name').value = '';
+});
+$('#prof-del').addEventListener('click', async () => {
+  const id = $('#prof-sel').value;
+  const p = ((state.profiles || {}).list || []).find((x) => x.id === id);
+  if (!p || !confirm(`¿Borrar el perfil "${p.name}"? (se guarda una copia por si acaso)`)) return;
+  const r = await pm.profileRemove(id);
+  if (!r.ok) alert(r.error);
+});
+$('#sync-on').addEventListener('change', async (e) => { await pm.updateSettings({ syncEnabled: e.target.checked }); if (e.target.checked) pm.syncNow(); });
+$('#sync-now').addEventListener('click', () => pm.syncNow());
+$('#sync-dir').addEventListener('click', () => pm.syncDir());
+$('#md-export').addEventListener('click', () => pm.exportMarkdown());
+$('#md-auto').addEventListener('change', (e) => pm.updateSettings({ autoMarkdown: e.target.checked }));
+$('#ics-export').addEventListener('click', () => pm.exportIcs());
+$('#cli-on').addEventListener('change', async (e) => {
+  const r = await pm.setCli(e.target.checked);
+  $('#cli-msg').textContent = r.ok ? (r.on ? '✅ Listo: abre una terminal nueva y escribe pm' : 'Quitado.') : '❌ ' + r.error;
+});
+$('#s-lowmem').addEventListener('change', (e) => pm.updateSettings({ lowMemory: e.target.checked }));

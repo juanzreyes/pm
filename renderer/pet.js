@@ -51,6 +51,9 @@ function chirp(kind = 'pio') {
   if (!notes) return;
   try {
     actx = actx || new AudioContext();
+    // Libera el audio tras 20 s en silencio (el servicio de audio ocupa memoria).
+    clearTimeout(chirp.idle);
+    chirp.idle = setTimeout(() => { if (actx) { actx.close().catch(() => {}); actx = null; } }, 20000);
     let t = actx.currentTime + 0.01;
     for (const [f1, f2, d] of notes) {
       const o = actx.createOscillator();
@@ -220,10 +223,10 @@ function speakText(text, lang) {
       .trim();
     if (!clean) return;
     const u = new SpeechSynthesisUtterance(clean);
-    const want = lang === 'en' ? 'en' : 'es';
+    const want = ['en', 'pt', 'fr'].includes(lang) ? lang : 'es';
     const voice = speechSynthesis.getVoices().find((v) => v.lang && v.lang.toLowerCase().startsWith(want));
     if (voice) u.voice = voice;
-    u.lang = want === 'en' ? 'en-US' : 'es-ES';
+    u.lang = { en: 'en-US', pt: 'pt-BR', fr: 'fr-FR' }[want] || 'es-ES';
     u.pitch = 1.7; // voz de pollito
     u.rate = 1.05;
     u.volume = Math.max(0, Math.min(1, ((state && state.settings && state.settings.volume) ?? 70) / 100));
@@ -584,7 +587,7 @@ function updateMeter() {
   body.classList.toggle('reduced', !!(st && st.reducedMotion));
   // Contador de avisos sin leer (clic en el medidor → centro de avisos).
   const unread = (state && state.unread) || 0;
-  const badge = $('#badge');
+  const badge = $('#unread');
   badge.textContent = unread > 9 ? '9+' : String(unread);
   badge.classList.toggle('hidden', !unread);
   if (pomo && pomo.endsAt) {
@@ -761,3 +764,64 @@ updateTail();
 
 // Modo foco: se pone la cinta de concentración.
 pm.onFocusMode((on) => body.classList.toggle('focus-mode', !!on));
+
+// 🎵 Modo música: con auriculares y una coreografía que cambia de paso cada pocos compases.
+// Pasos: cabeceo · balanceo lateral · alas arriba · saltitos · giro. Notas musicales flotando.
+const DANCE_MOVES = ['dance-bop', 'dance-sway', 'dance-wings', 'dance-hop', 'dance-bop', 'dance-twist'];
+let musicTimer = null;
+let moveTimer = null;
+let moveIdx = 0;
+function setMove(name) {
+  for (const m of DANCE_MOVES) body.classList.remove(m);
+  if (name) body.classList.add(name);
+}
+function stopDance() {
+  clearInterval(musicTimer);
+  clearInterval(moveTimer);
+  setMove(null);
+  body.classList.remove('music');
+}
+pm.onMusic((m) => {
+  const was = body.classList.contains('music');
+  if (!m) {
+    stopDance();
+    chick.title = '';
+    if (was) act('wave', true); // saludo al acabar la canción
+    return;
+  }
+  body.classList.add('music');
+  chick.title = `🎵 ${m.title}${m.app ? ` · ${m.app}` : ''}`;
+  if (was) return; // cambió de canción: sigue bailando
+  wake();
+  clearInterval(musicTimer);
+  clearInterval(moveTimer);
+  if (body.classList.contains('reduced')) { setMove('dance-bop'); return; } // accesibilidad: solo cabeceo suave
+  moveIdx = Math.floor(Math.random() * DANCE_MOVES.length);
+  setMove(DANCE_MOVES[moveIdx]);
+  // Cambia de paso cada 4 compases (8 s a 120 ppm).
+  moveTimer = setInterval(() => {
+    if (document.hidden || dragging || body.classList.contains('walking')) return;
+    moveIdx = (moveIdx + 1 + Math.floor(Math.random() * 2)) % DANCE_MOVES.length;
+    setMove(DANCE_MOVES[moveIdx]);
+  }, 8000);
+  musicTimer = setInterval(() => {
+    if (!body.classList.contains('music') || document.hidden) return;
+    const r = chick.getBoundingClientRect();
+    const n = toy(['🎵', '🎶', '♪', '♫'][Math.floor(Math.random() * 4)], 'note-float', r.left + r.width * (0.15 + Math.random() * 0.7), r.top + 18);
+    setTimeout(() => n.remove(), 2200);
+  }, 1000);
+});
+
+// 🥚 Eclosión: el huevo tiembla, se rompe y sale el coleccionable.
+pm.onHatch(({ emoji, rarity }) => {
+  wake();
+  const c = chickCenter();
+  const egg = toy('🥚', 'egg-hatch', c.x + 34, c.y + 4);
+  setTimeout(() => {
+    egg.textContent = '🐣';
+    egg.classList.add('cracked');
+    const prize = toy(emoji, `prize ${rarity}`, c.x + 34, c.y - 10);
+    setTimeout(() => { egg.remove(); prize.remove(); }, 3000);
+    act('celebrate');
+  }, 1400);
+});

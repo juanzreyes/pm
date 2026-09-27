@@ -360,7 +360,7 @@ svg * { transform-box: fill-box; }
 .lvl3 #bowtie { display: inline; }
 .lvl8 #crown { display: inline; }
 .lvl8 #tuft { display: none; }
-.lvl8 #badge { display: none; }
+/* El gafete de PM se lleva siempre, en todos los niveles */
 
 /* ---------- En reunión: audífonos puestos 🎧 ---------- */
 #headset { display: none; }
@@ -481,12 +481,12 @@ svg * { transform-box: fill-box; }
 #bubble.has-actions { cursor: default; }
 
 /* ---------- Contador de avisos sin leer ---------- */
-#badge {
+#unread {
   min-width: 16px; height: 16px; padding: 0 4px; border-radius: 99px; background: #e63946; color: #fff;
   font-size: 10px; font-weight: 900; display: inline-grid; place-items: center; margin-left: 2px;
   animation: badgePop .4s cubic-bezier(.3, 1.6, .5, 1);
 }
-#badge.hidden { display: none; }
+#unread.hidden { display: none; }
 @keyframes badgePop { from { transform: scale(0); } }
 
 /* ---------- Menos animación ---------- */

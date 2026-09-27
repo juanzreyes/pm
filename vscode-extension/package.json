@@ -1,31 +1,96 @@
 {
   "name": "pm-pollito",
   "displayName": "PM Pollito",
-  "description": "Tu pollito Project Manager en la barra de estado de VS Code: % de tu sesión de Claude, pomodoro y tareas.",
-  "version": "1.0.0",
+  "description": "Tu pollito Project Manager en VS Code: % de tu sesión de Claude, pomodoro, tareas, vigilante de tests y builds, y cola para Claude.",
+  "version": "1.1.0",
   "publisher": "juanzreyes",
   "license": "MIT",
   "icon": "icon.png",
-  "engines": { "vscode": "^1.80.0" },
-  "categories": ["Other"],
-  "activationEvents": ["onStartupFinished"],
+  "engines": {
+    "vscode": "^1.93.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
-      { "command": "pmPollito.menu", "title": "PM Pollito: Menú" },
-      { "command": "pmPollito.capture", "title": "PM Pollito: Anotar tarea o recordatorio" },
-      { "command": "pmPollito.pomodoro", "title": "PM Pollito: Empezar / detener pomodoro" },
-      { "command": "pmPollito.usage", "title": "PM Pollito: Ver consumo de Claude" }
+      {
+        "command": "pmPollito.menu",
+        "title": "PM Pollito: Menú"
+      },
+      {
+        "command": "pmPollito.capture",
+        "title": "PM Pollito: Anotar tarea o recordatorio"
+      },
+      {
+        "command": "pmPollito.pomodoro",
+        "title": "PM Pollito: Empezar / detener pomodoro"
+      },
+      {
+        "command": "pmPollito.usage",
+        "title": "PM Pollito: Ver consumo de Claude"
+      },
+      {
+        "command": "pmPollito.queue",
+        "title": "PM Pollito: Añadir a la cola de Claude"
+      },
+      {
+        "command": "pmPollito.pushCheck",
+        "title": "PM Pollito: Revisar antes de hacer push"
+      },
+      {
+        "command": "pmPollito.commitMessage",
+        "title": "PM Pollito: Sugerir mensaje de commit"
+      }
     ],
     "keybindings": [
-      { "command": "pmPollito.capture", "key": "ctrl+alt+n" }
+      {
+        "command": "pmPollito.capture",
+        "key": "ctrl+alt+n"
+      },
+      {
+        "command": "pmPollito.queue",
+        "key": "ctrl+alt+q"
+      }
     ],
     "configuration": {
       "title": "PM Pollito",
       "properties": {
-        "pmPollito.port": { "type": "number", "default": 47823, "description": "Puerto local de PM Pollito." },
-        "pmPollito.showTasks": { "type": "boolean", "default": true, "description": "Mostrar el progreso de tareas del día en la barra de estado." }
+        "pmPollito.port": {
+          "type": "number",
+          "default": 47823,
+          "description": "Puerto local de PM Pollito."
+        },
+        "pmPollito.showTasks": {
+          "type": "boolean",
+          "default": true,
+          "description": "Mostrar el progreso de tareas del día en la barra de estado."
+        },
+        "pmPollito.watchBuilds": {
+          "type": "boolean",
+          "default": true,
+          "description": "Avisar al pollito cuando un test o build falla (o se arregla) en la terminal."
+        }
       }
     }
+  },
+  "keywords": [
+    "claude",
+    "claude code",
+    "pomodoro",
+    "productivity",
+    "project manager",
+    "tamagotchi",
+    "tasks",
+    "anthropic"
+  ],
+  "galleryBanner": {
+    "color": "#FFD84A",
+    "theme": "light"
   }
 }

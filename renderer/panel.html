@@ -36,7 +36,7 @@
     <main>
       <!-- CHAT -->
       <section id="v-chat" class="view active">
-        <div id="messages"></div>
+        <div id="messages" role="log" aria-live="polite" aria-label="Conversación con el pollito"></div>
         <div class="chips">
           <button data-q="¿Cuánto llevo?">¿Cuánto llevo?</button>
           <button data-q="¿Cuándo se reinicia?">⏳ Reinicio</button>
@@ -55,6 +55,8 @@
       <section id="v-usage" class="view">
         <div id="conn" class="box"></div>
         <div id="limits"></div>
+        <div id="live-sessions" class="box small live-box"></div>
+        <div id="budget" class="box budget-box"></div>
         <h3>Actividad local en Claude Code</h3>
         <div id="local" class="grid"></div>
         <div class="row between muted small">
@@ -87,7 +89,7 @@
 
         <div class="row between">
           <h3 id="day-title">Hoy</h3>
-          <span id="day-progress" class="pill"></span>
+          <div class="row gap"><button id="btn-prioritize" class="ghost mini" title="Ordenar tareas y reservar bloques en tus huecos libres">🧠 Priorizar</button><span id="day-progress" class="pill"></span></div>
         </div>
         <ul id="tasks"></ul>
         <div id="est-insight" class="small muted hidden"></div>
@@ -155,6 +157,16 @@
         </div>
         <div id="claude-journal" class="box small"></div>
 
+        <div class="row between">
+          <h3>🤖 Cola para Claude</h3>
+          <button id="queue-next" class="ghost mini hidden">📋 Copiar siguiente</button>
+        </div>
+        <div id="claude-queue" class="box small"></div>
+        <form id="queue-form" class="row">
+          <input id="queue-input" placeholder="Lo que le pedirás a Claude cuando termine…" maxlength="4000" autocomplete="off" />
+          <button class="primary" type="submit">＋</button>
+        </form>
+
         <h3>⏰ Recordatorios</h3>
         <ul id="reminders" class="editlist"></ul>
         <form id="rem-form" class="row">
@@ -187,6 +199,8 @@
           <button id="git-refresh" class="ghost mini" title="Actualizar">↻</button>
         </div>
         <div id="gitbox" class="box"></div>
+        <div id="devbox" class="box small"></div>
+        <details id="branches" class="recurring"><summary><b>🌿 Tiempo por rama</b></summary><div id="branches-list"></div></details>
         <h3>Últimos días</h3>
         <div id="history"></div>
       </section>
@@ -289,6 +303,21 @@
           <p class="muted">🔒 Solo leo remitente y asunto de tus correos sin leer. La contraseña se guarda cifrada en tu PC.</p>
         </details>
         </div>
+        <div class="row between">
+          <h3>🏁 Hitos</h3>
+          <span id="ms-count" class="pill"></span>
+        </div>
+        <div id="milestones" class="ms-list"></div>
+        <form id="ms-form" class="ms-form">
+          <input id="ms-title" placeholder="Entrega de la v2, demo al cliente…" maxlength="80" required />
+          <div class="row gap">
+            <input id="ms-project" placeholder="Proyecto (opcional)" maxlength="60" list="ms-projects" />
+            <input id="ms-due" type="date" required aria-label="Fecha de entrega" />
+            <input id="ms-hours" type="number" min="0" max="999" placeholder="h" title="Horas estimadas (opcional)" class="num-in" />
+            <button class="primary" type="submit">＋</button>
+          </div>
+          <datalist id="ms-projects"></datalist>
+        </form>
       </section>
 
       <!-- MASCOTA / AJUSTES -->
@@ -333,6 +362,19 @@
         <div class="row between"><h3>🛍️ Tienda</h3><span id="coins" class="pill coins"></span></div>
         <div class="small muted">Ganas 🌽 maíz con cada XP, logros y el minijuego.</div>
         <div id="shop" class="shop-grid"></div>
+
+        <h3>🎭 Personalidad</h3>
+        <div id="personality" class="species"></div>
+
+        <div class="row between"><h3>🏡 Casita</h3><span id="home-count" class="pill"></span></div>
+        <div id="home" class="room" role="img" aria-label="Casita del pollito"></div>
+        <div id="home-shop" class="home-shop"></div>
+
+        <div class="row between"><h3>🥚 Colección</h3><span id="col-count" class="pill"></span></div>
+        <div id="collection" class="box small"></div>
+
+        <div class="row between"><h3>📜 Diario del pollito</h3><button id="diary-write" class="ghost mini">✍️ Escribir hoy</button></div>
+        <div id="diary" class="diary"></div>
 
         <h3>🐾 Especie</h3>
         <div id="species" class="species"></div>
@@ -452,7 +494,31 @@
       </form>
       <div id="bl-tasks" class="bl-tasks"></div>
       <input id="bl-free" class="bl-free" value="Foco profundo" maxlength="60" title="Título para el bloque libre" />
+      <form id="bl-kb" class="row gap bl-kb" aria-label="Añadir bloque con el teclado">
+        <select id="bl-kb-task" aria-label="Tarea"></select>
+        <input id="bl-kb-start" type="time" value="09:00" step="900" aria-label="Empieza" />
+        <input id="bl-kb-end" type="time" value="10:00" step="900" aria-label="Termina" />
+        <button class="soft" type="submit" aria-label="Añadir bloque">＋</button>
+      </form>
       <div id="bl-timeline" class="bl-timeline"></div>
+    </div>
+
+    <div id="o-friday" class="overlay hidden" role="dialog" aria-label="Revisión de la semana">
+      <div class="row between">
+        <h2>📆 Revisión de la semana</h2>
+        <button type="button" id="fr-close" class="icon" title="Cerrar" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="fr-scroll">
+        <p class="muted small">1. Así fue tu semana:</p>
+        <pre id="fr-report" class="fr-report"></pre>
+        <p class="muted small">2. ¿Cómo quedaron tus objetivos?</p>
+        <div id="fr-goals"></div>
+        <p class="muted small">3. ¿Qué harás el lunes? (una por línea; te las pongo en el daily)</p>
+        <textarea id="fr-plan" rows="4" placeholder="Terminar la API de pagos&#10;Revisar PRs pendientes"></textarea>
+        <p class="muted small">4. Una nota para tu yo del lunes (opcional)</p>
+        <input id="fr-note" maxlength="300" placeholder="Empieza por lo difícil 💪" />
+      </div>
+      <button type="button" id="fr-save" class="primary big">✅ Cerrar la semana</button>
     </div>
 
     <div id="o-whatsnew" class="overlay hidden">
@@ -506,9 +572,11 @@
     </div>
   </div>
   <script src="icons.js"></script>
+  <script src="../src/i18n-extra.js"></script>
   <script src="../src/i18n.js"></script>
   <script src="panel.js"></script>
   <script src="panel-extras.js"></script>
+  <script src="panel-life.js"></script>
   <script src="stats.js"></script>
 </body>
 </html>

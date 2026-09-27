@@ -102,5 +102,59 @@ En PowerShell:  Get-FileHash .\\${setup}  y compara con SHA256.txt.
 `;
 fs.writeFileSync(path.join(pub, 'LEEME.txt'), '﻿' + leeme.replace(/\n/g, '\r\n'));
 
+// 6) Web de descarga (index.html): se puede subir tal cual a cualquier hosting estático.
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const md = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>');
+let changes = '';
+try {
+  const log = fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8').split('\n');
+  let open = false;
+  for (const line of log) {
+    if (line.startsWith('## ')) { if (open) changes += '</ul>'; changes += `<h3>${md(line.slice(3))}</h3><ul>`; open = true; }
+    else if (line.startsWith('- ') && open) changes += `<li>${md(line.slice(2))}</li>`;
+  }
+  if (open) changes += '</ul>';
+} catch { /* sin changelog */ }
+let icon = '';
+try { icon = 'data:image/png;base64,' + fs.readFileSync(path.join(root, 'build', 'icon.png')).toString('base64'); } catch { /* sin icono */ }
+const html = `<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PM Pollito — tu pollito Project Manager</title>
+<meta name="description" content="Un pollito que vive en tu escritorio: vigila tus límites de Claude, organiza tu día y se integra con Claude Code.">
+<style>
+:root{--ink:#3b2f2f;--muted:#8a7a6a;--bg:#fff9e8;--card:#fffdf6;--line:#efe2bf;--y:#ffd84a;--o:#ff9f1c}
+@media (prefers-color-scheme:dark){:root{--ink:#f3e8d2;--muted:#b3a58e;--bg:#1d1a17;--card:#26221e;--line:#463c33}}
+*{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+main{max-width:860px;margin:0 auto;padding:40px 18px}
+header{display:flex;gap:18px;align-items:center;flex-wrap:wrap}header img{width:96px;height:96px}
+h1{margin:0;font-size:38px}.sub{color:var(--muted);font-size:17px;margin:4px 0 0}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin:26px 0}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 22px;border-radius:14px;font-weight:800;text-decoration:none;border:2px solid var(--ink);color:#3b2f2f;background:var(--o);box-shadow:0 4px 0 var(--ink)}
+.btn.alt{background:var(--card);color:var(--ink)}.btn small{font-weight:600;opacity:.75}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:18px 0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px}.card b{display:block;margin-bottom:4px}
+code{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:0 5px;font-size:.9em}
+.sha{font:12px Consolas,monospace;color:var(--muted);word-break:break-all}
+h2{margin-top:36px}h3{margin:18px 0 6px}ul{margin:0;padding-left:20px}footer{margin-top:40px;color:var(--muted);font-size:14px;text-align:center}
+</style></head><body><main>
+<header>${icon ? `<img src="${icon}" alt="">` : ''}<div><h1>PM Pollito</h1><p class="sub">Tu pollito Project Manager 🐣 · versión ${esc(version)} · ${esc(date)}</p></div></header>
+<div class="cta">
+  <a class="btn" href="${esc(setup)}" download>⬇️ Descargar para Windows <small>${mb(setup)} MB</small></a>
+  ${vsix ? `<a class="btn alt" href="${esc(vsix)}" download>🧩 Extensión de VS Code</a>` : ''}
+  <a class="btn alt" href="LEEME.txt">📄 Cómo instalar</a>
+</div>
+<div class="grid">
+  <div class="card"><b>📊 Tus límites de Claude</b>Cuánto llevas, cuándo se reinicia y a qué hora llegarás al 100%.</div>
+  <div class="card"><b>🧩 Dentro de Claude Code</b>MCP, línea de estado, sesiones en vivo y memoria de proyecto.</div>
+  <div class="card"><b>☀️ Tu día organizado</b>Daily, tareas, bloques de tiempo, foco, hábitos, notas e informes.</div>
+  <div class="card"><b>🐣 Un tamagotchi</b>Aliméntalo, decórale la casita, colecciona huevos y elige su personalidad.</div>
+</div>
+<h2>Novedades</h2>${changes}
+<h2>Comprobar la descarga</h2><p>En PowerShell: <code>Get-FileHash .\\${esc(setup)}</code> y compara:</p>
+<p class="sha">${files.map((f) => `${sha(f)} &nbsp;${esc(f)}`).join('<br>')}</p>
+<footer>Hecho con ❤️ por Juanzreyes · Todo se guarda en tu PC</footer>
+</main></body></html>`;
+fs.writeFileSync(path.join(pub, 'index.html'), html);
+
 console.log(`\n✅ public/ listo para compartir (versión ${version}):`);
 for (const f of fs.readdirSync(pub)) console.log(`   - ${f}`);

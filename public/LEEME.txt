@@ -1,4 +1,4 @@
-﻿PM POLLITO 1.3.0 🐣  —  tu pollito Project Manager
+﻿PM POLLITO 1.5.2 🐣  —  tu pollito Project Manager
 Hecho con ❤️ por Juanzreyes · 27 de septiembre de 2026
 =====================================================================
 
@@ -13,7 +13,7 @@ REQUISITOS
 - Opcional: una cuenta de Claude (Pro o Max) para ver tus límites de uso.
 
 INSTALAR (1 minuto)
-1. Haz doble clic en  PM-Pollito-Setup-1.3.0.exe  (78.6 MB).
+1. Haz doble clic en  PM-Pollito-Setup-1.5.2.exe  (78.7 MB).
 2. Si Windows muestra "Windows protegió su PC", pulsa "Más información" y luego
    "Ejecutar de todas formas". (Aparece porque el instalador aún no está firmado
    con un certificado; el archivo es seguro: puedes comprobarlo con SHA256.txt.)
@@ -32,8 +32,8 @@ PRIMEROS PASOS
 EXTENSIÓN PARA VS CODE (opcional)
 Muestra el pollito en la barra de estado de VS Code (% de Claude, pomodoro, tareas).
 - En VS Code: menú Extensiones (Ctrl+Shift+X) → "..." → "Instalar desde VSIX…"
-  → elige  pm-pollito-vscode-1.0.0.vsix
-- O en una terminal:  code --install-extension pm-pollito-vscode-1.0.0.vsix
+  → elige  pm-pollito-vscode-1.1.0.vsix
+- O en una terminal:  code --install-extension pm-pollito-vscode-1.1.0.vsix
 
 PRIVACIDAD
 Todo se guarda solo en tu PC (%APPDATA%\pm-pollito). No hay servidores propios:
@@ -44,4 +44,4 @@ DESINSTALAR
 Configuración de Windows → Aplicaciones → "PM Pollito" → Desinstalar.
 
 COMPROBAR LOS ARCHIVOS (opcional)
-En PowerShell:  Get-FileHash .\PM-Pollito-Setup-1.3.0.exe  y compara con SHA256.txt.
+En PowerShell:  Get-FileHash .\PM-Pollito-Setup-1.5.2.exe  y compara con SHA256.txt.

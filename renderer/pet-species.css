@@ -77,3 +77,58 @@
   100% { transform: translateY(4px) scale(.3) rotate(600deg); opacity: 0; }
 }
 .focus-mode #bandana { display: inline; }
+
+/* ---------- música: auriculares y coreografía (120 ppm = 0,5 s por pulso) ---------- */
+.music #headset { display: inline; }
+.music:not(.meeting) #headset .boom, .music:not(.meeting) #headset .mic { display: none; } /* auriculares de música, sin micro */
+.music #headset .cup { fill: #ff5fa2; stroke: #c93a7c; }
+.music #chick { transform-origin: 50% 90%; }
+
+/* 1) Cabeceo: la cabeza marca el ritmo */
+.dance-bop #bod { animation: danceBop .5s ease-in-out infinite; transform-origin: 50% 85%; }
+@keyframes danceBop { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(3px) rotate(-3deg); } }
+.dance-bop #tuft { animation: danceTuft .5s ease-in-out infinite; }
+@keyframes danceTuft { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(14deg); } }
+
+/* 2) Balanceo lateral con paso */
+.dance-sway #chick { animation: danceSway 1s ease-in-out infinite; }
+@keyframes danceSway { 0%, 100% { transform: translateX(-5px) rotate(-7deg); } 50% { transform: translateX(5px) rotate(7deg); } }
+.dance-sway #footL { animation: step .5s ease-in-out infinite alternate; }
+.dance-sway #footR { animation: step .5s ease-in-out infinite alternate-reverse; }
+
+/* 3) Alas arriba, ojos felices */
+.dance-wings #wingL { animation: danceWingL .5s ease-in-out infinite alternate; }
+.dance-wings #wingR { animation: danceWingR .5s ease-in-out infinite alternate; }
+@keyframes danceWingL { from { transform: rotate(10deg); } to { transform: rotate(75deg); } }
+@keyframes danceWingR { from { transform: rotate(-10deg); } to { transform: rotate(-75deg); } }
+.dance-wings #eyesOpen, .dance-hop #eyesOpen { display: none; }
+.dance-wings #eyesHappy, .dance-hop #eyesHappy { display: inline; }
+.dance-wings #bod { animation: danceBop .5s ease-in-out infinite; transform-origin: 50% 85%; }
+
+/* 4) Saltitos al ritmo */
+.dance-hop #chick { animation: danceHop .5s cubic-bezier(.3, 0, .6, 1) infinite; }
+@keyframes danceHop { 0%, 100% { transform: translateY(0) scaleY(1); } 15% { transform: translateY(0) scale(1.06, .92); } 50% { transform: translateY(-10px) scale(.97, 1.04); } }
+.dance-hop #shadow { animation: danceShadow .5s ease-in-out infinite; }
+@keyframes danceShadow { 50% { transform: scale(.7); opacity: .08; } }
+.dance-hop #wingL { animation: flapL .25s linear infinite alternate; }
+.dance-hop #wingR { animation: flapR .25s linear infinite alternate; }
+
+/* 5) Giro de cadera (twist) */
+.dance-twist #chick { animation: danceTwist .5s ease-in-out infinite alternate; }
+@keyframes danceTwist { from { transform: rotate(-12deg) translateY(1px); } to { transform: rotate(12deg) translateY(-2px); } }
+.dance-twist #tuft { animation: danceTuft .25s ease-in-out infinite; }
+
+/* Accesibilidad: con "menos animación", solo un cabeceo suave */
+.reduced.music #chick, .reduced.music #wingL, .reduced.music #wingR, .reduced.music #shadow { animation: none !important; }
+.reduced.dance-bop #bod { animation-duration: 1s; }
+.note-float { font-size: 15px; animation: noteFloat 2.2s ease-out forwards; }
+@keyframes noteFloat { from { transform: translate(0, 0) rotate(0); opacity: 1; } to { transform: translate(18px, -70px) rotate(25deg); opacity: 0; } }
+
+/* ---------- huevos ---------- */
+.egg-hatch { font-size: 26px; animation: eggShake .18s ease-in-out 7 alternate; }
+.egg-hatch.cracked { animation: pop .3s ease-out; }
+@keyframes eggShake { from { transform: rotate(-14deg); } to { transform: rotate(14deg); } }
+.prize { font-size: 30px; animation: prizeUp 3s ease-out forwards; }
+.prize.rare { filter: drop-shadow(0 0 6px #7aa2ff); }
+.prize.epic { filter: drop-shadow(0 0 10px #c77dff) drop-shadow(0 0 4px #fff); }
+@keyframes prizeUp { 0% { transform: translateY(20px) scale(.2); opacity: 0; } 25% { transform: translateY(-30px) scale(1.3); opacity: 1; } 70% { transform: translateY(-38px) scale(1); opacity: 1; } 100% { transform: translateY(-60px) scale(.8); opacity: 0; } }

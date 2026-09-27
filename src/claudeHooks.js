@@ -10,7 +10,7 @@ const os = require('os');
 const PORT = 47823;
 const MARK = `127.0.0.1:${PORT}/claude-hook`;
 const COMMAND = `curl -s -m 2 -X POST -H "Content-Type: application/json" --data-binary @- http://${MARK} || exit 0`;
-const EVENTS = ['UserPromptSubmit', 'Stop', 'Notification'];
+const EVENTS = ['UserPromptSubmit', 'Stop', 'Notification', 'SessionStart', 'SessionEnd'];
 
 function settingsPath() {
   const dir = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
@@ -75,6 +75,9 @@ function uninstall() {
  *  - GET  /status       → estado para la extensión de VS Code
  *  - POST /command      → comandos permitidos desde la extensión ({ cmd })
  *  - POST /capture      → anotar tarea o recordatorio ({ text })
+ *  - POST /dev-event    → resultado de un test/build en VS Code ({ command, exitCode, cwd, output })
+ *  - POST /mcp          → servidor MCP del pollito (JSON-RPC; exige también "Authorization: Bearer <clave>")
+ *  - POST /statusline   → línea de estado de Claude Code (recibe el JSON de la sesión, devuelve texto)
  * /status, /command y /capture exigen la cabecera "X-PM: 1" (una web no puede enviarla sin permiso).
  */
 function startServer(onEvent, api = {}) {
@@ -88,17 +91,52 @@ function startServer(onEvent, api = {}) {
     const fromExtension = req.headers['x-pm'] === '1' && !req.headers.origin;
     if (url !== '/claude-hook') {
       if (!fromExtension) { res.writeHead(403); return res.end(); }
+      if (url === '/mcp') {
+        if (req.method !== 'POST') { res.writeHead(405, { Allow: 'POST' }); return res.end(); }
+        const auth = String(req.headers.authorization || '');
+        if (!api.mcpToken || auth !== `Bearer ${api.mcpToken()}`) { res.writeHead(401); return res.end(); }
+        let body = '';
+        req.on('data', (c) => { body += c; if (body.length > 1e6) req.destroy(); });
+        req.on('end', async () => {
+          let msg;
+          try { msg = JSON.parse(body); } catch {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } }));
+          }
+          const out = await api.mcp(msg);
+          if (!out) { res.writeHead(202); return res.end(); }
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify(out));
+        });
+        return;
+      }
+      if (url === '/statusline' && req.method === 'POST' && api.statusline) {
+        let body = '';
+        req.on('data', (c) => { body += c; if (body.length > 2e5) req.destroy(); });
+        req.on('end', () => {
+          let data = {};
+          try { data = JSON.parse(body || '{}'); } catch { /* sin datos */ }
+          let line = '🐣 PM';
+          try { line = api.statusline(data); } catch { /* respuesta simple */ }
+          res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+          res.end(line);
+        });
+        return;
+      }
       if (req.method === 'GET' && url === '/status' && api.status) {
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
         return res.end(JSON.stringify(api.status()));
       }
-      if (req.method === 'POST' && (url === '/command' || url === '/capture')) {
+      if (req.method === 'POST' && (url === '/command' || url === '/capture' || url === '/dev-event')) {
         let body = '';
-        req.on('data', (c) => { body += c; if (body.length > 1e4) req.destroy(); });
+        const max = url === '/dev-event' ? 1e5 : 1e4;
+        req.on('data', (c) => { body += c; if (body.length > max) req.destroy(); });
         req.on('end', () => {
           let data = {};
           try { data = JSON.parse(body || '{}'); } catch { /* vacío */ }
-          const ok = url === '/command' ? api.command && api.command(String(data.cmd || '')) : api.capture && api.capture(String(data.text || ''));
+          const ok = url === '/command' ? api.command && api.command(String(data.cmd || ''))
+            : url === '/dev-event' ? api.devEvent && api.devEvent(data)
+              : api.capture && api.capture(String(data.text || ''));
           res.writeHead(ok ? 200 : 400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ ok: !!ok }));
         });

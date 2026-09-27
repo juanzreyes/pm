@@ -35,12 +35,20 @@
         <div class="sec" id="sec-general" data-title="General">
           <h2>General</h2>
           <div class="opt row between"><div><b>Idioma / Language</b><p class="muted small">Idioma de toda la app.</p></div>
-            <select id="lang" style="width:auto"><option value="es">Español</option><option value="en">English</option></select></div>
+            <select id="lang" style="width:auto"><option value="es">Español</option><option value="en">English</option><option value="pt">Português</option><option value="fr">Français</option></select></div>
+          <div class="opt row between"><div><b>Perfil</b><p class="muted small">Tareas, horarios y ajustes separados (p. ej. Trabajo y Personal). El pollito es el mismo en todos.</p></div>
+            <div class="row gap"><select id="prof-sel" aria-label="Perfil"></select><button id="prof-go" class="soft">Cambiar</button></div></div>
+          <div class="opt row gap wrap" id="prof-new-row"><input id="prof-emoji" class="emoji-in" value="🏠" maxlength="4" aria-label="Emoji del perfil" /><input id="prof-name" placeholder="Nuevo perfil (ej: Personal)" maxlength="24" /><button id="prof-add" class="ghost">＋ Crear</button><button id="prof-del" class="ghost">Borrar el elegido</button></div>
           <div class="opt row between"><div><b>Iniciar con Windows</b><p class="muted small">El pollito aparece al encender el PC.</p></div><input type="checkbox" class="switch" id="s-autostart" /></div>
           <h3>Rutina</h3>
           <div class="opt row between"><div><b>Pregunta del daily</b><p class="muted small">A esta hora te pregunto qué hiciste ayer y qué harás hoy.</p></div><input type="time" id="s-morning" /></div>
           <div class="opt row between"><div><b>Cierre del día</b><p class="muted small">Te pregunto si cumpliste lo planeado.</p></div><input type="time" id="s-evening" /></div>
           <div class="opt row between"><div><b>Solo de lunes a viernes</b></div><input type="checkbox" class="switch" id="s-workdays" /></div>
+          <div class="opt row between"><div><b>Personalidad</b><p class="muted small">Cambia cómo te habla, te felicita y te regaña (también la IA).</p></div>
+            <select id="s-personality" aria-label="Personalidad"><option value="motivador">🥳 Motivador</option><option value="sarcastico">😏 Sarcástico</option><option value="zen">🧘 Zen</option><option value="sargento">🪖 Sargento</option></select></div>
+          <div class="opt row between"><div><b>Modo música</b><p class="muted small">Si suena Spotify (o YouTube Music, Deezer…), bailo al ritmo.</p></div><input type="checkbox" class="switch" id="s-music" /></div>
+          <div class="opt row between"><div><b>Distinguir música de voz</b><p class="muted small">Mientras algo suena, escucho el sonido del PC (no el micrófono) para no bailar con vídeos o podcasts de gente hablando. Se analiza al momento en tu PC: no se graba ni se guarda nada.</p></div><input type="checkbox" class="switch" id="s-musicdetect" /></div>
+          <div class="opt row between"><div><b>Vigilante de tests y builds</b><p class="muted small">Con la extensión de VS Code: te aviso si falla un test o build, y lo celebro cuando lo arreglas.</p></div><input type="checkbox" class="switch" id="s-builds" /></div>
           <div class="opt row between"><div><b>Modo foco en bloques de tiempo</b><p class="muted small">Durante tus bloques solo te aviso de lo urgente.</p></div><input type="checkbox" class="switch" id="s-focus-blocks" /></div>
           <div class="opt row between"><div><b>Modo foco en pomodoros</b></div><input type="checkbox" class="switch" id="s-focus-pomo" /></div>
           <div class="opt row between"><div><b>Charlas espontáneas</b><p class="muted small">Comentarios y ánimos de vez en cuando.</p></div><input type="checkbox" class="switch" id="s-chatter" /></div>
@@ -51,11 +59,12 @@
         <div class="sec" id="sec-appearance" data-title="Apariencia">
           <h2>Apariencia</h2>
           <div class="opt row between"><div><b>Tema</b><p class="muted small">Del panel, los ajustes y la paleta.</p></div>
-            <div class="seg" id="theme"><button data-v="system">Sistema</button><button data-v="light" data-icon="sun">Claro</button><button data-v="dark" data-icon="moon">Oscuro</button></div></div>
+            <div class="seg" id="theme"><button data-v="system">Sistema</button><button data-v="light" data-icon="sun">Claro</button><button data-v="dark" data-icon="moon">Oscuro</button><button data-v="contrast" title="Alto contraste">◐ Contraste</button></div></div>
           <div class="opt row between"><div><b>Tamaño del pollito</b></div>
             <div class="seg" id="size"><button data-v="s">Pequeño</button><button data-v="m">Mediano</button><button data-v="l">Grande</button></div></div>
           <div class="opt row between"><div><b>Modo discreto</b><p class="muted small">Se esconde en el borde de la pantalla y se asoma cuando tiene algo que decirte o pasas el ratón.</p></div><input type="checkbox" class="switch" id="discreet" /></div>
           <div class="opt row between"><div><b>Ocultarme al presentar</b><p class="muted small">Pantalla completa o compartiendo en Teams: desaparezco yo y mis avisos.</p></div><input type="checkbox" class="switch" id="auto-hide" /></div>
+          <div class="opt row between"><div><b>Ahorro de memoria</b><p class="muted small">Sin aceleración gráfica y liberando ventanas ocultas: ~40% menos memoria y menos CPU. Se aplica al reiniciar.</p></div><input type="checkbox" class="switch" id="s-lowmem" /></div>
           <div class="opt row between"><div><b>Menos animación</b><p class="muted small">Movimientos más suaves y sin efectos (accesibilidad).</p></div><input type="checkbox" class="switch" id="reduced" /></div>
           <div class="opt row between"><div><b>Paseos por la pantalla</b><p class="muted small">De vez en cuando camino por la barra de tareas y vuelvo a mi sitio.</p></div><input type="checkbox" class="switch" id="s-strolls" /></div>
           <div class="opt row between" id="opt-follow"><div><b>Seguirte entre monitores</b><p class="muted small">Si trabajas en otra pantalla, me cambio a esa pantalla.</p></div><input type="checkbox" class="switch" id="s-follow" /></div>
@@ -97,7 +106,15 @@
           <div class="opt row between"><div><b>Copia de seguridad</b><p class="muted small">Exporta la memoria del pollito para cambiar de PC. Las claves no se exportan.</p></div>
             <div class="row gap"><button id="export" class="soft" data-icon="download">Exportar</button><button id="import" class="ghost" data-icon="upload">Importar</button></div></div>
           <div class="opt row between"><div><b>Copia automática semanal</b><p class="muted small">Guardo una copia cada semana en una carpeta sincronizada (OneDrive / Google Drive) y conservo las 6 últimas.</p><p class="muted small" id="bk-info"></p></div><input type="checkbox" class="switch" id="bk-auto" /></div>
+          <div class="opt row between"><div><b>Contraseña de las copias</b><p class="muted small" id="bk-pass-info">Opcional: cifra las copias (AES-256). Sin ella no se podrán abrir, ¡no la olvides!</p></div>
+            <form id="bk-pass-form" class="row gap"><input id="bk-pass" type="password" placeholder="Contraseña" autocomplete="new-password" aria-label="Contraseña de las copias" /><button class="soft" type="submit">Guardar</button></form></div>
           <div class="opt row gap wrap"><button id="bk-now" class="soft" data-icon="download">Copiar ahora</button><button id="bk-dir" class="ghost" data-icon="folder">Cambiar carpeta</button><button id="bk-open" class="ghost">Ver copias</button></div>
+          <h3>Entre PCs y otras apps</h3>
+          <div class="opt row between"><div><b>Sincronizar entre mis PCs</b><p class="muted small" id="sync-info">Usa una carpeta de OneDrive / Google Drive: el mismo pollito, tareas y notas en el portátil y en el PC.</p></div><input type="checkbox" class="switch" id="sync-on" /></div>
+          <div class="opt row gap wrap"><button id="sync-now" class="soft">🔄 Sincronizar ahora</button><button id="sync-dir" class="ghost" data-icon="folder">Cambiar carpeta</button></div>
+          <div class="opt row between"><div><b>Exportar a Markdown / Obsidian</b><p class="muted small" id="md-info">Cada día como una nota: tareas, notas, lo que hiciste con Claude, tiempo y diario.</p></div><button id="md-export" class="soft">📝 Exportar</button></div>
+          <div class="opt row between"><div><b>Exportar solo cada noche</b><p class="muted small">A las 21:00, a la misma carpeta.</p></div><input type="checkbox" class="switch" id="md-auto" /></div>
+          <div class="opt row between"><div><b>Bloques de hoy a tu calendario</b><p class="muted small">Archivo .ics para Outlook o Google Calendar: tus compañeros verán que estás en foco.</p></div><button id="ics-export" class="ghost">📅 Exportar .ics</button></div>
           <div class="opt row between danger-zone"><div><b>Borrar todos mis datos</b><p class="muted small">Elimina el pollito, sus recuerdos y tus conexiones de este PC.</p></div><button id="delete" class="danger" data-icon="trash">Borrar todo</button></div>
           <div id="data-msg" class="small"></div>
         </div>
@@ -113,6 +130,25 @@
               <button id="cc-uninstall" class="ghost hidden">Quitar</button>
             </div>
             <div id="cc-msg"></div>
+          </div>
+          <div class="opt box small">
+            <div class="row between"><b>🧩 El pollito dentro de Claude (MCP)</b><span id="mcp-status" class="pill"></span></div>
+            <p class="muted">Claude podrá leer y actualizar tus tareas, la cola, notas, recordatorios y límites (herramientas <code>pm_…</code>). Solo por tu PC (127.0.0.1) y con una clave secreta.</p>
+            <div class="opt row between"><div><b>Claude Code</b><p class="muted small">Se añade a <code>~/.claude.json</code> (con copia de seguridad). Reinicia tus sesiones de Claude Code.</p></div><input type="checkbox" class="switch" id="mcp-code" /></div>
+            <div class="opt row between" id="mcp-desktop-row"><div><b>Claude Desktop</b><p class="muted small">Para el chat de la app de Claude. Reinicia Claude Desktop después.</p></div><input type="checkbox" class="switch" id="mcp-desktop" /></div>
+            <div class="opt row between"><div><b>Línea de estado en Claude Code</b><p class="muted small" id="sl-info">Abajo en Claude Code: 🐣 42% · 🍅 12:30 · ✅ 3/7</p></div><input type="checkbox" class="switch" id="mcp-statusline" /></div>
+            <div id="mcp-msg" class="small"></div>
+          </div>
+          <div class="opt box small">
+            <div class="row between"><b>⌨️ Comando <code>pm</code> en la terminal</b><input type="checkbox" class="switch" id="cli-on" /></div>
+            <p class="muted">Desde cualquier terminal: <code>pm status</code>, <code>pm add "revisar PR"</code>, <code>pm done 2</code>, <code>pm focus 50</code>, <code>pm queue …</code>. Abre una terminal nueva después de activarlo.</p>
+            <div id="cli-msg" class="small"></div>
+          </div>
+          <div class="opt box small">
+            <div class="row between"><b>🧠 Memoria de proyecto (CLAUDE.md)</b></div>
+            <p class="muted">Escribo en el <code>CLAUDE.md</code> del repo lo que sé de él (comandos, errores frecuentes, decisiones de tus notas, entregas), entre unas marcas; el resto del archivo no se toca.</p>
+            <div class="row gap"><select id="pm-repo" aria-label="Repositorio"></select><button id="pm-mem" class="soft">Actualizar CLAUDE.md</button></div>
+            <div id="pm-mem-msg" class="small"></div>
           </div>
           <div class="opt box small">
             <div class="row between"><b>🐙 GitHub</b><span id="gh-status" class="pill"></span></div>
@@ -235,6 +271,7 @@
     </section>
   </div>
   <script src="icons.js"></script>
+  <script src="../src/i18n-extra.js"></script>
   <script src="../src/i18n.js"></script>
   <script src="settings.js"></script>
 </body>

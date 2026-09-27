@@ -112,12 +112,12 @@ pm.onPaletteOpen((cmds) => {
 });
 pm.onState((s) => {
   lang = s.lang || 'es';
-  document.documentElement.classList.toggle('dark', !!s.dark);
+  document.documentElement.classList.toggle('dark', !!s.dark); document.documentElement.classList.toggle('contrast', !!s.contrast);
 });
 pm.getState().then((s) => {
   lang = s.lang || 'es';
-  document.documentElement.classList.toggle('dark', !!s.dark);
-  if (lang === 'en') I18N.translateDom(document.body, 'en');
+  document.documentElement.classList.toggle('dark', !!s.dark); document.documentElement.classList.toggle('contrast', !!s.contrast);
+  if (lang !== 'es') I18N.translateDom(document.body, lang);
 });
 pm.paletteList().then((c) => { commands = c; render(); });
 q.focus();

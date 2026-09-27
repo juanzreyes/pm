@@ -53,8 +53,7 @@ async function postForm(url, params) {
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const err = new Error(json.error_description || json.error || `HTTP ${res.status}`);
-    err.code = json.error;
+    const err = Object.assign(new Error(json.error_description || json.error || `HTTP ${res.status}`), { code: json.error });
     throw err;
   }
   return json;
@@ -123,7 +122,7 @@ function authorize(providerKey, cfg) {
 
     // Escucha en IPv4 e IPv6 locales (dual stack) y solo acepta conexiones de este equipo.
     server.listen(0, '::', () => {
-      const port = server.address().port;
+      const port = /** @type {import('net').AddressInfo} */ (server.address()).port;
       redirectUri = `http://${p.redirectHost}:${port}/callback`;
       const params = new URLSearchParams({
         client_id: cfg.clientId,
