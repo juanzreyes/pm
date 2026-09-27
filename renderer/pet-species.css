@@ -1,0 +1,79 @@
+/* ---------- Especies: pollito (por defecto), patito, gatito y pingüino ---------- */
+.sp { display: none; }
+
+/* Patito: blanco con pico ancho naranja */
+.species-duck #sp-duck { display: inline; }
+.species-duck #beak { display: none; }
+.species-duck #body { fill: #fbfaf5; stroke: #c9bfa8; }
+.species-duck .wing ellipse { fill: #efebe0; stroke: #c9bfa8; }
+.species-duck #belly { fill: #fff; }
+.species-duck #tuft path { fill: #fbfaf5; stroke: #c9bfa8; }
+.species-duck #tail-young path { fill: #efebe0; stroke: #c9bfa8; }
+#sp-duck .bill { fill: #ff9f1c; stroke: #d97706; stroke-width: 1.2; }
+#sp-duck .nostril { stroke: #b45309; stroke-width: 1.2; stroke-linecap: round; }
+.talking #sp-duck .bill { animation: talk .18s ease-in-out infinite alternate; transform-origin: 50% 20%; }
+
+/* Gatito: naranja atigrado con orejas, bigotes y cola */
+.species-cat #sp-cat-back, .species-cat #sp-cat, .species-cat #sp-cat-stripes { display: inline; }
+.species-cat #beak, .species-cat #tuft, .species-cat #tail-young { display: none !important; }
+.species-cat #body { fill: #f6a85c; stroke: #b86b27; }
+.species-cat .wing ellipse { fill: #f39b45; stroke: #b86b27; }
+.species-cat #belly { fill: #fde6cc; }
+.species-cat #feet path { fill: #f6a85c; stroke: #b86b27; }
+#sp-cat-back .ear, #sp-cat-back .cat-tail { fill: #f39b45; stroke: #b86b27; stroke-width: 1.4; stroke-linejoin: round; }
+#sp-cat-back .ear-in { fill: #ffc2c8; }
+#sp-cat-back .cat-tail { transform-origin: 0% 100%; animation: catTail 2.4s ease-in-out infinite; }
+@keyframes catTail { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-12deg); } }
+#sp-cat-stripes path { stroke: #c9772e; stroke-width: 2.4; stroke-linecap: round; fill: none; }
+#sp-cat .nose { fill: #ff7b9c; stroke: #c94f6d; stroke-width: .8; }
+#sp-cat .mouth { fill: none; stroke: #7a4a2a; stroke-width: 1.3; stroke-linecap: round; }
+#sp-cat .whisk { stroke: #7a4a2a; stroke-width: 1; stroke-linecap: round; opacity: .7; }
+
+/* Pingüino: frac oscuro, antifaz y barriga blancos */
+.species-penguin #sp-penguin { display: inline; }
+.species-penguin #tuft, .species-penguin #tail-young { display: none !important; }
+.species-penguin #body { fill: #3b4160; stroke: #23273b; }
+.species-penguin .wing ellipse { fill: #2f3450; stroke: #1c2033; }
+.species-penguin #belly { fill: #fbfbff; rx: 29px; ry: 26px; cy: 88px; }
+#sp-penguin ellipse, #sp-penguin path { fill: #fbfbff; }
+.species-penguin #beakTop { fill: #ffb020; }
+.species-penguin #eyesHappy path, .species-penguin #eyesClosed path { stroke: #23273b; }
+
+/* Otras especies no se convierten en gallo */
+.species-duck #comb, .species-cat #comb, .species-penguin #comb,
+.species-duck #wattle, .species-cat #wattle, .species-penguin #wattle,
+.species-duck #tail-rooster, .species-cat #tail-rooster, .species-penguin #tail-rooster { display: none !important; }
+
+/* ---------- Amiguito ---------- */
+#buddy { position: absolute; left: 78px; bottom: 20px; width: 46px; height: 46px; display: none; pointer-events: none; z-index: 3; }
+.has-buddy #buddy { display: block; animation: buddyIdle 2.2s ease-in-out infinite; }
+#buddy svg { overflow: visible; }
+#buddy .b-shadow { fill: #000; opacity: .14; }
+#buddy .b-foot { fill: #ff9f1c; }
+#buddy .b-body { fill: #ffe066; stroke: #d99a14; stroke-width: 1.2; }
+#buddy .b-tuft { fill: #ffe066; stroke: #d99a14; stroke-width: 1; }
+#buddy .b-eye { fill: #3b2f2f; animation: buddyBlink 4.5s infinite; transform-box: fill-box; transform-origin: center; }
+#buddy .b-shine { fill: #fff; }
+#buddy .b-beak { fill: #ff9f1c; }
+#buddy .b-bill { display: none; fill: #ff9f1c; stroke: #d97706; stroke-width: .8; }
+#buddy .b-cheek { fill: #ff9fb0; opacity: .6; }
+.acc-buddy-duck #buddy .b-body, .acc-buddy-duck #buddy .b-tuft { fill: #fbfaf5; stroke: #c9bfa8; }
+.acc-buddy-duck #buddy .b-beak { display: none; }
+.acc-buddy-duck #buddy .b-bill { display: inline; }
+@keyframes buddyIdle { 0%, 100% { transform: translateY(0) rotate(0deg); } 25% { transform: translateY(-2px) rotate(-4deg); } 50% { transform: translateY(0) rotate(0); } 75% { transform: translateY(-2px) rotate(4deg); } }
+@keyframes buddyBlink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+@keyframes buddyHop { 0%, 100% { transform: translateY(0); } 30% { transform: translateY(-16px) rotate(-8deg); } 60% { transform: translateY(0); } 75% { transform: translateY(-7px); } }
+.has-buddy.a-celebrate #buddy, .has-buddy.a-dance #buddy, .has-buddy.a-hop #buddy, .has-buddy.a-love #buddy, .has-buddy.a-eat #buddy { animation: buddyHop .8s ease-in-out 2; }
+.has-buddy.walking #buddy { animation: buddyIdle .5s ease-in-out infinite; }
+.reduced #buddy { animation: none !important; }
+
+/* ---------- Juegos: maíz y pelota ---------- */
+.toy { position: fixed; z-index: 20; pointer-events: none; font-size: 22px; line-height: 1; }
+.corn-drop { animation: cornDrop 1.3s cubic-bezier(.4, 0, .9, .6) forwards; }
+@keyframes cornDrop {
+  0% { transform: translateY(-120px) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  80% { transform: translateY(0) rotate(540deg); opacity: 1; }
+  100% { transform: translateY(4px) scale(.3) rotate(600deg); opacity: 0; }
+}
+.focus-mode #bandana { display: inline; }

@@ -12,6 +12,9 @@ const DEFAULTS = {
     lastTick: null,
     lastPetAt: 0,
     xp: 0,
+    clean: 100, // limpieza
+    energy: 100, // energía
+    sick: false,
   },
   settings: {
     morningTime: '08:00',
@@ -25,6 +28,15 @@ const DEFAULTS = {
     muteUntil: 0, // modo silencio (reuniones)
     autoStartAsked: false,
     accounts: {}, // cuentas con inicio de sesión web: { microsoft: {...}, google: {...} }
+    theme: 'system', // 'system' | 'light' | 'dark'
+    petSize: 'm', // 's' | 'm' | 'l'
+    discreet: false, // se esconde en el borde de la pantalla
+    reducedMotion: false,
+    volume: 70,
+    voice: true, // leer en voz alta los avisos importantes
+    micWatch: true, // detectar reuniones por el micrófono (sin grabar nada)
+    gitWatch: true,
+    trackingPausedUntil: 0,
   },
   // Memoria de la vida del pollito entre aperturas.
   life: {

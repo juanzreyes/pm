@@ -56,7 +56,22 @@ function usageSummary(usage) {
     else if (s.utilization >= 50) tail = 'Vamos a mitad de camino, todo bajo control 🐥';
     else tail = '¡Tenemos muchísimo margen! A trabajar 💪';
   }
-  return `Así vamos:\n${lines.join('\n')}\n${tail}`;
+  const f = usage.forecast && usage.forecast.five_hour;
+  let fc = '';
+  if (f && f.rate) {
+    fc = f.willHit
+      ? `\n🔮 A este ritmo (+${Math.round(f.rate)}%/h) llegarás al 100% a las ${new Date(f.eta).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}.`
+      : `\n🔮 A este ritmo (+${f.rate.toFixed(1)}%/h) no llegarás al límite antes del reinicio.`;
+  }
+  return `Así vamos:\n${lines.join('\n')}\n${tail}${fc}`;
+}
+
+function costSummary(local) {
+  if (!local || !local.available) return 'No encontré registros de Claude Code para calcular el coste.';
+  const m = (v) => '$' + v.toFixed(2);
+  const top = Object.entries(local.today.projects || {}).sort((a, b) => b[1].cost - a[1].cost).slice(0, 4)
+    .map(([k, v]) => `• ${k}: ${m(v.cost)}`).join('\n');
+  return `💵 Coste equivalente en la API:\nHoy ${m(local.today.cost)} · últimos 7 días ${m(local.week.cost)}${top ? `\n${top}` : ''}\n(Con tu plan no lo pagas; es lo que costaría por API.)`;
 }
 
 function resetSummary(usage) {
@@ -232,6 +247,13 @@ function reply(msg, ctx) {
   if (has('token', 'mensaje', 'modelo', 'hoy he', 'estadistica')) {
     return { text: localSummary(usage && usage.local, 'today') };
   }
+  if (has('patron', 'cuando soy mas productivo', 'mejor hora', 'insight', 'mis habitos', 'estimo', 'estimacion')) {
+    const list = typeof ctx.insights === 'function' ? ctx.insights() : [];
+    return { text: `Esto he aprendido de ti 🧠\n${list.map((x) => '• ' + x).join('\n')}`, anim: 'read' };
+  }
+  if (has('coste', 'costo', 'cuesta', 'dinero', 'dolares', 'precio', 'cost', '$')) {
+    return { text: costSummary(usage && usage.local), anim: 'peck' };
+  }
   if (has('uso', 'consum', 'gast', 'cuanto llevo', 'limite', 'cuota', 'como voy', 'como vamos', 'porcentaje', 'stats')) {
     return { text: usageSummary(usage), anim: 'peck' };
   }
@@ -263,6 +285,9 @@ function reply(msg, ctx) {
   if (has('tarea', 'pendiente', 'que tengo', 'que hago', 'to do', 'todo')) {
     return { text: tasksSummary(day) };
   }
+  if (has('bano', 'banar', 'banate', 'ducha', 'limpi', 'bath')) return { text: '¡Al agua, pato! Digo… pollito 🛁', action: 'bath' };
+  if (has('siesta', 'duerme', 'dormir', 'descansa', 'nap')) return { text: 'Una siestita y vuelvo 😴', action: 'nap' };
+  if (has('medicina', 'curar', 'enfermo', 'medicine')) return { text: '💊', action: 'medicine' };
   if (has('comida', 'come', 'hambre', 'maiz', 'semilla', 'aliment')) {
     return { text: '¡Ñam ñam! 🌽', action: 'feed' };
   }

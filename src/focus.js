@@ -19,16 +19,26 @@ public class PmWin {
   [DllImport("user32.dll")] public static extern IntPtr MonitorFromWindow(IntPtr h, uint f);
   [DllImport("user32.dll")] public static extern bool GetMonitorInfo(IntPtr m, ref MONITORINFO mi);
   [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetClassName(IntPtr h, StringBuilder s, int n);
-  // ¿La ventana activa ocupa todo el monitor? (presentación, vídeo o juego a pantalla completa)
-  public static bool IsFullscreen(IntPtr h) {
-    if (h == IntPtr.Zero) return false;
+  [DllImport("user32.dll")] public static extern bool IsZoomed(IntPtr h);
+  [DllImport("user32.dll")] public static extern int GetWindowLong(IntPtr h, int i);
+  // ¿La ventana activa está en pantalla completa de verdad? (presentación, vídeo o juego)
+  // Devuelve el rectángulo del monitor "L,T,R,B" o "" si no.
+  // Una ventana MAXIMIZADA no cuenta (en un 2º monitor sin barra de tareas, o con la barra
+  // oculta, también cubre todo el monitor), ni una con barra de título.
+  public static string FullscreenMonitor(IntPtr h) {
+    if (h == IntPtr.Zero) return "";
     var cls = new StringBuilder(256); GetClassName(h, cls, 256);
     var c = cls.ToString();
-    if (c == "Progman" || c == "WorkerW" || c == "Shell_TrayWnd") return false; // escritorio / barra de tareas
-    RECT r; if (!GetWindowRect(h, out r)) return false;
+    if (c == "Progman" || c == "WorkerW" || c == "Shell_TrayWnd" || c == "Shell_SecondaryTrayWnd") return ""; // escritorio / barras de tareas
+    if (IsZoomed(h)) return "";
+    const int WS_CAPTION = 0x00C00000;
+    if ((GetWindowLong(h, -16) & WS_CAPTION) == WS_CAPTION) return "";
+    RECT r; if (!GetWindowRect(h, out r)) return "";
     var mi = new MONITORINFO(); mi.cbSize = Marshal.SizeOf(typeof(MONITORINFO));
-    if (!GetMonitorInfo(MonitorFromWindow(h, 2), ref mi)) return false;
-    return r.L <= mi.rcMonitor.L && r.T <= mi.rcMonitor.T && r.R >= mi.rcMonitor.R && r.B >= mi.rcMonitor.B;
+    if (!GetMonitorInfo(MonitorFromWindow(h, 2), ref mi)) return "";
+    var m = mi.rcMonitor;
+    if (r.L <= m.L && r.T <= m.T && r.R >= m.R && r.B >= m.B) return m.L + "," + m.T + "," + m.R + "," + m.B;
+    return "";
   }
   public delegate bool EnumProc(IntPtr h, IntPtr l);
   [DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc cb, IntPtr l);
@@ -83,8 +93,8 @@ while ($true) {
   }
   $tt = ''
   try { $tt = [PmWin]::TeamsTitles() } catch {}
-  $fs = $false
-  try { $fs = [PmWin]::IsFullscreen($h) } catch {}
+  $fs = ''
+  try { $fs = [PmWin]::FullscreenMonitor($h) } catch {}
   [Console]::Out.WriteLine((@{ t = $sb.ToString(); p = $pn; i = [int]($idle / 1000); m = ($mic -join '|'); tt = $tt; f = $fs } | ConvertTo-Json -Compress))
   [Console]::Out.Flush()
   Start-Sleep -Seconds 5

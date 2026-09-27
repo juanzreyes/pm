@@ -1,0 +1,39 @@
+/* ---------- Necesidades del tamagotchi: sucio, enfermo, cansado ---------- */
+#dirt { display: none; }
+#dirt ellipse { fill: #8a5a2b; opacity: .45; }
+.dirty #dirt { display: inline; }
+
+/* Enfermo: tono verdoso y termómetro */
+.sick #body, .sick .wing ellipse { filter: hue-rotate(35deg) saturate(.55) brightness(.97); }
+.sick #cheeks ellipse { fill: #9ad0a2; }
+.sick #prop-thermo { display: inline; }
+#prop-thermo .glass { stroke: #e8eef7; stroke-width: 4.5; stroke-linecap: round; }
+#prop-thermo .mercury { stroke: #e63946; stroke-width: 2; stroke-linecap: round; }
+#prop-thermo .bulb { fill: #e63946; }
+.sick .eye { transform: scaleY(.6) translateY(2px); }
+.sick #bod { animation-duration: 2.8s; }
+
+/* Cansado */
+.tired .eye { transform: scaleY(.45) translateY(3px); }
+.tired #tuft { animation: none; transform: rotate(-22deg); }
+
+/* Baño */
+.a-bath #eyesOpen { display: none; }
+.a-bath #eyesHappy { display: inline; }
+.a-bath #bod { animation: wobble .25s ease-in-out 8 alternate; }
+.a-bath #wingL { animation: flapL .15s linear 14 alternate; }
+.a-bath #wingR { animation: flapR .15s linear 14 alternate; }
+
+/* ---------- Temporadas y cumpleaños ---------- */
+.season { display: none; }
+#season-santa .hat { fill: #e63946; stroke: #9d1d27; stroke-width: 1.2; }
+#season-santa .fur, #season-santa .pom { fill: #fffdf6; stroke: #d9d2c0; stroke-width: 1; }
+#season-pumpkin .pk { fill: #ff8c1a; stroke: #b85d00; stroke-width: 1.3; }
+#season-pumpkin .rib { stroke: #b85d00; stroke-width: 1.2; fill: none; }
+#season-pumpkin .stem { fill: #3a7d2c; }
+.season-xmas:not(.has-head) #season-santa, .season-halloween:not(.has-head) #season-pumpkin { display: inline; }
+.season-xmas:not(.has-head) #tuft, .season-halloween:not(.has-head) #tuft,
+.season-xmas:not(.has-head) #comb, .season-halloween:not(.has-head) #comb { display: none; }
+/* Cumpleaños y Año Nuevo: gorro de fiesta (si no lleva otro gorro) */
+.birthday:not(.has-head) #acc-hat-party, .season-newyear:not(.has-head) #acc-hat-party { display: inline; }
+.birthday:not(.has-head) #tuft, .season-newyear:not(.has-head) #tuft { display: none; }

@@ -2,3 +2,8 @@ node_modules/
 dist/
 *.log
 oauth.config.json
+
+# Binarios para compartir (pesados: súbelos a GitHub Releases, Drive, etc.)
+public/*.exe
+public/*.vsix
+vscode-extension/*.vsix

@@ -1,0 +1,50 @@
+/* Tema oscuro, iconos y foco visible: compartido por panel, ajustes, paleta y "acerca de". */
+.ico { display: inline-block; vertical-align: -3px; flex: none; }
+button .ico + *, button .ico { margin-right: 2px; }
+
+/* Foco visible al navegar con teclado */
+:focus { outline: none; }
+:focus-visible { outline: 3px solid #4d7cfe !important; outline-offset: 2px; border-radius: 10px; }
+
+/* Menos animación */
+html.reduced *, html.reduced *::before, html.reduced *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+
+/* ---------- Oscuro ---------- */
+html.dark {
+  --ink: #f3e8d2;
+  --muted: #b3a58e;
+  --bg: #231f1b;
+  --card: #2d2823;
+  --line: #463c33;
+  --yellow: #e2bc34;
+  --orange: #ff9f1c;
+  --blue: #6d9bff;
+  color-scheme: dark;
+}
+html.dark #card, html.dark .card { box-shadow: 0 4px 0 #000; border-color: #0f0d0b; }
+html.dark header { background: linear-gradient(#4a3f22, #3b3219); border-bottom-color: #0f0d0b; }
+html.dark nav button.active { border-color: #0f0d0b; }
+html.dark main { border-top-color: #0f0d0b; }
+html.dark input, html.dark textarea, html.dark select { background: #1c1916; color: var(--ink); border-color: var(--line); }
+html.dark .msg.pet { background: #3a3222; border-color: #5a4b2a; }
+html.dark .msg.me { background: #243152; border-color: #34477a; }
+html.dark .chips button, html.dark .icon, html.dark .item .wear, html.dark .acc-btn { background: #1c1916; color: var(--ink); border-color: var(--line); }
+html.dark .icon { border-color: #0f0d0b; }
+html.dark .primary, html.dark .soft { border-color: #0f0d0b; box-shadow: 0 2px 0 #0f0d0b; }
+html.dark .soft { background: #4a3f22; color: var(--ink); }
+html.dark .ghost { color: var(--ink); }
+html.dark .pill { border-color: #0f0d0b; color: #231f1b; }
+html.dark .bar { background: #3a332c; border-color: #0f0d0b; }
+html.dark .box, html.dark .limit, html.dark .tile, html.dark .tile2, html.dark .chart, html.dark .meet, html.dark .mailrow,
+html.dark .pr, html.dark .mon, html.dark .item, html.dark .ach, html.dark #tasks li, html.dark .checklist li { background: var(--card); border-color: var(--line); }
+html.dark .editlist li { background: #3a3222; }
+html.dark .pomo-box { background: #3a2626; border-color: #5a3434; }
+html.dark .pomo-box.break { background: #1f3326; border-color: #2f5a3c; }
+html.dark #conn.ok, html.dark .live, html.dark .meet.now { background: #1f3326; border-color: #2f5a3c; }
+html.dark #conn.bad { background: #3a2a1c; border-color: #5a4028; }
+html.dark code { background: #1c1916; border-color: var(--line); }
+html.dark .viz-root { --surface-1: #2d2823; --text-primary: #f3e8d2; --text-secondary: #b3a58e; --grid: #463c33;
+  --series-1: #3987e5; --series-2: #d95926; --seq-0: #3a332c; --seq-1: #184f95; --seq-2: #1c5cab; --seq-3: #2a78d6; --seq-4: #5598e7; --seq-5: #9ec5f4; }
+html.dark .overlay { background: var(--bg); }
+html.dark .danger { border-color: #6a2d2d; color: #ff8a8a; }
+html.dark .link { color: var(--blue); }

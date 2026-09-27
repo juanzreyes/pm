@@ -9,7 +9,7 @@ const fmtTok = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + ' M' : n >= 1e3 ? (n / 
 const dayName = (d) => d.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'short' });
 
 /** Daily en formato para pegar en Slack / Teams. */
-function daily(day, date = new Date(), commitsYesterday = []) {
+function daily(day, date = new Date(), commitsYesterday = [], extras = {}) {
   const s = day.standup || { yesterday: '', today: [], help: '' };
   const lines = [`*Daily · ${dayName(date)}*`, ''];
   lines.push('✅ *Ayer:*');
@@ -20,6 +20,10 @@ function daily(day, date = new Date(), commitsYesterday = []) {
   lines.push('', '📋 *Hoy:*');
   if (s.today.length) s.today.forEach((t) => lines.push(`• ${t.done ? '~' + t.text + '~ ✔' : t.text}`));
   else lines.push('• —');
+  if (extras.claudeToday && extras.claudeToday.length) {
+    lines.push('', '🤖 *Con Claude hoy:*');
+    extras.claudeToday.forEach((l) => lines.push(`• ${l}`));
+  }
   lines.push('', `🚧 *Bloqueos / ayuda:* ${s.help || 'Ninguno'}`);
   return lines.join('\n');
 }
@@ -81,6 +85,10 @@ function weekly(data, extra = {}) {
     L.push('', '## 🤖 Claude');
     if (c.local) L.push(`- ${c.local.week.messages} respuestas · ${fmtTok(c.local.week.input + c.local.week.output)} tokens esta semana`);
     for (const l of c.limits || []) L.push(`- ${l.label}: ${Math.round(l.utilization)}%`);
+  }
+  if (extra.goals && extra.goals.length) {
+    L.push('', '## 🎯 Objetivos de la semana');
+    extra.goals.forEach((g) => L.push(`- ${g.progress >= 100 ? '✅' : `${g.progress || 0}%`} ${g.text}`));
   }
   L.push('', `_Generado por ${extra.name || 'PM'} 🐣_`);
   return L.join('\n');

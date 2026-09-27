@@ -29,6 +29,8 @@ const SHOP = [
   { id: 'skin-pink', slot: 'skin', name: 'Plumas rosadas', emoji: '🩷', price: 250 },
   { id: 'skin-mint', slot: 'skin', name: 'Plumas menta', emoji: '💚', price: 250 },
   { id: 'skin-gold', slot: 'skin', name: 'Plumas doradas', emoji: '✨', price: 600 },
+  { id: 'buddy-chick', slot: 'buddy', name: 'Amiguito pollito', emoji: '🐤', price: 350 },
+  { id: 'buddy-duck', slot: 'buddy', name: 'Amiguito patito', emoji: '🦆', price: 400 },
 ];
 
 // ---------- Logros ----------

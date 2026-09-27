@@ -69,11 +69,45 @@ function uninstall() {
   writeSettings(s);
 }
 
-/** Servidor local que recibe los eventos de Claude Code. */
-function startServer(onEvent) {
+/**
+ * Servidor local (solo 127.0.0.1):
+ *  - POST /claude-hook  → eventos de Claude Code
+ *  - GET  /status       → estado para la extensión de VS Code
+ *  - POST /command      → comandos permitidos desde la extensión ({ cmd })
+ *  - POST /capture      → anotar tarea o recordatorio ({ text })
+ * /status, /command y /capture exigen la cabecera "X-PM: 1" (una web no puede enviarla sin permiso).
+ */
+function startServer(onEvent, api = {}) {
   const server = http.createServer((req, res) => {
     const ip = req.socket.remoteAddress;
-    if (!(ip === '127.0.0.1' || ip === '::ffff:127.0.0.1' || ip === '::1') || req.method !== 'POST' || !req.url.startsWith('/claude-hook')) {
+    if (!(ip === '127.0.0.1' || ip === '::ffff:127.0.0.1' || ip === '::1')) {
+      res.writeHead(403);
+      return res.end();
+    }
+    const url = (req.url || '').split('?')[0];
+    const fromExtension = req.headers['x-pm'] === '1' && !req.headers.origin;
+    if (url !== '/claude-hook') {
+      if (!fromExtension) { res.writeHead(403); return res.end(); }
+      if (req.method === 'GET' && url === '/status' && api.status) {
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        return res.end(JSON.stringify(api.status()));
+      }
+      if (req.method === 'POST' && (url === '/command' || url === '/capture')) {
+        let body = '';
+        req.on('data', (c) => { body += c; if (body.length > 1e4) req.destroy(); });
+        req.on('end', () => {
+          let data = {};
+          try { data = JSON.parse(body || '{}'); } catch { /* vacío */ }
+          const ok = url === '/command' ? api.command && api.command(String(data.cmd || '')) : api.capture && api.capture(String(data.text || ''));
+          res.writeHead(ok ? 200 : 400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: !!ok }));
+        });
+        return;
+      }
+      res.writeHead(404);
+      return res.end();
+    }
+    if (req.method !== 'POST') {
       res.writeHead(404);
       return res.end();
     }

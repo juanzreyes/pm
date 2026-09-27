@@ -159,11 +159,20 @@
       [`🍅 ${t.pomodoros}`, 'Pomodoros este mes'],
       [`📦 ${t.commits}`, 'Commits este mes'],
     ].map(([v, l]) => `<div class="tile2"><b>${v}</b><span>${l}</span></div>`).join('');
+    const insightsHtml = `<div class="chart insights"><h4>🧠 Tus patrones</h4>${(s.insights || []).map((x) => `<p>${escH(x)}</p>`).join('')}</div>`;
+    const moodDays = d14.filter((d) => d.mood);
+    const MOOD = ['', '😫', '😕', '😐', '🙂', '😄'];
+    const moodHtml = moodDays.length
+      ? chart('Ánimo (14 días)', null, `<div class="moodrow">${d14.map((d) => `<span data-tip="${escH(d.label)}">${d.mood ? MOOD[d.mood] : '·'}</span>`).join('')}</div>`)
+      : '';
     document.getElementById('st-charts').innerHTML =
+      insightsHtml +
       chart('Horas trabajadas (30 días)', null, heatmap(s.days)) +
       chart('Trabajo vs distracción (14 días)', [['var(--series-1)', 'Trabajo'], ['var(--series-2)', 'Distracción']], stacked(d14)) +
       chart('Tareas cumplidas vs planeadas (14 días)', [['var(--series-1)', 'Cumplidas'], ['var(--seq-1)', 'Planeadas']], tasks(d14)) +
+      moodHtml +
       chart('Tokens de Claude por día (14 días)', null, simpleBars(d14, (d) => d.tokens, fmtTok, 'tokens')) +
+      chart('Coste equivalente en la API por día (14 días)', null, simpleBars(d14, (d) => d.cost, (v) => '$' + (v < 10 ? v.toFixed(1) : Math.round(v)), 'USD')) +
       chart('Proyectos (30 días)', null, projects(s.projects));
     lang = (await pm.getState()).lang || 'es';
     if (lang === 'en') I18N.translateDom(ov, 'en');

@@ -113,6 +113,24 @@ function walk(dir, out, minMtime) {
   }
 }
 
+// Nombre del proyecto = carpeta raíz del repositorio git (no la subcarpeta donde estabas).
+const rootCache = new Map();
+function projectName(cwd) {
+  if (rootCache.has(cwd)) return rootCache.get(cwd);
+  let dir = cwd;
+  let name = path.basename(cwd);
+  for (let i = 0; i < 6; i++) {
+    try {
+      if (fs.existsSync(path.join(dir, '.git'))) { name = path.basename(dir); break; }
+    } catch { break; }
+    const up = path.dirname(dir);
+    if (up === dir) break;
+    dir = up;
+  }
+  rootCache.set(cwd, name);
+  return name;
+}
+
 function parseFile(p) {
   const entries = [];
   let raw;
@@ -122,24 +140,50 @@ function parseFile(p) {
     try {
       const j = JSON.parse(line);
       const m = j.message;
-      if (j.type !== 'assistant' || !m || !m.usage) continue;
+      if (j.type !== 'assistant' || !m || !m.usage || String(m.model || '').startsWith('<')) continue; // sin mensajes internos (<synthetic>)
       const u = m.usage;
-      entries.push({
+      const cc = u.cache_creation || {};
+      const write5m = cc.ephemeral_5m_input_tokens ?? (u.cache_creation_input_tokens || 0);
+      const write1h = cc.ephemeral_1h_input_tokens || 0;
+      const e = {
         id: (m.id || '') + '|' + (j.requestId || ''),
         ts: Date.parse(j.timestamp),
         model: m.model || 'desconocido',
         input: (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0),
         cacheRead: u.cache_read_input_tokens || 0,
         output: u.output_tokens || 0,
-        project: path.basename(path.dirname(p)),
-      });
+        project: j.cwd ? projectName(j.cwd) : path.basename(path.dirname(p)),
+      };
+      e.cost = costOf(e.model, u.input_tokens || 0, write5m, write1h, e.cacheRead, e.output);
+      entries.push(e);
     } catch { /* línea incompleta */ }
   }
   return entries;
 }
 
+// ---------- coste equivalente en la API (US$ por millón de tokens: entrada / salida) ----------
+// Con un plan Pro/Max no pagas esto; sirve para saber cuánto "vale" lo que usas y en qué proyecto.
+const PRICES = [
+  [/fable|mythos/, 10, 50],
+  [/opus-5-5/, 4, 20],
+  [/opus-(5|4-[5-9])/, 5, 25],
+  [/opus/, 15, 75], // Opus 4 / 4.1
+  [/sonnet-5/, 2, 10],
+  [/sonnet/, 3, 15],
+  [/haiku-4/, 1, 5],
+  [/haiku/, 0.8, 4],
+];
+function priceOf(model) {
+  for (const [re, inp, out] of PRICES) if (re.test(model)) return { inp, out };
+  return { inp: 3, out: 15 };
+}
+function costOf(model, input, write5m, write1h, cacheRead, output) {
+  const p = priceOf(model);
+  return (input * p.inp + write5m * p.inp * 1.25 + write1h * p.inp * 2 + cacheRead * p.inp * 0.1 + output * p.out) / 1e6;
+}
+
 function emptyBucket() {
-  return { input: 0, output: 0, cacheRead: 0, messages: 0, models: {} };
+  return { input: 0, output: 0, cacheRead: 0, messages: 0, cost: 0, models: {}, projects: {} };
 }
 
 function add(b, e) {
@@ -147,8 +191,13 @@ function add(b, e) {
   b.output += e.output;
   b.cacheRead += e.cacheRead;
   b.messages += 1;
+  b.cost += e.cost || 0;
   const short = e.model.replace(/^claude-/, '').replace(/-\d{8}$/, '');
   b.models[short] = (b.models[short] || 0) + e.input + e.output;
+  const pr = b.projects[e.project] || (b.projects[e.project] = { cost: 0, tokens: 0, messages: 0 });
+  pr.cost += e.cost || 0;
+  pr.tokens += e.input + e.output;
+  pr.messages += 1;
 }
 
 function localStats() {
@@ -180,9 +229,10 @@ function localStats() {
       if (!e.ts || e.ts < monthAgo || seen.has(e.id)) continue;
       seen.add(e.id);
       const dk = dayKeyOf(e.ts);
-      const bd = byDay[dk] || (byDay[dk] = { tokens: 0, messages: 0 });
+      const bd = byDay[dk] || (byDay[dk] = { tokens: 0, messages: 0, cost: 0 });
       bd.tokens += e.input + e.output;
       bd.messages += 1;
+      bd.cost += e.cost || 0;
       if (e.ts < weekAgo) continue;
       add(buckets.week, e);
       if (e.ts >= startToday.getTime()) add(buckets.today, e);

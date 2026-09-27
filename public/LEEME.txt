@@ -1,0 +1,47 @@
+﻿PM POLLITO 1.3.0 🐣  —  tu pollito Project Manager
+Hecho con ❤️ por Juanzreyes · 27 de septiembre de 2026
+=====================================================================
+
+QUÉ ES
+Un pollito que vive en tu escritorio, siempre encima de tus ventanas: vigila cuánto
+llevas gastado de tus límites de Claude, te pregunta cada mañana qué vas a hacer,
+te avisa de reuniones y recordatorios, te regaña si te distraes y es un tamagotchi
+al que cuidar (comida, baños, siestas, accesorios y logros).
+
+REQUISITOS
+- Windows 10 u 11 (64 bits).
+- Opcional: una cuenta de Claude (Pro o Max) para ver tus límites de uso.
+
+INSTALAR (1 minuto)
+1. Haz doble clic en  PM-Pollito-Setup-1.3.0.exe  (78.6 MB).
+2. Si Windows muestra "Windows protegió su PC", pulsa "Más información" y luego
+   "Ejecutar de todas formas". (Aparece porque el instalador aún no está firmado
+   con un certificado; el archivo es seguro: puedes comprobarlo con SHA256.txt.)
+3. Elige la carpeta (o deja la que viene) y pulsa Instalar.
+4. Al terminar, el pollito sale de su huevo en tu escritorio: ponle nombre. 🥚➜🐣
+5. Para ver tus límites de Claude: clic en el pollito → pestaña "Uso" →
+   "Conectar con mi cuenta de Claude" e inicia sesión en la página oficial.
+
+PRIMEROS PASOS
+- Clic en el pollito: abre el panel.  Clic derecho: menú rápido.  Arrástralo a donde quieras.
+- Ctrl+Alt+Espacio: paleta de comandos desde cualquier app.
+- Ctrl+Alt+P: anotar una tarea o un recordatorio ("recuérdame a las 3 revisar el informe").
+- En el panel, la lista "Configura tu pollito" te guía por lo más útil.
+- Ajustes (icono ⚙️): tema oscuro, tamaño, privacidad, integraciones, idioma (English).
+
+EXTENSIÓN PARA VS CODE (opcional)
+Muestra el pollito en la barra de estado de VS Code (% de Claude, pomodoro, tareas).
+- En VS Code: menú Extensiones (Ctrl+Shift+X) → "..." → "Instalar desde VSIX…"
+  → elige  pm-pollito-vscode-1.0.0.vsix
+- O en una terminal:  code --install-extension pm-pollito-vscode-1.0.0.vsix
+
+PRIVACIDAD
+Todo se guarda solo en tu PC (%APPDATA%\pm-pollito). No hay servidores propios:
+PM solo habla con Claude, GitHub o tu correo si tú los conectas. En Ajustes →
+Privacidad puedes pausar el seguimiento, exportar o borrar todos tus datos.
+
+DESINSTALAR
+Configuración de Windows → Aplicaciones → "PM Pollito" → Desinstalar.
+
+COMPROBAR LOS ARCHIVOS (opcional)
+En PowerShell:  Get-FileHash .\PM-Pollito-Setup-1.3.0.exe  y compara con SHA256.txt.

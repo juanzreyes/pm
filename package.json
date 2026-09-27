@@ -1,13 +1,15 @@
 {
   "name": "pm-pollito",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "description": "PM, tu pollito project manager: widget flotante que vigila tus límites de Claude y te acompaña en tu día.",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "icon": "electron scripts/make-icon.js",
     "dist": "electron-builder --win --publish never",
-    "release": "electron-builder --win --publish always"
+    "release": "electron-builder --win --publish always",
+    "postdist": "node scripts/build-public.js",
+    "public": "node scripts/build-public.js"
   },
   "author": "Juan Ramon Reyes Linares",
   "license": "MIT",

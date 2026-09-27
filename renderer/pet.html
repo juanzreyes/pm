@@ -5,9 +5,12 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" />
   <title>PM</title>
   <link rel="stylesheet" href="pet.css" />
+  <link rel="stylesheet" href="pet-idle.css" />
+  <link rel="stylesheet" href="pet-needs.css" />
+  <link rel="stylesheet" href="pet-species.css" />
 </head>
 <body>
-  <div id="bubble" class="hidden hit"><span id="bubble-text"></span></div>
+  <div id="bubble" class="hidden hit"><span id="bubble-text"></span><div id="bubble-actions"></div></div>
 
   <div id="walker">
     <div id="fx"></div>
@@ -51,9 +54,18 @@
             <g id="wingL" class="wing"><ellipse cx="22" cy="78" rx="11" ry="17" transform="rotate(20 22 78)" /></g>
             <g id="wingR" class="wing"><ellipse cx="98" cy="78" rx="11" ry="17" transform="rotate(-20 98 78)" /></g>
 
+            <!-- Especies: orejas y cola de gato (detrás del cuerpo) -->
+            <g id="sp-cat-back" class="sp">
+              <path class="cat-tail" d="M92 102 q30 -2 22 -38 q-3 -8 -9 -3 q8 26 -15 33z" />
+              <path class="ear" d="M28 54 L26 14 L56 38z" /><path class="ear" d="M92 54 L94 14 L64 38z" />
+              <path class="ear-in" d="M32 46 L31 24 L49 38z" /><path class="ear-in" d="M88 46 L89 24 L71 38z" />
+            </g>
             <ellipse id="body" cx="60" cy="72" rx="40" ry="41" />
             <ellipse id="belly" cx="60" cy="90" rx="24" ry="17" />
             <ellipse id="flush" cx="60" cy="72" rx="40" ry="41" />
+            <!-- Pingüino: antifaz blanco alrededor de los ojos -->
+            <g id="sp-penguin" class="sp"><ellipse cx="45" cy="67" rx="12" ry="13" /><ellipse cx="75" cy="67" rx="12" ry="13" /><path d="M45 78 q15 10 30 0 l0 8 q-15 8 -30 0z" /></g>
+            <g id="sp-cat-stripes" class="sp"><path d="M50 34 l3 9 M60 32 v10 M70 34 l-3 9" /></g>
 
             <g id="tuft">
               <path d="M58 33 q-6 -12 2 -16 q-2 8 3 14z" />
@@ -105,6 +117,17 @@
               <path id="beakTop" d="M51 77 q9 -7 18 0 q-9 7 -18 0z" />
             </g>
 
+            <!-- Pico de pato y hocico de gato -->
+            <g id="sp-duck" class="sp">
+              <path class="bill" d="M45 77 q15 -10 30 0 q5 5 -2 8.5 q-13 4.5 -26 0 q-7 -3.5 -2 -8.5z" />
+              <path class="nostril" d="M55.5 76.5 h2 M62.5 76.5 h2" />
+            </g>
+            <g id="sp-cat" class="sp">
+              <path class="nose" d="M55.5 76 h9 l-4.5 4.5z" />
+              <path class="mouth" d="M60 80.5 q-2.5 5 -7 3 M60 80.5 q2.5 5 7 3" />
+              <path class="whisk" d="M28 75 l15 3 M28 82 l15 0 M92 75 l-15 3 M92 82 l-15 0" />
+            </g>
+
             <g id="badge">
               <rect x="70" y="95" width="17" height="11" rx="3" />
               <text x="78.5" y="103.2" text-anchor="middle">PM</text>
@@ -117,6 +140,51 @@
             <g id="crown">
               <path d="M45 30 l2 -11 l6 6 l7 -9 l7 9 l6 -6 l2 11z" />
               <circle cx="60" cy="16.5" r="1.8" class="gem" />
+            </g>
+
+            <!-- Suciedad (cuando no lo bañas) -->
+            <g id="dirt">
+              <ellipse cx="42" cy="96" rx="5" ry="3.5" /><ellipse cx="80" cy="54" rx="4" ry="3" />
+              <ellipse cx="72" cy="104" rx="3.5" ry="2.5" /><ellipse cx="34" cy="62" rx="3" ry="2.2" />
+            </g>
+            <!-- Termómetro (enfermo) -->
+            <g id="prop-thermo" class="prop">
+              <path class="glass" d="M66 80 L92 70" /><path class="mercury" d="M66 80 L78 75.4" /><circle cx="66" cy="80" r="2.6" class="bulb" />
+            </g>
+            <!-- Disfraces de temporada -->
+            <g id="season-santa" class="season">
+              <path class="hat" d="M36 38 q24 -34 50 -4 q6 10 14 12 q-2 6 -8 4 q-8 -4 -8 -12 q-20 -12 -48 0z" />
+              <path class="fur" d="M33 40 q27 -10 54 -4 l-1 7 q-26 -6 -52 4z" />
+              <circle cx="97" cy="48" r="5" class="pom" />
+            </g>
+            <g id="season-pumpkin" class="season">
+              <path class="stem" d="M58 10 q0 -6 5 -8 q-2 5 -1 9z" />
+              <path class="pk" d="M40 34 q-6 -24 20 -24 q26 0 20 24 q-20 6 -40 0z" />
+              <path class="rib" d="M52 12 q-4 12 -2 23 M68 12 q4 12 2 23" />
+            </g>
+
+            <!-- Objetos para las animaciones de reposo -->
+            <g id="prop-clipboard" class="prop">
+              <rect class="board" x="14" y="80" width="26" height="32" rx="3" />
+              <rect class="paper" x="17" y="85" width="20" height="24" rx="1.5" />
+              <rect class="clip" x="22" y="78" width="10" height="5" rx="1.5" />
+              <path class="line" d="M20 91 h13 M20 97 h13 M20 103 h9" />
+              <path class="tick" d="M31 101 l2.5 3 l5 -7" />
+            </g>
+            <g id="prop-cup" class="prop">
+              <path class="mug" d="M84 88 h16 v11 q0 6 -8 6 q-8 0 -8 -6z" />
+              <path class="handle" d="M100 91 q6 0 6 4 q0 4 -6 4" />
+              <path class="coffee" d="M85.5 90 h13" />
+            </g>
+            <g id="prop-laptop" class="prop">
+              <path class="lid" d="M36 90 h48 l-3 -20 h-42z" />
+              <rect class="screen" x="42" y="73" width="36" height="14" rx="1.5" />
+              <path class="code c1" d="M45 77 h14" /><path class="code c2" d="M48 80.5 h20" /><path class="code c3" d="M45 84 h10" />
+              <path class="base" d="M30 90 h60 l-4 6 h-52z" />
+            </g>
+            <circle id="prop-gum" class="prop" cx="60" cy="84" r="7" />
+            <g id="prop-foot" class="prop" transform="translate(99 44) rotate(-145) scale(1.35)">
+              <path class="scratchfoot" d="M0 0 q-2 9 -7 11 q5 0 7 -3 q1 4 5 4 q-4 -3 -2 -12z" />
             </g>
 
             <!-- Barbilla de gallo -->
@@ -186,7 +254,21 @@
         </g></g>
       </svg>
     </div>
-    <div id="meter" class="hit"><span id="meter-dot"></span><span id="meter-text">…</span></div>
+    <!-- Amiguito (tienda) -->
+    <div id="buddy" aria-hidden="true">
+      <svg viewBox="0 0 50 50" width="46" height="46">
+        <ellipse class="b-shadow" cx="25" cy="47" rx="12" ry="2.5" />
+        <path class="b-foot" d="M19 42 q-1 5 -4 6 h6z M31 42 q1 5 4 6 h-6z" />
+        <ellipse class="b-body" cx="25" cy="29" rx="16" ry="16" />
+        <path class="b-tuft" d="M24 13 q-2 -6 2 -7 q-1 4 1 7z" />
+        <ellipse class="b-eye" cx="19.5" cy="26" rx="2.3" ry="2.8" /><ellipse class="b-eye" cx="30.5" cy="26" rx="2.3" ry="2.8" />
+        <circle class="b-shine" cx="20.3" cy="25" r=".9" /><circle class="b-shine" cx="31.3" cy="25" r=".9" />
+        <path class="b-beak" d="M22 31 q3 -3 6 0 q-3 3 -6 0z" />
+        <path class="b-bill" d="M19.5 31 q5.5 -4 11 0 q2 2 -1 3.5 q-4.5 1.5 -9 0 q-3 -1.5 -1 -3.5z" />
+        <ellipse class="b-cheek" cx="15" cy="31" rx="2.8" ry="1.8" /><ellipse class="b-cheek" cx="35" cy="31" rx="2.8" ry="1.8" />
+      </svg>
+    </div>
+    <div id="meter" class="hit"><span id="meter-dot"></span><span id="meter-text">…</span><span id="badge" class="hidden"></span></div>
   </div>
 
   <script src="../src/i18n.js"></script>

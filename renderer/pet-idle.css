@@ -1,0 +1,140 @@
+/* =====================================================================
+   ANIMACIONES EN REPOSO (standby): el pollito se entretiene solo
+   ===================================================================== */
+.prop { display: none; }
+#prop-clipboard .board { fill: #b07a45; stroke: #7a4f25; stroke-width: 1.2; }
+#prop-clipboard .paper { fill: #fffdf6; }
+#prop-clipboard .clip { fill: #9aa3b5; stroke: #5d6475; stroke-width: 1; }
+#prop-clipboard .line { stroke: #c9bfa9; stroke-width: 1.6; stroke-linecap: round; fill: none; }
+#prop-clipboard .tick { stroke: #1baf7a; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; fill: none; stroke-dasharray: 14; stroke-dashoffset: 14; }
+#prop-clipboard { transform-origin: 50% 100%; }
+#prop-cup .mug { fill: #fffdf6; stroke: #3b2f2f; stroke-width: 1.4; }
+#prop-cup .handle { fill: none; stroke: #3b2f2f; stroke-width: 1.8; }
+#prop-cup .coffee { stroke: #7a4f25; stroke-width: 2; }
+#prop-cup { transform-origin: 30% 100%; }
+#prop-laptop .lid { fill: #9aa3b5; stroke: #5d6475; stroke-width: 1.2; }
+#prop-laptop .screen { fill: #1f2433; }
+#prop-laptop .code { stroke-width: 1.8; stroke-linecap: round; }
+#prop-laptop .c1 { stroke: #6da7ec; }
+#prop-laptop .c2 { stroke: #1baf7a; }
+#prop-laptop .c3 { stroke: #eda100; }
+#prop-laptop .base { fill: #c3c9d6; stroke: #5d6475; stroke-width: 1.2; }
+#prop-gum { fill: #ff8fc0; stroke: #e0569a; stroke-width: 1.2; opacity: .92; transform-origin: 50% 20%; }
+
+@keyframes propIn { from { transform: translateY(8px) scale(.6); opacity: 0; } }
+
+/* Revisar el portapapeles (¡es PM!) */
+.a-read #prop-clipboard { display: inline; animation: propIn .35s ease-out; }
+.a-read #prop-clipboard .tick { animation: drawTick .5s ease-out 1.6s forwards; }
+.a-read #bod { animation: readNod .9s ease-in-out 3; }
+.a-read .eye { transform: translate(-3px, 3px) scaleY(.85); }
+@keyframes readNod { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-5deg) translateY(1px); } }
+@keyframes drawTick { to { stroke-dashoffset: 0; } }
+
+/* Café */
+.a-coffee #prop-cup { display: inline; animation: sip 3.2s ease-in-out; }
+.a-coffee #bod { animation: sipBody 3.2s ease-in-out; }
+.a-coffee #eyesOpen { animation: closeEyes 3.2s steps(1); }
+.a-coffee #eyesHappy { display: inline; animation: openHappy 3.2s steps(1); }
+@keyframes sip { 0%, 100% { transform: translate(0, 0) rotate(0); } 35%, 65% { transform: translate(-16px, -10px) rotate(-28deg); } }
+@keyframes sipBody { 0%, 100% { transform: rotate(0); } 35%, 65% { transform: rotate(-6deg) translateY(-1px); } }
+@keyframes closeEyes { 0%, 30% { opacity: 1; } 35%, 65% { opacity: 0; } 70%, 100% { opacity: 1; } }
+@keyframes openHappy { 0%, 30% { opacity: 0; } 35%, 65% { opacity: 1; } 70%, 100% { opacity: 0; } }
+
+/* Teclear en el portátil */
+.a-typing #prop-laptop { display: inline; animation: propIn .35s ease-out; }
+.a-typing #prop-laptop .code { animation: codeBlink .5s steps(2) infinite; }
+.a-typing #prop-laptop .c2 { animation-delay: .17s; }
+.a-typing #prop-laptop .c3 { animation-delay: .33s; }
+.a-typing #wingL { animation: typeL .16s ease-in-out infinite alternate; }
+.a-typing #wingR { animation: typeR .16s ease-in-out infinite alternate-reverse; }
+.a-typing .eye { transform: translateY(3px) scaleY(.8); }
+.a-typing #bod { animation: none; }
+@keyframes codeBlink { 50% { opacity: .2; } }
+@keyframes typeL { from { transform: rotate(-8deg); } to { transform: rotate(-22deg) translateY(-2px); } }
+@keyframes typeR { from { transform: rotate(8deg); } to { transform: rotate(22deg) translateY(-2px); } }
+
+/* Globo de chicle */
+.a-gum #prop-gum { display: inline; animation: gum 2.6s ease-in forwards; }
+.a-gum #beakBottom { transform: scaleY(.6); }
+.a-gum .eye { transform: translate(0, -1px) scale(1.05); }
+@keyframes gum { 0% { transform: scale(0); } 70% { transform: scale(1.9); } 78% { transform: scale(2.05); opacity: .92; } 80%, 100% { transform: scale(2.2); opacity: 0; } }
+
+/* Cantar */
+.a-sing #bod { animation: sway .6s ease-in-out 5 alternate; }
+.a-sing #beakBottom { animation: talk .3s ease-in-out infinite alternate; }
+.a-sing #eyesOpen { display: none; }
+.a-sing #eyesHappy { display: inline; }
+@keyframes sway { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+
+/* Rascarse la cabeza con la patita */
+#prop-foot .scratchfoot { fill: #FF9F1C; stroke: #d97706; stroke-width: 1; transform-origin: 50% 0%; }
+.a-scratch #prop-foot { display: inline; }
+.a-scratch #prop-foot .scratchfoot { animation: scratchFoot .16s ease-in-out 11 alternate; }
+.a-scratch #footR { opacity: 0; }
+.a-scratch #bod { animation: scratchBody 1.9s ease-in-out; }
+.a-scratch .eye { transform: scaleY(.5); }
+@keyframes scratchFoot { from { transform: rotate(-12deg); } to { transform: rotate(14deg) translateY(2px); } }
+@keyframes scratchBody { 0%, 100% { transform: rotate(0); } 15%, 85% { transform: rotate(10deg) translateY(2px); } }
+
+/* Acicalarse el ala */
+.a-preen #bod { animation: preen 2.2s ease-in-out; }
+.a-preen #wingL { animation: preenWing 2.2s ease-in-out; }
+.a-preen #eyesOpen { display: none; }
+.a-preen #eyesClosed { display: inline; }
+@keyframes preen { 0%, 100% { transform: rotate(0); } 25%, 45%, 65% { transform: rotate(-14deg) translate(-3px, 3px); } 35%, 55%, 75% { transform: rotate(-10deg) translate(-2px, 2px); } }
+@keyframes preenWing { 0%, 100% { transform: rotate(0); } 20%, 80% { transform: rotate(35deg); } }
+
+/* Esponjarse las plumas */
+.a-fluff #bod { animation: fluff 1.2s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes fluff { 0%, 100% { transform: scale(1); } 20% { transform: scale(.94, 1.04); } 45% { transform: scale(1.16, 1.1); } 55% { transform: scale(1.12, 1.08) rotate(3deg); } 65% { transform: scale(1.14, 1.08) rotate(-3deg); } }
+
+/* Saludar */
+.a-wave #wingR { animation: waveWing .28s ease-in-out 6 alternate; }
+.a-wave #eyesOpen { display: none; }
+.a-wave #eyesHappy { display: inline; }
+@keyframes waveWing { from { transform: rotate(-70deg); } to { transform: rotate(-110deg); } }
+
+/* Estornudo */
+.a-sneeze #bod { animation: sneeze 1.4s ease-in-out; }
+.a-sneeze #eyesOpen { animation: closeEyes 1.4s steps(1); }
+@keyframes sneeze { 0% { transform: scale(1); } 45% { transform: scale(.96, 1.06) rotate(-8deg) translateY(-2px); } 55% { transform: scale(1.1, .9) rotate(6deg) translateY(3px); } 70% { transform: scale(1.02, .98); } 100% { transform: scale(1); } }
+
+/* Hipo */
+.a-hiccup #flip { animation: hiccup 1.8s ease-out; }
+@keyframes hiccup { 0%, 30%, 60%, 100% { transform: translateY(0); } 8%, 38%, 68% { transform: translateY(-8px) scale(.97, 1.04); } }
+
+/* Sentarse un ratito */
+.a-sit #bod { animation: sit 3.4s ease-in-out; }
+.a-sit #feet { animation: sitFeet 3.4s ease-in-out; }
+.a-sit .eye { transform: scaleY(.7); }
+@keyframes sit { 0%, 100% { transform: translateY(0) scale(1); } 15%, 85% { transform: translateY(8px) scale(1.08, .92); } }
+@keyframes sitFeet { 0%, 100% { opacity: 1; } 15%, 85% { opacity: 0; } }
+
+/* Giro */
+.a-spin svg { animation: spin 1s ease-in-out; }
+@keyframes spin { 0% { transform: scaleX(1); } 25% { transform: scaleX(-1) translateY(-6px); } 50% { transform: scaleX(1) translateY(-10px); } 75% { transform: scaleX(-1) translateY(-6px); } 100% { transform: scaleX(1); } }
+
+/* Mirar a los lados */
+.a-lookaround #eyes { animation: lookAround 2.4s ease-in-out; }
+.a-lookaround #bod { animation: tilt 2.4s ease-in-out; }
+@keyframes lookAround { 0%, 100% { transform: translate(0, 0); } 20%, 40% { transform: translate(-4px, 0); } 60%, 80% { transform: translate(4px, -1px); } }
+
+/* Palabras y plumitas que salen de los gestos */
+.p.word { font-weight: 900; color: #3b2f2f; -webkit-text-stroke: .4px #fff; font-family: "Segoe UI", sans-serif; letter-spacing: .02em; }
+.p.feather { color: #ffd84a; -webkit-text-stroke: .6px #d99a14; }
+
+/* Perseguir una mariposa */
+.a-butterfly .eye { transform: translateY(-3px); }
+.a-butterfly #bod { animation: follow 4.2s ease-in-out; }
+@keyframes follow { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-8deg); } 50% { transform: rotate(6deg) translateY(-2px); } 75% { transform: rotate(-5deg); } }
+.butterfly { position: absolute; font-size: 16px; left: 0; top: 0; animation: flutter 4.2s ease-in-out forwards; pointer-events: none; }
+@keyframes flutter {
+  0% { transform: translate(-10px, 40px) rotate(-10deg); opacity: 0; }
+  10% { opacity: 1; }
+  25% { transform: translate(60px, 10px) rotate(10deg); }
+  45% { transform: translate(150px, 30px) rotate(-10deg); }
+  65% { transform: translate(110px, 70px) rotate(8deg); }
+  85% { transform: translate(40px, 20px) rotate(-6deg); }
+  100% { transform: translate(190px, -30px) rotate(10deg); opacity: 0; }
+}

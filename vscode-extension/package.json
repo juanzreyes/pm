@@ -1,0 +1,31 @@
+{
+  "name": "pm-pollito",
+  "displayName": "PM Pollito",
+  "description": "Tu pollito Project Manager en la barra de estado de VS Code: % de tu sesión de Claude, pomodoro y tareas.",
+  "version": "1.0.0",
+  "publisher": "juanzreyes",
+  "license": "MIT",
+  "icon": "icon.png",
+  "engines": { "vscode": "^1.80.0" },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "pmPollito.menu", "title": "PM Pollito: Menú" },
+      { "command": "pmPollito.capture", "title": "PM Pollito: Anotar tarea o recordatorio" },
+      { "command": "pmPollito.pomodoro", "title": "PM Pollito: Empezar / detener pomodoro" },
+      { "command": "pmPollito.usage", "title": "PM Pollito: Ver consumo de Claude" }
+    ],
+    "keybindings": [
+      { "command": "pmPollito.capture", "key": "ctrl+alt+n" }
+    ],
+    "configuration": {
+      "title": "PM Pollito",
+      "properties": {
+        "pmPollito.port": { "type": "number", "default": 47823, "description": "Puerto local de PM Pollito." },
+        "pmPollito.showTasks": { "type": "boolean", "default": true, "description": "Mostrar el progreso de tareas del día en la barra de estado." }
+      }
+    }
+  }
+}

@@ -464,3 +464,32 @@ svg * { transform-box: fill-box; }
 .skin-pink #body, .skin-pink .wing ellipse, .skin-pink #tuft path, .skin-pink #belly, .skin-pink #tail-young path { filter: hue-rotate(290deg) saturate(.85); }
 .skin-mint #body, .skin-mint .wing ellipse, .skin-mint #tuft path, .skin-mint #belly, .skin-mint #tail-young path { filter: hue-rotate(95deg) saturate(.65); }
 .skin-gold #body, .skin-gold .wing ellipse, .skin-gold #tuft path { filter: saturate(1.6) brightness(1.05) drop-shadow(0 0 3px #ffd700); }
+
+/* ---------- Botones dentro del bocadillo ---------- */
+#bubble { max-height: 146px; }
+#bubble-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+#bubble-actions:empty { display: none; }
+#bubble-actions button {
+  font: inherit; font-size: 10.5px; font-weight: 800; color: #3b2f2f; cursor: pointer; white-space: nowrap;
+  background: #ffd84a; border: 2px solid #3b2f2f; border-radius: 10px; padding: 2px 6px;
+  box-shadow: 0 2px 0 #3b2f2f; transition: transform .08s;
+}
+#bubble-actions button:first-child { background: #ff9f1c; color: #fff; }
+#bubble-actions button:hover { transform: translateY(-1px); }
+#bubble-actions button:active { transform: translateY(1px); box-shadow: 0 1px 0 #3b2f2f; }
+#bubble-actions button:focus-visible { outline: 3px solid #4d7cfe; outline-offset: 2px; }
+#bubble.has-actions { cursor: default; }
+
+/* ---------- Contador de avisos sin leer ---------- */
+#badge {
+  min-width: 16px; height: 16px; padding: 0 4px; border-radius: 99px; background: #e63946; color: #fff;
+  font-size: 10px; font-weight: 900; display: inline-grid; place-items: center; margin-left: 2px;
+  animation: badgePop .4s cubic-bezier(.3, 1.6, .5, 1);
+}
+#badge.hidden { display: none; }
+@keyframes badgePop { from { transform: scale(0); } }
+
+/* ---------- Menos animación ---------- */
+.reduced #bod, .reduced #shadow, .reduced #tuft, .reduced .wing, .reduced #comb, .reduced #tail-rooster { animation-duration: 4s !important; }
+.reduced .p, .reduced .confetti, .reduced .zzz { display: none; }
+.reduced #bubble { animation: none; }

@@ -40,8 +40,28 @@ function dayLabel(key) {
 
 // ---------- navegación ----------
 let pendingView = null;
+// Lleva la vista hasta una sección y la resalta un momento.
+function flashTo(sel) {
+  const el = $(sel);
+  if (!el) return;
+  if (el.tagName === 'DETAILS') el.open = true;
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  el.classList.remove('flash');
+  void el.offsetWidth;
+  el.classList.add('flash');
+  setTimeout(() => el.classList.remove('flash'), 1800);
+}
+
 function show(view) {
   if (!state) { pendingView = view; return; }
+  // Destinos tipo "day#reminders": pestaña + sección a resaltar.
+  let focusSel = null;
+  if (typeof view === 'string' && view.includes('#')) {
+    const [v, s] = view.split('#');
+    view = v;
+    focusSel = '#' + s;
+  }
+  if (focusSel) setTimeout(() => flashTo(focusSel), 120);
   $$('.overlay').forEach((o) => o.classList.add('hidden'));
   if (view === 'report' || view === 'daily-copy') {
     openReport(view === 'report' ? 'weekly' : 'daily');
@@ -49,6 +69,19 @@ function show(view) {
   }
   if (view === 'stats') {
     if (window.openStats) window.openStats();
+    return;
+  }
+  if (view === 'inbox') {
+    $('#o-inbox').classList.remove('hidden');
+    renderInbox();
+    return;
+  }
+  if (view === 'tour') {
+    startTour();
+    return;
+  }
+  if (view === 'prompts' || view === 'blocks' || view === 'whatsnew') {
+    if (window.openExtra) window.openExtra(view);
     return;
   }
   if (view === 'shop') view = 'pet';
@@ -83,6 +116,10 @@ function render() {
   renderProd();
   renderPet();
   renderGami();
+  renderInbox();
+  if (window.renderExtras) window.renderExtras();
+  document.documentElement.classList.toggle('dark', !!state.dark);
+  document.documentElement.classList.toggle('reduced', !!(state.settings && state.settings.reducedMotion));
   if (state.lang === 'en') I18N.translateDom(document.getElementById('card'), 'en');
 }
 
@@ -128,6 +165,26 @@ function connectionHtml(c) {
     <button type="button" class="ghost" data-recheck>🔄 Volver a comprobar</button>`;
 }
 
+const money = (v) => '$' + (v || 0).toFixed((v || 0) < 10 ? 2 : 0);
+// Coste por proyecto (hoy, y de la semana si hoy no hay nada).
+function projectCosts(today, week) {
+  const src = Object.keys(today || {}).length ? today : week || {};
+  const list = Object.entries(src).sort((a, b) => b[1].cost - a[1].cost).slice(0, 5);
+  if (!list.length) return '';
+  const max = list[0][1].cost || 1;
+  return list.map(([k, v]) => `<div class="proj"><span class="n" title="${esc(k)}">${esc(k)}</span><div class="bar"><i style="width:${Math.max(4, (v.cost / max) * 100)}%"></i></div><span class="t">${money(v.cost)}</span></div>`).join('');
+}
+
+// Predicción: ritmo y a qué hora llegarías al 100%.
+function forecastHtml(f, l) {
+  if (!f) return '';
+  if (f.rate === null) return '<div class="fc muted">🔮 Calculando tu ritmo… (necesito unos minutos de datos)</div>';
+  const rate = `+${f.rate < 10 ? f.rate.toFixed(1) : Math.round(f.rate)}%/h`;
+  if (!f.eta || !f.willHit) return `<div class="fc ok">🔮 Ritmo ${rate} · al paso actual <b>no llegarás al límite</b> antes del reinicio ✅</div>`;
+  const opts = l.key === 'five_hour' ? { hour: '2-digit', minute: '2-digit' } : { weekday: 'short', hour: '2-digit', minute: '2-digit' };
+  return `<div class="fc warn">🔮 Ritmo ${rate} · llegarás al 100% a las <b>${new Date(f.eta).toLocaleString(LOC(), opts)}</b> (${fmtDur(f.beforeReset / 1000)} antes del reinicio)</div>`;
+}
+
 function renderUsage() {
   const u = state.usage;
   const c = u.connection || {};
@@ -142,6 +199,7 @@ function renderUsage() {
         <div class="top"><b>${esc(l.label)}</b><span class="pct">${p}%</span></div>
         <div class="bar"><i class="${level(p)}" style="width:${Math.min(100, p)}%"></i></div>
         <div class="reset">${l.resetsAt ? `⏳ Se reinicia en <b>${fmtUntil(l.resetsAt)}</b> · ${fmtClock(l.resetsAt)}` : ''}</div>
+        ${forecastHtml((u.forecast || {})[l.key], l)}
       </div>`;
     })
     .join('');
@@ -157,7 +215,13 @@ function renderUsage() {
       <div class="tile"><b>${fmtTokens(t.input + t.output)}</b><span>tokens hoy (entrada+salida)</span></div>
       <div class="tile"><b>${fmtTokens(h.input + h.output)}</b><span>últimas 5 h · ${h.messages} resp.</span></div>
       <div class="tile"><b>${fmtTokens(w.input + w.output)}</b><span>últimos 7 días · ${w.messages} resp.</span></div>
-      <div class="tile wide"><span>Modelos hoy</span><div>${models}</div></div>`;
+      <div class="tile wide"><span>Modelos hoy</span><div>${models}</div></div>
+      <div class="tile wide cost">
+        <div class="cost-title">💵 Coste equivalente en la API</div>
+        <div class="cost-sum"><div><small>Hoy</small><strong>${money(t.cost)}</strong></div><div><small>7 días</small><strong>${money(w.cost)}</strong></div></div>
+        ${projectCosts(t.projects, w.projects)}
+        <span class="small muted">Con tu plan no pagas esto: es lo que costaría por API. Útil para ver dónde se va tu cuota.</span>
+      </div>`;
   }
   $('#fetched').textContent = u.fetchedAt ? 'Actualizado ' + new Date(u.fetchedAt).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' }) : '';
 }
@@ -168,11 +232,33 @@ function renderDay() {
   const done = tasks.filter((t) => t.done).length;
   $('#day-title').textContent = 'Hoy · ' + new Date().toLocaleDateString(LOC(), { weekday: 'long', day: 'numeric', month: 'short' });
   $('#day-progress').textContent = tasks.length ? `${done}/${tasks.length}` : 'sin plan';
-  $('#tasks').innerHTML = tasks.length
-    ? tasks.map((t, i) => `<li class="${t.done ? 'done' : ''}"><input type="checkbox" data-i="${i}" ${t.done ? 'checked' : ''}/><span>${esc(t.text)}</span><button data-del="${i}" title="Quitar">✕</button></li>`).join('')
-    : '<li class="empty">Aún no hay tareas. Haz el daily o añade una 👇</li>';
-  $$('#tasks input[type=checkbox]').forEach((cb) => cb.addEventListener('change', () => pm.toggleTask(state.todayKey, Number(cb.dataset.i))));
-  $$('#tasks button[data-del]').forEach((b) => b.addEventListener('click', () => pm.removeTask(Number(b.dataset.del))));
+  // No repintar mientras editas una tarea o la arrastras.
+  if (!$('#tasks input.edit, #tasks input.tedit') && !dragFrom) {
+    const PRIO_T = { h: 'Prioridad alta', m: 'Prioridad media', l: 'Prioridad baja' };
+    $('#tasks').innerHTML = tasks.length
+      ? tasks.map((t, i) => `<li class="${t.done ? 'done' : ''}" draggable="true" data-i="${i}">
+          <span class="grip" title="Arrastra para ordenar">${ICON('grip', 14)}</span>
+          <button class="prio ${t.priority || ''}" data-prio="${i}" title="${t.priority ? PRIO_T[t.priority] : 'Sin prioridad'} (clic para cambiar)" aria-label="Prioridad"></button>
+          <input type="checkbox" data-i="${i}" ${t.done ? 'checked' : ''} aria-label="Hecha"/>
+          <span class="t" data-edit="${i}" title="Doble clic para editar">${esc(t.text)}</span>
+          <span class="ttime ${t.time ? '' : 'empty'}" data-time="${i}" title="Hora (crea un recordatorio)">${t.time ? '🕒 ' + esc(t.time) : '🕒'}</span>
+          <span class="timer ${t.startedAt ? 'on' : ''} ${t.spent || t.est || t.startedAt ? '' : 'empty'}" data-timer="${i}" title="Clic: iniciar / pausar cronómetro · Doble clic: estimar minutos">${timerText(t)}</span>
+          <button data-del="${i}" title="Quitar" aria-label="Quitar">✕</button></li>`).join('')
+      : '<li class="empty">Aún no hay tareas. Haz el daily o añade una 👇</li>';
+  }
+
+  // Qué tan bien estimas (con al menos 3 tareas cronometradas y estimadas).
+  const est = state.estimates || {};
+  const ei = $('#est-insight');
+  ei.classList.toggle('hidden', !est.ratio);
+  if (est.ratio) {
+    const r = est.ratio;
+    ei.textContent = r > 1.15
+      ? `⏱️ Sueles tardar ${r.toFixed(1).replace('.', ',')}× lo que estimas (${est.samples} tareas). ¡Estima un poco más largo!`
+      : r < 0.85
+        ? `⏱️ Terminas antes de lo que estimas (${Math.round(r * 100)}% del tiempo). ¡Eres más rápido de lo que crees!`
+        : `⏱️ ¡Estimas muy bien! Tardas lo que calculas (${est.samples} tareas).`;
+  }
 
   const notes = [];
   if (day.standup && day.standup.yesterday) notes.push(`<p><b>Ayer:</b> ${esc(day.standup.yesterday)}</p>`);
@@ -201,26 +287,26 @@ function renderPet() {
   const days = p.born ? Math.floor((Date.now() - p.born) / 864e5) : 0;
   $('#st-age').textContent = p.born ? `Edad: ${days === 0 ? 'nació hoy 🥚' : days + ' día' + (days === 1 ? '' : 's')}` : '';
   if (document.activeElement !== $('#rename-input')) $('#rename-input').value = p.name || '';
-  const s = state.settings;
-  $('#s-morning').value = s.morningTime;
-  $('#s-evening').value = s.eveningTime;
-  $('#s-workdays').checked = !!s.workdaysOnly;
-  $('#s-chatter').checked = !!s.chatter;
-  $('#s-autostart').checked = !!state.autoStart;
-  $('#token-clear').classList.toggle('hidden', !s.hasManualToken);
-  $('#s-focus').checked = !!s.focusWatch;
-  $('#s-sounds').checked = !!s.sounds;
-  $('#mute').textContent = state.muted ? '🔔 Quitar silencio' : '🔕 Silenciar 1 hora (reunión)';
+  $('#st-clean').style.width = Math.round(p.clean ?? 100) + '%';
+  $('#st-energy').style.width = Math.round(p.energy ?? 100) + '%';
+  const napping = (p.napUntil || 0) > Date.now();
+  const status = p.sick ? '🤒 Está enfermo: dale una medicina (y comida y un baño).' : napping ? '😴 Durmiendo la siesta…' : (p.clean ?? 100) < 35 ? '🪰 Está sucio: ¡hora del baño!' : (p.energy ?? 100) < 25 ? '😪 Está muy cansado: déjalo dormir una siesta.' : '';
+  $('#st-status').textContent = status;
+  $('#st-status').classList.toggle('hidden', !status);
+  $('#medicine').classList.toggle('hidden', !p.sick);
+  $('#nap').disabled = napping;
   const lv = state.level || { level: 1, title: 'Pollito becario', into: 0, next: 100 };
   $('#lv-title').textContent = lv.title;
   $('#lv-num').textContent = 'Nv ' + lv.level;
   $('#st-xp').style.width = Math.round((lv.into / lv.next) * 100) + '%';
-  const w = state.web || {};
-  $('#web-status').innerHTML = w.connected
-    ? `<b>✅ Conectado a claude.ai</b>${w.orgName ? ` <span class="muted">· ${esc(w.orgName)}</span>` : ''}`
-    : '<span class="muted">Inicia sesión en la página oficial de Claude; yo solo leo tu uso.</span>';
-  $('#web-login').textContent = loggingIn ? '⏳ Esperando a que inicies sesión…' : w.connected ? '🔄 Volver a conectar' : '🌐 Conectar con mi cuenta de Claude';
-  $('#web-logout').classList.toggle('hidden', !w.connected);
+
+  // Primeros pasos
+  const cl = state.checklist || [];
+  const done = cl.filter((x) => x.done).length;
+  $('#checklist-box').classList.toggle('hidden', cl.length > 0 && done === cl.length);
+  $('#cl-count').textContent = `${done}/${cl.length}`;
+  $('#cl-bar').style.width = cl.length ? Math.round((done / cl.length) * 100) + '%' : '0%';
+  $('#checklist').innerHTML = cl.map((x) => `<li class="${x.done ? 'done' : ''}" ${x.done ? '' : `data-cmd="${esc(x.cmd)}"`}><span class="ck">${x.done ? '✓' : ''}</span>${esc(x.label)}</li>`).join('');
 }
 
 // ---------- conexión web ----------
@@ -245,8 +331,6 @@ document.addEventListener('click', async (e) => {
     if (!$('#o-onboarding').classList.contains('hidden')) $('#onb-conn').innerHTML = connectionHtml(state.usage.connection);
   }
 });
-$('#web-login').addEventListener('click', webLogin);
-$('#web-logout').addEventListener('click', async () => { state = await pm.webLogout(); render(); });
 
 function fmtDur(secs) {
   const m = Math.round((secs || 0) / 60);
@@ -542,19 +626,6 @@ function renderProd() {
     ghbox.innerHTML = `<div class="small muted">@${esc(gh.login)} · ${(gh.toReview || []).length} por revisar · ${(gh.mine || []).length} tuyos abiertos</div>` +
       (rev || '') + (mine || '') + (!rev && !mine ? '<div class="muted small">¡Nada pendiente en GitHub! 🎉</div>' : '');
   }
-
-  // Integraciones (Perfil)
-  const cc = state.claudeCode || {};
-  $('#cc-status').textContent = cc.installed ? (cc.working ? '🤖 trabajando…' : '✅ conectado') : 'sin conectar';
-  $('#cc-install').textContent = cc.installed ? '🔄 Reinstalar hooks' : 'Conectar con Claude Code';
-  $('#cc-uninstall').classList.toggle('hidden', !cc.installed);
-  $('#gh-status').textContent = gh.status === 'ok' ? '✅ @' + gh.login : gh.hasToken ? '⚠️ error' : 'sin conectar';
-  $('#gh-remove').classList.toggle('hidden', !gh.hasToken);
-  if (document.activeElement !== $('#git-roots')) $('#git-roots').value = (g.roots || []).join('\n');
-  const h = state.health || {};
-  $('#h-breaks').checked = h.breaks !== false;
-  $('#h-eyes').checked = h.eyes !== false;
-  $('#h-water').checked = h.water !== false;
 }
 
 $('#pomo-btn').addEventListener('click', () => (state.pomo ? pm.pomoStop() : pm.pomoStart()));
@@ -578,40 +649,13 @@ $('#btn-csv').addEventListener('click', async () => {
 });
 $('#git-refresh').addEventListener('click', async () => { state = await pm.gitRefresh(); render(); });
 $('#gh-refresh').addEventListener('click', async () => { state = await pm.githubRefresh(); render(); });
-$('#gh-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const t = $('#gh-token').value.trim();
-  if (!t) return;
-  $('#gh-token').value = '';
-  $('#gh-status').textContent = '⏳';
-  state = await pm.setGithubToken(t);
-  render();
-});
-$('#gh-remove').addEventListener('click', async () => { state = await pm.setGithubToken(''); render(); });
-$('#cc-install').addEventListener('click', async () => {
-  const r = await pm.hooksInstall();
-  $('#cc-msg').className = 'small ' + (r.ok ? 'okmsg' : 'err');
-  $('#cc-msg').textContent = r.ok ? '✅ ¡Listo! Abre una sesión nueva de Claude Code para que empiece a avisarme.' : '😿 ' + r.error;
-  if (r.ok) { state = r.state; render(); }
-});
-$('#cc-uninstall').addEventListener('click', async () => {
-  const r = await pm.hooksUninstall();
-  $('#cc-msg').className = 'small ' + (r.ok ? 'muted' : 'err');
-  $('#cc-msg').textContent = r.ok ? 'Hooks quitados. Tu configuración de Claude Code quedó como antes.' : '😿 ' + r.error;
-  if (r.ok) { state = r.state; render(); }
-});
-$('#git-roots-save').addEventListener('click', async () => {
-  const roots = $('#git-roots').value.split('\n').map((x) => x.trim()).filter(Boolean);
-  state = await pm.updateIntegrations({ gitRoots: roots });
-  $('#git-roots-msg').textContent = '✅ Guardado. Buscando repos…';
-  render();
-});
-for (const id of ['breaks', 'eyes', 'water']) {
-  $('#h-' + id).addEventListener('change', async (e) => { state = await pm.updateIntegrations({ health: { [id]: e.target.checked } }); render(); });
-}
 document.addEventListener('click', (e) => {
   const r = e.target.closest('[data-rem]');
-  if (r) pm.removeReminder(r.dataset.rem);
+  if (r) {
+    const rem = (state.reminders || []).find((x) => x.id === r.dataset.rem);
+    pm.removeReminder(r.dataset.rem);
+    if (rem) toast(`Recordatorio eliminado`, () => pm.restoreReminder(rem));
+  }
   const p = e.target.closest('[data-pr]');
   if (p) pm.openPR(p.dataset.pr);
 });
@@ -657,20 +701,6 @@ function renderGami() {
     return `<div class="item ${x.equipped ? 'eq' : ''}" title="${esc(SLOT_NAMES[x.slot] || x.slot)}"><span class="e">${x.emoji}</span><span class="n">${esc(x.name)}</span>${btn}</div>`;
   }).join('');
 
-  // IA
-  const a = state.ai || {};
-  const sel = $('#ai-model');
-  if (!sel.options.length) sel.innerHTML = Object.entries(a.models || {}).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
-  sel.value = a.model;
-  $('#ai-enabled').checked = !!a.enabled;
-  $('#ai-remove').classList.toggle('hidden', !a.hasKey);
-  $('#ai-key').placeholder = a.hasKey ? '•••••••• (guardada)' : 'sk-ant-…';
-
-  // Idioma y presentación
-  $('#lang').value = state.lang || 'es';
-  $('#auto-hide').checked = state.autoHide !== false;
-  $('#version').textContent = `PM v${state.version || '?'}${state.packaged ? '' : ' (desarrollo)'}`;
-
   // Sitios
   const mons = state.monitors || [];
   $('#monitors').innerHTML = mons.length
@@ -699,7 +729,12 @@ document.addEventListener('click', async (e) => {
   const m = e.target.closest('[data-mon]');
   if (m) pm.openMonitor(m.dataset.mon);
   const md = e.target.closest('[data-mon-del]');
-  if (md) { state = await pm.removeMonitor(md.dataset.monDel); render(); }
+  if (md) {
+    const mon = (state.monitors || []).find((x) => x.id === md.dataset.monDel);
+    state = await pm.removeMonitor(md.dataset.monDel);
+    render();
+    if (mon) toast('Sitio eliminado', async () => { const r = await pm.addMonitor(mon.url, mon.name); if (r.ok) { state = r.state; render(); } });
+  }
 });
 
 // Aviso flotante breve dentro del panel.
@@ -715,33 +750,6 @@ function alertMsg(text) {
   setTimeout(() => t.remove(), 3500);
 }
 
-$('#ai-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const k = $('#ai-key').value.trim();
-  if (!k) return;
-  $('#ai-key').value = '';
-  $('#ai-msg').className = 'small muted';
-  $('#ai-msg').textContent = '⏳ Probando la API key…';
-  const r = await pm.setAiKey(k);
-  state = r.state;
-  $('#ai-msg').className = 'small ' + (r.ok ? 'okmsg' : 'err');
-  $('#ai-msg').textContent = r.ok ? '✅ ¡IA activada! Pregúntame lo que quieras en el chat.' : '😿 ' + r.error;
-  render();
-});
-$('#ai-remove').addEventListener('click', async () => { const r = await pm.setAiKey(''); state = r.state; render(); });
-$('#ai-model').addEventListener('change', (e) => pm.updateSettings({ aiModel: e.target.value }));
-$('#ai-enabled').addEventListener('change', (e) => pm.updateSettings({ aiEnabled: e.target.checked }));
-$('#lang').addEventListener('change', async (e) => {
-  await pm.updateSettings({ lang: e.target.value });
-  location.reload(); // recarga el panel para aplicar el idioma a todos los textos
-});
-$('#auto-hide').addEventListener('change', (e) => pm.updateSettings({ autoHide: e.target.checked }));
-$('#check-updates').addEventListener('click', async () => {
-  $('#check-updates').textContent = '⏳';
-  const r = await pm.checkUpdates();
-  $('#check-updates').textContent = r.ok ? `✅ v${r.version}` : '—';
-  if (!r.ok) alertMsg(r.error);
-});
 $('#open-stats').addEventListener('click', () => show('stats'));
 $('#open-game').addEventListener('click', () => pm.openGame());
 $('#mon-form').addEventListener('submit', async (e) => {
@@ -783,6 +791,141 @@ const i18nObserver = new MutationObserver(() => {
 });
 i18nObserver.observe(document.getElementById('card'), { childList: true, subtree: true, characterData: true });
 
+// ---------- cabecera: paleta, avisos, ajustes ----------
+$('#hb-palette').addEventListener('click', () => pm.openPalette());
+$('#hb-inbox').addEventListener('click', () => show('inbox'));
+$('#hb-settings').addEventListener('click', () => pm.openSettings());
+
+// ---------- centro de avisos ----------
+const IB_CATS = [
+  ['all', 'Todo'], ['routine', '☀️ Rutina'], ['meeting', '📅 Reuniones'], ['reminder', '⏰ Recordatorios'], ['claude', '🤖 Claude'],
+  ['focus', '👀 Enfoque'], ['usage', '📊 Uso'], ['github', '🐙 GitHub'], ['git', '📦 Git'], ['monitor', '🌐 Sitios'],
+  ['pomodoro', '🍅 Pomodoro'], ['health', '🧘 Salud'], ['achievement', '🏅 Logros'], ['mail', '📧 Correo'], ['pet', '🐣 Pollito'],
+];
+let ibFilter = 'all';
+function renderInbox() {
+  const items = state.inbox || [];
+  const present = new Set(items.map((x) => x.cat));
+  $('#ib-filters').innerHTML = IB_CATS.filter(([k]) => k === 'all' || present.has(k))
+    .map(([k, n]) => `<button type="button" class="${k === ibFilter ? 'on' : ''}" data-ibf="${k}">${n}</button>`).join('');
+  const list = items.filter((x) => ibFilter === 'all' || x.cat === ibFilter);
+  $('#ib-list').innerHTML = list.length
+    ? list.map((x) => {
+        const d = new Date(x.at);
+        const when = d.toDateString() === new Date().toDateString() ? hm(x.at) : d.toLocaleDateString(LOC(), { day: 'numeric', month: 'short' }) + ' ' + hm(x.at);
+        const cat = (IB_CATS.find(([k]) => k === x.cat) || ['', ''])[1];
+        const acts = (x.actions || []).filter((a) => !/^(ack|snooze\.|focus\.)/.test(a.cmd));
+        const tg = x.target || { cmd: 'panel', arg: IB_TARGET[x.cat] || 'chat' };
+        return `<div class="ib ${x.read ? '' : 'unread'}" role="button" tabindex="0" data-ibid="${esc(x.id)}" data-tcmd="${esc(tg.cmd)}" data-targ="${esc(tg.arg || '')}" title="Clic para ir a verlo">
+          <div class="meta"><span>${esc(cat)}</span><span>${esc(when)}</span></div>${esc(x.text)}
+          <div class="ib-foot">${acts.length ? `<div class="acts">${acts.map((a) => `<button type="button" data-ibcmd="${esc(a.cmd)}" data-ibarg="${esc(a.arg || '')}">${esc(a.label)}</button>`).join('')}</div>` : '<span></span>'}<span class="go">Ver →</span></div></div>`;
+      }).join('')
+    : '<div class="empty">No hay avisos por aquí 🐣</div>';
+  const unread = state.unread || 0;
+  $('#hb-badge').textContent = unread > 9 ? '9+' : String(unread);
+  $('#hb-badge').classList.toggle('hidden', !unread);
+}
+$('#ib-filters').addEventListener('click', (e) => { const b = e.target.closest('[data-ibf]'); if (b) { ibFilter = b.dataset.ibf; renderInbox(); } });
+// Destino por categoría (para avisos antiguos que no lo traen guardado).
+const IB_TARGET = {
+  meeting: 'agenda#meetings', reminder: 'day#reminders', usage: 'usage#limits', focus: 'day#focus', github: 'agenda#ghbox',
+  git: 'day#gitbox', monitor: 'agenda#monitors', pomodoro: 'day#pomo-box', health: 'day#focus', achievement: 'pet#achievements',
+  mail: 'agenda#mailbox', claude: 'usage#local', pet: 'pet', routine: 'day',
+};
+function openInboxItem(card) {
+  pm.inboxRead(card.dataset.ibid);
+  $('#o-inbox').classList.add('hidden');
+  const cmd = card.dataset.tcmd;
+  const arg = card.dataset.targ || undefined;
+  // Si el destino está en este mismo panel, navega aquí; si no (web, proyecto…), lo hace la app.
+  if (cmd === 'panel') show(arg || 'chat');
+  else pm.command(cmd, arg);
+}
+$('#ib-list').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-ibcmd]');
+  if (b) {
+    e.stopPropagation();
+    pm.command(b.dataset.ibcmd, b.dataset.ibarg || undefined);
+    return;
+  }
+  const card = e.target.closest('.ib[data-ibid]');
+  if (card) openInboxItem(card);
+});
+$('#ib-list').addEventListener('keydown', (e) => {
+  const card = e.target.closest('.ib[data-ibid]');
+  if (card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openInboxItem(card); }
+});
+$('#ib-close').addEventListener('click', () => { $('#o-inbox').classList.add('hidden'); pm.inboxRead(); });
+$('#ib-read').addEventListener('click', () => pm.inboxRead());
+$('#ib-clear').addEventListener('click', () => pm.inboxClear());
+
+// ---------- tour de bienvenida ----------
+const TOUR = [
+  { view: 'chat', sel: 'header', text: '👋 ¡Hola! Soy tu pollito PM. Aquí arriba ves mi ánimo y cuánto llevas de tu sesión de Claude.' },
+  { view: 'chat', sel: '.hbtns', text: '🔍 Busca cualquier acción, 🔔 revisa tus avisos y ⚙️ abre los ajustes. Truco: Ctrl+Alt+Espacio abre la paleta desde cualquier app.' },
+  { view: 'chat', sel: 'nav', text: '📑 Estas son mis pestañas. También puedes cambiar con las teclas 1 a 5.' },
+  { view: 'chat', sel: '#chat-form', text: '💬 Pregúntame lo que quieras: “¿cuánto llevo?”, “mis tareas”, “recuérdame a las 3…”. Pulsa / para escribir aquí.' },
+  { view: 'usage', sel: '#limits', text: '📊 Tus límites de Claude y cuándo se reinician. Te aviso al 50, 75, 90 y 100%.' },
+  { view: 'day', sel: '#pomo-box', text: '🍅 Pomodoro: 25 min de concentración. Mientras dura me pongo mi bandana y te vigilo más de cerca.' },
+  { view: 'day', sel: '#tasks', text: '✅ Tus tareas del día. Doble clic para editar, arrástralas para ordenar, el puntito cambia la prioridad y el 🕒 pone hora.' },
+  { view: 'agenda', sel: '#meetings', text: '📅 Reuniones, GitHub, tus sitios y correo. Conecta tu calendario para que te avise antes de cada reunión.' },
+  { view: 'pet', sel: '#checklist-box', text: '🚀 Completa estos pasos para sacarme todo el partido. ¡Y compra accesorios en la tienda con tu maíz 🌽!' },
+];
+let tourI = 0;
+function tourShow() {
+  const st = TOUR[tourI];
+  show(st.view, true);
+  setTimeout(() => {
+    const el = $(st.sel);
+    const spot = $('#tour-spot');
+    const card = $('#tour-card');
+    if (el) {
+      const r = el.getBoundingClientRect();
+      Object.assign(spot.style, { left: r.left - 4 + 'px', top: r.top - 4 + 'px', width: r.width + 8 + 'px', height: r.height + 8 + 'px' });
+      spot.classList.remove('hidden');
+      const below = r.bottom + 170 < window.innerHeight;
+      card.style.top = (below ? r.bottom + 12 : Math.max(10, r.top - 150)) + 'px';
+    }
+    $('#tour-step').textContent = `${tourI + 1} / ${TOUR.length}`;
+    $('#tour-text').textContent = state && state.lang === 'en' ? I18N.tr(st.text, 'en') : st.text;
+    $('#tour-prev').classList.toggle('hidden', tourI === 0);
+    $('#tour-next').textContent = tourI === TOUR.length - 1 ? '¡Listo! 🎉' : 'Siguiente';
+    card.classList.remove('hidden');
+    $('#tour-next').focus();
+  }, 120);
+}
+function tourEnd() {
+  $('#tour-spot').classList.add('hidden');
+  $('#tour-card').classList.add('hidden');
+  pm.setFlags({ tourDone: true });
+  show('chat');
+}
+$('#tour-next').addEventListener('click', () => { if (tourI < TOUR.length - 1) { tourI++; tourShow(); } else tourEnd(); });
+$('#tour-prev').addEventListener('click', () => { if (tourI > 0) { tourI--; tourShow(); } });
+$('#tour-skip').addEventListener('click', tourEnd);
+function startTour() { tourI = 0; tourShow(); }
+
+// ---------- atajos de teclado en el panel ----------
+document.addEventListener('keydown', (e) => {
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+  if (e.ctrlKey && e.key.toLowerCase() === 'k') { e.preventDefault(); pm.openPalette(); return; }
+  if (e.ctrlKey && e.key === ',') { e.preventDefault(); pm.openSettings(); return; }
+  if (!$('#tour-card').classList.contains('hidden')) {
+    if (e.key === 'ArrowRight' || e.key === 'Enter') $('#tour-next').click();
+    if (e.key === 'ArrowLeft') $('#tour-prev').click();
+    return;
+  }
+  if (typing || e.ctrlKey || e.altKey || e.metaKey) return;
+  const views = ['chat', 'usage', 'day', 'agenda', 'pet'];
+  if (/^[1-5]$/.test(e.key)) { show(views[Number(e.key) - 1]); e.preventDefault(); }
+  else if (e.key === '/') { show('chat'); $('#chat-input').focus(); e.preventDefault(); }
+  else if (e.key.toLowerCase() === 'n') { show('day'); $('#task-input').focus(); e.preventDefault(); }
+  else if (e.key.toLowerCase() === 'p') { state.pomo ? pm.pomoStop() : pm.pomoStart(); e.preventDefault(); }
+});
+
+// Pregunta enviada desde la paleta de comandos.
+pm.onChatAsk((text) => { show('chat'); send(text); });
+
 // ---------- chat ----------
 async function send(text) {
   text = text.trim();
@@ -791,7 +934,7 @@ async function send(text) {
   await pm.chat(text);
 }
 $('#chat-form').addEventListener('submit', (e) => { e.preventDefault(); send($('#chat-input').value); });
-$$('.chips button').forEach((b) => b.addEventListener('click', () => send(b.dataset.q)));
+$$('.chips button[data-q]').forEach((b) => b.addEventListener('click', () => send(b.dataset.q)));
 
 // ---------- uso ----------
 async function refresh() {
@@ -802,6 +945,169 @@ async function refresh() {
 }
 $('#refresh').addEventListener('click', refresh);
 setInterval(() => { if (state) renderUsage(); }, 30000); // cuenta atrás de reinicio
+
+// ---------- tareas editables ----------
+let dragFrom = null;
+const tasksEl = document.getElementById('tasks');
+const PRIO_NEXT = { undefined: 'h', '': 'h', h: 'm', m: 'l', l: '' };
+
+tasksEl.addEventListener('change', (e) => {
+  const cb = e.target.closest('input[type=checkbox][data-i]');
+  if (cb) pm.toggleTask(state.todayKey, Number(cb.dataset.i));
+});
+tasksEl.addEventListener('click', async (e) => {
+  const del = e.target.closest('[data-del]');
+  if (del) {
+    const i = Number(del.dataset.del);
+    const removed = await pm.removeTask(i);
+    if (removed) toast(`Tarea eliminada: “${removed.text}”`, () => pm.restoreTask(i, removed));
+    return;
+  }
+  const pr = e.target.closest('[data-prio]');
+  if (pr) {
+    const i = Number(pr.dataset.prio);
+    const t = state.today.standup.today[i];
+    pm.updateTask(i, { priority: PRIO_NEXT[t.priority || ''] });
+    return;
+  }
+  const tm = e.target.closest('[data-time]');
+  if (tm && !tm.querySelector('input')) {
+    const i = Number(tm.dataset.time);
+    const t = state.today.standup.today[i];
+    tm.innerHTML = `<input type="time" class="tedit" value="${esc(t.time || '')}" />`;
+    const inp = tm.querySelector('input');
+    inp.focus();
+    const commit = () => { pm.updateTask(i, { time: inp.value || '' }); inp.classList.remove('tedit'); setTimeout(render, 0); };
+    inp.addEventListener('change', commit);
+    inp.addEventListener('blur', commit);
+    inp.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') { inp.value = t.time || ''; inp.blur(); } });
+  }
+});
+// Doble clic para editar el texto.
+tasksEl.addEventListener('dblclick', (e) => {
+  const sp = e.target.closest('[data-edit]');
+  if (!sp) return;
+  const i = Number(sp.dataset.edit);
+  const old = sp.textContent;
+  sp.innerHTML = `<input class="edit" value="${esc(old)}" maxlength="200" />`;
+  const inp = sp.querySelector('input');
+  inp.focus();
+  inp.select();
+  let done = false;
+  const finish = (save) => {
+    if (done) return;
+    done = true;
+    const v = inp.value.trim();
+    inp.classList.remove('edit');
+    if (save && v && v !== old) pm.editTask(i, v);
+    else sp.textContent = old;
+    setTimeout(render, 0);
+  };
+  inp.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') finish(true); if (ev.key === 'Escape') finish(false); });
+  inp.addEventListener('blur', () => finish(true));
+});
+// Arrastrar para reordenar.
+tasksEl.addEventListener('dragstart', (e) => {
+  const li = e.target.closest('li[data-i]');
+  if (!li) return;
+  dragFrom = Number(li.dataset.i);
+  li.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+});
+tasksEl.addEventListener('dragover', (e) => {
+  const li = e.target.closest('li[data-i]');
+  if (!li || dragFrom === null) return;
+  e.preventDefault();
+  const r = li.getBoundingClientRect();
+  const below = e.clientY > r.top + r.height / 2;
+  $$('#tasks li').forEach((x) => x.classList.remove('drop-above', 'drop-below'));
+  li.classList.add(below ? 'drop-below' : 'drop-above');
+});
+tasksEl.addEventListener('drop', (e) => {
+  e.preventDefault();
+  const li = e.target.closest('li[data-i]');
+  if (li && dragFrom !== null) {
+    let to = Number(li.dataset.i);
+    const below = li.classList.contains('drop-below');
+    if (below && to < dragFrom) to += 1;
+    if (!below && to > dragFrom) to -= 1;
+    if (to !== dragFrom) pm.moveTask(dragFrom, to);
+  }
+});
+tasksEl.addEventListener('dragend', () => {
+  dragFrom = null;
+  $$('#tasks li').forEach((x) => x.classList.remove('dragging', 'drop-above', 'drop-below'));
+  setTimeout(render, 0);
+});
+
+// ---------- cronómetro por tarea ----------
+function spentOf(t) {
+  return (t.spent || 0) + (t.startedAt ? (Date.now() - t.startedAt) / 1000 : 0);
+}
+function clock(secs) {
+  const s = Math.floor(secs), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
+  return h ? `${h}:${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}` : `${m}:${String(r).padStart(2, '0')}`;
+}
+function timerText(t) {
+  const s = spentOf(t);
+  const icon = t.startedAt ? '⏸' : '▶';
+  if (!s && !t.est) return '⏱';
+  const over = t.est && s > t.est * 60;
+  return `${icon} ${clock(s)}${t.est ? ` / ${t.est}m` : ''}${over ? ' ⚠️' : ''}`;
+}
+// Refresco en vivo del cronómetro que está en marcha (sin repintar la lista).
+setInterval(() => {
+  if (!state || !state.today || !state.today.standup) return;
+  state.today.standup.today.forEach((t, i) => {
+    if (!t.startedAt) return;
+    const el = document.querySelector(`#tasks [data-timer="${i}"]`);
+    if (el && !el.querySelector('input')) el.textContent = timerText(t);
+  });
+}, 1000);
+let timerClickT = null;
+tasksEl.addEventListener('click', (e) => {
+  const tm = e.target.closest('[data-timer]');
+  if (!tm || tm.querySelector('input')) return;
+  // Espera un poco por si es doble clic (estimar).
+  clearTimeout(timerClickT);
+  timerClickT = setTimeout(() => {
+    const i = Number(tm.dataset.timer);
+    const t = state.today.standup.today[i];
+    pm.taskTimer(i, t.startedAt ? 'stop' : 'start');
+  }, 230);
+});
+tasksEl.addEventListener('dblclick', (e) => {
+  const tm = e.target.closest('[data-timer]');
+  if (!tm) return;
+  clearTimeout(timerClickT);
+  const i = Number(tm.dataset.timer);
+  const t = state.today.standup.today[i];
+  tm.innerHTML = `<input type="number" class="tedit" min="1" max="600" placeholder="min" value="${t.est || ''}" />`;
+  const inp = tm.querySelector('input');
+  inp.focus();
+  inp.select();
+  let done = false;
+  const commit = () => { if (done) return; done = true; pm.updateTask(i, { est: inp.value }); inp.classList.remove('tedit'); setTimeout(render, 0); };
+  inp.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') commit(); if (ev.key === 'Escape') { done = true; inp.classList.remove('tedit'); setTimeout(render, 0); } });
+  inp.addEventListener('blur', commit);
+});
+
+// ---------- aviso con "Deshacer" ----------
+let toastTimer = null;
+let toastUndo = null;
+function toast(text, undo) {
+  $('#toast-text').textContent = state && state.lang === 'en' ? I18N.tr(text, 'en') : text;
+  $('#toast-undo').classList.toggle('hidden', !undo);
+  toastUndo = undo || null;
+  $('#toast').classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('#toast').classList.add('hidden'), 6000);
+}
+$('#toast-undo').addEventListener('click', () => {
+  if (toastUndo) toastUndo();
+  toastUndo = null;
+  $('#toast').classList.add('hidden');
+});
 
 // ---------- día ----------
 $('#task-form').addEventListener('submit', async (e) => {
@@ -818,25 +1124,14 @@ $('#btn-review').addEventListener('click', () => show('review'));
 $('#feed').addEventListener('click', () => pm.feed());
 $('#pet').addEventListener('click', () => pm.pet());
 $('#rename-form').addEventListener('submit', (e) => { e.preventDefault(); pm.rename($('#rename-input').value); $('#rename-input').blur(); });
-$('#s-morning').addEventListener('change', (e) => e.target.value && pm.updateSettings({ morningTime: e.target.value }));
-$('#s-evening').addEventListener('change', (e) => e.target.value && pm.updateSettings({ eveningTime: e.target.value }));
-$('#s-workdays').addEventListener('change', (e) => pm.updateSettings({ workdaysOnly: e.target.checked }));
-$('#s-chatter').addEventListener('change', (e) => pm.updateSettings({ chatter: e.target.checked }));
-$('#s-focus').addEventListener('change', (e) => pm.updateSettings({ focusWatch: e.target.checked }));
-$('#s-sounds').addEventListener('change', (e) => pm.updateSettings({ sounds: e.target.checked }));
-$('#mute').addEventListener('click', () => pm.chat(state.muted ? 'quita el silencio' : 'silencio'));
-$('#s-autostart').addEventListener('change', (e) => pm.updateSettings({ autoStart: e.target.checked }));
-$('#token-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const t = $('#token-input').value.trim();
-  if (!t) return;
-  $('#token-input').value = '';
-  state = await pm.setToken(t);
-  render();
-  show('usage');
+$('#open-settings2').addEventListener('click', () => pm.openSettings());
+$('#bath').addEventListener('click', () => pm.command('bath'));
+$('#nap').addEventListener('click', () => pm.command('nap'));
+$('#medicine').addEventListener('click', () => pm.command('medicine'));
+$('#checklist').addEventListener('click', (e) => {
+  const li = e.target.closest('[data-cmd]');
+  if (li) pm.command(li.dataset.cmd);
 });
-$('#token-clear').addEventListener('click', async () => { state = await pm.setToken(''); render(); });
-$('#quit').addEventListener('click', () => pm.quit());
 
 // ---------- onboarding ----------
 function openOnboarding() {
@@ -850,8 +1145,12 @@ $('#onb-form').addEventListener('submit', async (e) => {
   const n = $('#onb-name').value.trim();
   if (!n) return;
   await pm.rename(n);
+  const sp = document.querySelector('#onb-species .sp.on');
+  if (sp && sp.dataset.sp !== 'chick') pm.setSpecies(sp.dataset.sp);
   $('#o-onboarding').classList.add('hidden');
   show('chat');
+  // Primera vez: tour de bienvenida.
+  if (!(state.flags && state.flags.tourDone)) setTimeout(startTour, 2500);
 });
 
 // ---------- daily ----------
@@ -878,6 +1177,8 @@ function openStandup() {
     const pt = (prev && prev.standup && prev.standup.today) || [];
     $('#su-yesterday').value = pt.map((t) => `${t.done ? '✅' : '⬜'} ${t.text}`).join('\n');
     suTasks = prev && prev.review && prev.review.carry ? pt.filter((t) => !t.done).map((t) => t.text) : [];
+    // Las recurrentes de hoy ya vienen puestas 🔁
+    for (const t of state.recurringToday || []) if (!suTasks.includes(t)) suTasks.push(t);
     $('#su-help').value = '';
     $('#su-intro').textContent = prev ? `Te dejé lo que planeaste el ${dayLabel(prev.date)} para que lo ajustes.` : 'Cuéntame para organizar el día.';
     // Añade tus commits del último día laborable (git) a "¿Qué hiciste ayer?".
@@ -887,7 +1188,14 @@ function openStandup() {
       const lines = commits.slice(-12).map((c) => `📦 [${c.repo}] ${c.subject}`);
       $('#su-yesterday').value = (base ? base + '\n' : '') + lines.join('\n');
       $('#su-intro').textContent += ` Añadí tus ${commits.length} commit${commits.length === 1 ? '' : 's'} de git 📦`;
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => {
+      // …y lo que le pediste a Claude Code ese día.
+      const cj = (state.claudeJournal && state.claudeJournal.prev) || [];
+      if (!cj.length) return;
+      const cur = $('#su-yesterday').value;
+      $('#su-yesterday').value = (cur ? cur + '\n' : '') + cj.map((p) => `🤖 [${p.project}] ${p.items.join(' · ')}`).join('\n');
+      $('#su-intro').textContent += ' y lo que hiciste con Claude 🤖';
+    });
   }
   renderSuTasks();
   $('#o-standup').classList.remove('hidden');
@@ -910,6 +1218,13 @@ $('#su-form').addEventListener('submit', async (e) => {
 });
 
 // ---------- cierre ----------
+let rvMood = 0;
+$('#rv-mood').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-m]');
+  if (!b) return;
+  rvMood = Number(b.dataset.m);
+  $$('#rv-mood button').forEach((x) => x.classList.toggle('on', x === b));
+});
 function openReview() {
   const tasks = (state.today.standup && state.today.standup.today) || [];
   if (!tasks.length) {
@@ -921,13 +1236,15 @@ function openReview() {
     .join('');
   $$('#rv-tasks input').forEach((cb) => cb.addEventListener('change', () => cb.parentElement.classList.toggle('done', cb.checked)));
   $('#rv-notes').value = (state.today.review && state.today.review.notes) || '';
+  rvMood = state.today.mood || 0;
+  $$('#rv-mood button').forEach((b) => b.classList.toggle('on', Number(b.dataset.m) === rvMood));
   $('#o-review').classList.remove('hidden');
 }
 $('#rv-later').addEventListener('click', async () => { await pm.snooze('review'); $('#o-review').classList.add('hidden'); pm.hidePanel(); });
 $('#rv-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const done = $$('#rv-tasks input').map((cb) => cb.checked);
-  await pm.saveReview({ done, notes: $('#rv-notes').value, carry: $('#rv-carry').checked });
+  await pm.saveReview({ done, notes: $('#rv-notes').value, carry: $('#rv-carry').checked, mood: rvMood || undefined });
   $('#o-review').classList.add('hidden');
   show('day');
 });

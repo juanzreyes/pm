@@ -56,11 +56,11 @@ function create(ctx) {
       const mins = long ? POMO.long : POMO.short;
       pomo = { phase: 'break', endsAt: Date.now() + mins * 60e3, round: pomo.round, long };
       ctx.say(`🍅 ¡Pomodoro completado! (${day.pomodoros} hoy · +10 XP)\nDescanso de ${mins} min: levántate y estírate 🧘`, 'celebrate', 12000);
-      ctx.notify('🍅 ¡Pomodoro completado!', `Descanso de ${mins} minutos. ¡Estírate!`);
+      ctx.notify('🍅 ¡Pomodoro completado!', `Descanso de ${mins} minutos. ¡Estírate!`, () => ctx.command('panel', 'day#pomo-box'));
     } else {
       pomo = null;
       ctx.say('⏰ ¡Se acabó el descanso! ¿Otro pomodoro? Escríbeme "pomodoro" o clic derecho → 🍅', 'alarm-soft', 12000);
-      ctx.notify('⏰ Fin del descanso', '¿Empezamos otro pomodoro?');
+      ctx.notify('⏰ Fin del descanso', '¿Empezamos otro pomodoro?', () => ctx.command('panel', 'day#pomo-box'));
     }
     pomoEmit();
   }
@@ -94,8 +94,13 @@ function create(ctx) {
       if (r.done || r.at > now) continue;
       r.done = true;
       changed = true;
-      ctx.say(`⏰ ¡Recordatorio! ${r.text}`, 'alarm', 20000);
-      ctx.notify('⏰ Recordatorio', r.text);
+      ctx.say(`⏰ ¡Recordatorio! ${r.text}`, 'alarm', 30000, {
+        actions: [
+          { label: '✅ Hecho', cmd: 'reminder.done', arg: r.id },
+          { label: '⏰ +10 min', cmd: 'reminder.snooze', arg: r.id },
+        ],
+      });
+      ctx.notify('⏰ Recordatorio', r.text, () => ctx.command('panel', 'day#reminders'));
       ctx.pushChat('pet', `⏰ Recordatorio: ${r.text}`);
     }
     const before = (S().reminders || []).length;
@@ -107,6 +112,8 @@ function create(ctx) {
   function capture(text) {
     text = String(text || '').trim().slice(0, 300);
     if (!text) return null;
+    // "cada lunes: …" → tarea recurrente
+    if (ctx.captureHook) { const h = ctx.captureHook(text); if (h) return h; }
     const r = addReminder(text);
     if (r) {
       const when = new Date(r.at).toDateString() === new Date().toDateString() ? `hoy a las ${hm(r.at)}` : `el ${new Date(r.at).toLocaleDateString('es', { weekday: 'long' })} a las ${hm(r.at)}`;
@@ -182,9 +189,10 @@ function create(ctx) {
   const gitWarned = {};
   const roots = () => {
     const r = S().settings.gitRoots;
-    return Array.isArray(r) && r.length ? r : [path.dirname(ctx.appDir)];
+    return Array.isArray(r) && r.length ? r : ctx.defaultGitRoots();
   };
   async function gitRefresh() {
+    if (S().settings.gitWatch === false) { gitState = { repos: 0, today: [], warnings: [], at: Date.now(), off: true }; ctx.broadcast(); return; }
     const repos = git.discover(roots());
     const start = new Date(); start.setHours(0, 0, 0, 0);
     const todayCommits = await git.commits(repos, start.getTime(), Date.now());
@@ -209,7 +217,7 @@ function create(ctx) {
         warnings.push({ repo: st.repo, text: `${st.changed} archivos sin commit desde hace ${fmtDur(sinceCommit / 1000)}` });
         if (!gitWarned[st.repo] || now - gitWarned[st.repo] > 2 * 3600e3) {
           gitWarned[st.repo] = now;
-          if (!ctx.isMuted() && !ctx.getMeeting()) ctx.say(`💾 Llevas ${fmtDur(sinceCommit / 1000)} sin commit en ${st.repo} (${st.changed} archivos) 😬 ¡Guarda tu trabajo!`, 'alert', 11000);
+          if (!ctx.isMuted() && !ctx.getMeeting()) ctx.say(`💾 Llevas ${fmtDur(sinceCommit / 1000)} sin commit en ${st.repo} (${st.changed} archivos) 😬 ¡Guarda tu trabajo!`, 'alert', 11000, { target: { cmd: 'open.project', arg: st.path }, actions: [{ label: '📂 Abrir proyecto', cmd: 'open.project', arg: st.path }] });
         }
       }
       if (/^(main|master)$/.test(st.branch) && now - st.lastChangeAt < 3600e3) {
@@ -217,7 +225,7 @@ function create(ctx) {
         const k = st.repo + '|main|' + new Date().toDateString();
         if (!gitWarned[k]) {
           gitWarned[k] = now;
-          if (!ctx.isMuted() && !ctx.getMeeting()) ctx.say(`🌿 Ojo: estás haciendo cambios directo en ${st.branch} de ${st.repo}. ¿No toca una rama? 🤔`, 'judge', 10000);
+          if (!ctx.isMuted() && !ctx.getMeeting()) ctx.say(`🌿 Ojo: estás haciendo cambios directo en ${st.branch} de ${st.repo}. ¿No toca una rama? 🤔`, 'judge', 10000, { target: { cmd: 'open.project', arg: st.path } });
         }
       }
     }
@@ -242,7 +250,7 @@ function create(ctx) {
       ghPrev = r;
       gh = { status: 'ok', ...r, at: Date.now() };
       for (const n of notes.slice(0, 3)) {
-        ctx.say(n.text, n.anim, 11000);
+        ctx.say(n.text, n.anim, 11000, { cat: 'github', actions: [{ label: '🔗 Abrir en GitHub', cmd: 'open.url', arg: n.url }] });
         ctx.notify('GitHub', n.text, () => ctx.openUrl(n.url));
         ctx.pushChat('pet', n.text);
       }
@@ -279,13 +287,19 @@ function create(ctx) {
       ctx.store.save();
       if (secs >= 20) {
         if (looking) ctx.animate('hop');
-        else ctx.say(`✅ ¡Claude terminó en ${proj}! (${fmtDur(secs)}) Ve a revisar 👀`, 'celebrate', 10000);
-        if (!looking) ctx.notify('✅ Claude terminó', `${proj} · ${fmtDur(secs)}`);
+        else ctx.say(`✅ ¡Claude terminó en ${proj}! (${fmtDur(secs)}) Ve a revisar 👀`, 'celebrate', 12000, {
+          target: { cmd: 'open.project', arg: ev.cwd },
+          actions: [{ label: '📂 Abrir proyecto', cmd: 'open.project', arg: ev.cwd }, { label: '👍 Visto', cmd: 'ack' }],
+        });
+        if (!looking) ctx.notify('✅ Claude terminó', `${proj} · ${fmtDur(secs)}`, () => ctx.command('open.project', ev.cwd));
       }
     } else if (name === 'Notification') {
       const txt = translate(ev.message);
-      ctx.say(`🙋 Claude ${txt} (${proj})`, 'alert', 15000);
-      if (!looking) ctx.notify('🙋 Claude te necesita', `${proj}: ${txt}`);
+      ctx.say(`🙋 Claude ${txt} (${proj})`, 'alert', 15000, {
+        target: { cmd: 'open.project', arg: ev.cwd },
+        actions: [{ label: '📂 Ir al proyecto', cmd: 'open.project', arg: ev.cwd }],
+      });
+      if (!looking) ctx.notify('🙋 Claude te necesita', `${proj}: ${txt}`, () => ctx.command('open.project', ev.cwd));
     }
     ctx.send('pet:claude', { working: Object.keys(sessions).length > 0 });
     ctx.broadcast();
@@ -302,12 +316,12 @@ function create(ctx) {
   // ================= INFORMES =================
   function weeklyReport() {
     const u = ctx.getUsage();
-    return report.weekly(S(), { claude: { local: u.local, limits: u.limits }, name: ctx.petName() });
+    return report.weekly(S(), { claude: { local: u.local, limits: u.limits }, name: ctx.petName(), goals: ctx.weekGoals ? ctx.weekGoals() : [] });
   }
   async function dailyText() {
     let commits = [];
     try { commits = await lastWorkdayCommits(); } catch { /* sin git */ }
-    return report.daily(ctx.today(), new Date(), commits);
+    return report.daily(ctx.today(), new Date(), commits, { claudeToday: ctx.claudeToday ? ctx.claudeToday() : [] });
   }
   const timesheet = () => report.timesheetCsv(S(), 30);
 
@@ -335,8 +349,8 @@ function create(ctx) {
     };
   }
 
-  function start() {
-    claudeHooks.startServer(onClaudeEvent);
+  function start(extApi) {
+    claudeHooks.startServer(onClaudeEvent, extApi);
     setInterval(pomoTick, 2000);
     setInterval(remindersTick, 15000);
     setInterval(claudeTick, 60000);

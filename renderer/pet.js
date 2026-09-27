@@ -59,7 +59,8 @@ function chirp(kind = 'pio') {
       o.frequency.setValueAtTime(f1, t);
       o.frequency.exponentialRampToValueAtTime(f2, t + d);
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(kind === 'angry' ? 0.05 : 0.1, t + 0.012);
+      const vol = Math.max(0.0002, ((state.settings.volume ?? 70) / 100) * (kind === 'angry' ? 0.07 : 0.14));
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
       g.gain.exponentialRampToValueAtTime(0.0001, t + d);
       o.connect(g).connect(actx.destination);
       o.start(t);
@@ -78,6 +79,10 @@ const DUR = {
   hop: 900, peck: 900, flap: 1300, 'alarm-soft': 1400, dance: 2000, love: 1900, celebrate: 1500,
   alert: 1000, alarm: 1600, sad: 2500, faint: 3300, eat: 1900, wobble: 1300, look: 1700, hatch: 2900, hug: 2200,
   angry: 2000, judge: 2000, yawn: 2200, stretch: 2700,
+  // Gestos de reposo
+  bath: 2300,
+  read: 2900, coffee: 3300, typing: 3600, gum: 2700, sing: 3100, scratch: 1900, preen: 2300, fluff: 1300,
+  wave: 1800, sneeze: 1500, hiccup: 1900, sit: 3500, spin: 1100, lookaround: 2500, butterfly: 4300,
 };
 let actionTimer = null;
 let currentAction = null;
@@ -164,6 +169,30 @@ function effects(name) {
       break;
     case 'judge': particle(pick(['👀', '🤨', '📋']), 132, 55, { size: 20, d: 1.8 }); break;
     case 'yawn': particle('💤', 125, 60, { size: 16, d: 2 }); break;
+    case 'bath':
+      for (let i = 0; i < 10; i++) particle(pick(['🫧', '🫧', '💧', '✨']), rand(55, 145), rand(70, 140), { dx: rand(-25, 25), d: rand(1, 1.8), delay: i * 0.18, size: rand(11, 17) });
+      break;
+    // Gestos de reposo
+    case 'read': particle('✅', 58, 100, { size: 13, d: 1.3, delay: 2 }); break;
+    case 'coffee': for (let i = 0; i < 3; i++) particle('♨️', rand(118, 132), 118, { size: 11, d: 1.6, delay: 0.3 + i * 0.5, dx: rand(-6, 6) }); break;
+    case 'typing': particle('💡', 128, 52, { size: 15, d: 1.6, delay: 2.6 }); break;
+    case 'gum': particle('¡pop!', 88, 112, { cls: 'p word', size: 12, d: 0.9, delay: 2.05 }); break;
+    case 'sing': for (let i = 0; i < 4; i++) particle(pick(['🎵', '🎶', '♪']), rand(118, 140), rand(80, 95), { dx: rand(-20, 25), d: 1.6, delay: i * 0.6, size: rand(12, 17) }); break;
+    case 'scratch': particle('❓', 138, 58, { size: 13, d: 1.4, delay: 0.4 }); break;
+    case 'fluff': for (let i = 0; i < 6; i++) particle('•', rand(60, 140), rand(80, 130), { dx: rand(-30, 30), d: 1.1, size: rand(8, 12), cls: 'p feather' }); break;
+    case 'wave': particle('👋', 145, 78, { size: 16, d: 1.4 }); break;
+    case 'sneeze': particle('¡Achís!', 110, 100, { cls: 'p word', size: 13, d: 1, delay: 0.6, dx: 20 }); break;
+    case 'hiccup': for (let i = 0; i < 3; i++) particle('hic', rand(118, 134), 80, { cls: 'p word', size: 11, d: 0.8, delay: i * 0.55 }); break;
+    case 'sit': particle('😌', 132, 70, { size: 14, d: 2, delay: 0.6 }); break;
+    case 'butterfly': {
+      const b = document.createElement('div');
+      b.className = 'butterfly';
+      b.textContent = '🦋';
+      fx.appendChild(b);
+      setTimeout(() => b.remove(), 4400);
+      setTimeout(() => act('hop', true), 3900);
+      break;
+    }
   }
 }
 
@@ -179,7 +208,34 @@ function bang(txt) {
 let typeTimer = null;
 let hideTimer = null;
 
-function say({ text, anim, ms, quiet }) {
+const bubbleActions = $('#bubble-actions');
+
+// Voz del pollito (voces de Windows, sin internet). Solo avisos importantes.
+function speakText(text, lang) {
+  try {
+    if (!window.speechSynthesis) return;
+    const clean = String(text)
+      .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, '') // sin emojis
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!clean) return;
+    const u = new SpeechSynthesisUtterance(clean);
+    const want = lang === 'en' ? 'en' : 'es';
+    const voice = speechSynthesis.getVoices().find((v) => v.lang && v.lang.toLowerCase().startsWith(want));
+    if (voice) u.voice = voice;
+    u.lang = want === 'en' ? 'en-US' : 'es-ES';
+    u.pitch = 1.7; // voz de pollito
+    u.rate = 1.05;
+    u.volume = Math.max(0, Math.min(1, ((state && state.settings && state.settings.volume) ?? 70) / 100));
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  } catch { /* sin voz disponible */ }
+}
+
+function say(payload) {
+  const { text, anim, ms, quiet, actions } = payload;
+  bubbleTarget = payload.target || null;
+  bubble.title = bubbleTarget ? (payload.lang === 'en' ? 'Click to see it' : 'Clic para ir a verlo') : '';
   if (!text) return;
   wake();
   clearInterval(typeTimer);
@@ -190,18 +246,39 @@ function say({ text, anim, ms, quiet }) {
   bubble.style.animation = '';
   updateTail();
   bubbleText.textContent = '';
+  // Botones de acción dentro del bocadillo (Unirme, Posponer, Es trabajo…).
+  bubbleActions.innerHTML = '';
+  bubble.classList.toggle('has-actions', !!(actions && actions.length));
+  for (const a of actions || []) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = a.label;
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      pm.petAction(a.cmd, a.arg);
+      hideBubble();
+    });
+    bubbleActions.appendChild(b);
+  }
   const chars = [...text];
   let i = 0;
   body.classList.add('talking');
-  typeTimer = setInterval(() => {
-    bubbleText.textContent += chars[i++] || '';
-    if (i >= chars.length) {
-      clearInterval(typeTimer);
-      body.classList.remove('talking');
-    }
-  }, 26);
+  const reduced = !!(state && state.settings && state.settings.reducedMotion);
+  if (reduced) {
+    bubbleText.textContent = text; // sin efecto máquina de escribir
+    body.classList.remove('talking');
+  } else {
+    typeTimer = setInterval(() => {
+      bubbleText.textContent += chars[i++] || '';
+      if (i >= chars.length) {
+        clearInterval(typeTimer);
+        body.classList.remove('talking');
+      }
+    }, 26);
+  }
   if (anim) act(anim, !!quiet);
   else if (!quiet) chirp('pio');
+  if (payload.speak) speakText(text, payload.lang);
   scheduleHide(ms || Math.max(5000, 2500 + chars.length * 55));
 }
 
@@ -223,9 +300,21 @@ function hideBubble() {
 
 bubble.addEventListener('mouseenter', () => clearTimeout(hideTimer));
 bubble.addEventListener('mouseleave', () => scheduleHide(3000));
-bubble.addEventListener('click', () => {
-  pm.openPanel('chat');
+// Clic en el bocadillo (fuera de los botones) → ir a ver el aviso.
+let bubbleTarget = null;
+bubble.addEventListener('click', (e) => {
+  if (e.target.closest('button')) return;
+  if (bubbleTarget) pm.petAction(bubbleTarget.cmd, bubbleTarget.arg);
+  else pm.openPanel('chat');
   hideBubble();
+});
+
+// Modo discreto: al pasar el ratón por encima, se asoma.
+chick.addEventListener('mouseenter', () => pm.hover(true));
+chick.addEventListener('mouseleave', () => pm.hover(false));
+pm.onDock((d) => {
+  body.classList.toggle('docked', !!d);
+  if (d) body.classList.toggle('left', d.side === 'right'); // mira hacia la pantalla
 });
 
 function updateTail() {
@@ -350,11 +439,29 @@ function wander() {
   }, dur);
 }
 
+// Repertorio de reposo según la hora del día (y sin repetir el último gesto).
+let lastIdle = '';
+function standbyPool() {
+  const h = new Date().getHours();
+  const base = ['look', 'lookaround', 'peck', 'flap', 'hop', 'wobble', 'dance', 'scratch', 'preen', 'fluff', 'wave', 'spin', 'sneeze', 'hiccup', 'gum', 'sing', 'butterfly', 'sit'];
+  let extra = [];
+  if (h >= 7 && h < 11) extra = ['coffee', 'coffee', 'read', 'stretch'];          // mañana: café y planear el día
+  else if (h >= 11 && h < 18) extra = ['typing', 'typing', 'read', 'read', 'coffee']; // horario laboral: a trabajar
+  else if (h >= 18 && h < 23) extra = ['sit', 'yawn', 'sing', 'gum'];              // tarde-noche: más relajado
+  const pool = [...base, ...extra].filter((x) => x !== lastIdle);
+  return pool;
+}
+
 function idle() {
-  if (!dragging && !sleeping() && Date.now() > busyUntil) {
+  const reduced = !!(state && state.settings && state.settings.reducedMotion);
+  const docked = body.classList.contains('docked');
+  // Con "menos animación" solo hace gestos suaves de vez en cuando; en el borde no pasea.
+  if (reduced && !dragging && Date.now() > busyUntil) {
+    if (Math.random() < 0.3) act('look', true);
+  } else if (!dragging && !sleeping() && Date.now() > busyUntil && !docked) {
     const mood = [...body.classList].find((c) => c.startsWith('mood-')) || 'mood-happy';
     const hungry = body.classList.contains('hungry');
-    let pool = ['look', 'peck', 'flap', 'hop', 'look', 'wobble', 'dance'];
+    let pool = standbyPool();
     if (mood === 'mood-panic') pool = ['alert', 'look', 'flap', 'alert'];
     if (mood === 'mood-worried') pool = ['look', 'peck', 'wobble', 'look'];
     if (mood === 'mood-exhausted') pool = ['look', 'sad', 'wobble'];
@@ -362,18 +469,34 @@ function idle() {
     if (mood === 'mood-angry') pool = ['angry', 'look', 'angry', 'wobble'];
     if (body.classList.contains('judging')) pool = body.classList.contains('fuming') ? ['angry', 'judge', 'angry'] : ['judge', 'judge', 'look'];
     if (body.classList.contains('bored')) pool = ['yawn', 'look', 'sad', 'yawn'];
+    if (body.classList.contains('tired')) pool = ['yawn', 'sit', 'look', 'yawn', 'sit'];
+    if (body.classList.contains('sick')) pool = ['sad', 'sneeze', 'look', 'sit'];
+    if (body.classList.contains('dirty') && Math.random() < 0.4) particle('🪰', rand(60, 150), rand(60, 110), { dx: rand(-40, 40), d: 2.2, size: 12 });
     const still = mood === 'mood-angry' || body.classList.contains('judging') || body.classList.contains('meeting') || body.classList.contains('pomo-focus');
     if (body.classList.contains('meeting')) pool = ['look', 'peck', 'look'];
-    if (!still && Math.random() < 0.35) wander();
-    else act(pick(pool), true);
+    if (!still && Math.random() < 0.25) wander();
+    else {
+      lastIdle = pick(pool);
+      act(lastIdle, true);
+    }
   }
-  setTimeout(idle, rand(4500, 10000));
+  setTimeout(idle, rand(3500, 8000));
 }
 
 // Zzz mientras duerme
 setInterval(() => {
   if (sleeping()) particle('z', rand(100, 115), rand(55, 70), { cls: 'zzz', size: rand(12, 18) });
 }, 1400);
+
+// Ambiente de temporada: nieve, murciélagos, corazones, confeti de Año Nuevo, velitas de cumpleaños.
+setInterval(() => {
+  if (body.classList.contains('reduced') || sleeping() && Math.random() < 0.5) return;
+  if (body.classList.contains('season-xmas')) particle('❄️', rand(20, 200), 20, { cls: 'p fall', d: 3, size: rand(9, 14) });
+  else if (body.classList.contains('season-halloween') && Math.random() < 0.35) particle('🦇', rand(40, 180), rand(40, 90), { dx: rand(-40, 40), d: 2.2, size: 13 });
+  else if (body.classList.contains('season-valentine') && Math.random() < 0.5) particle('💘', rand(60, 150), rand(60, 100), { d: 2, size: 13 });
+  else if (body.classList.contains('season-newyear') && Math.random() < 0.3) confetti();
+  else if (body.classList.contains('birthday') && Math.random() < 0.4) particle(pick(['🎂', '🎈', '🎉']), rand(40, 170), rand(60, 110), { d: 2.2, size: 15 });
+}, 2500);
 
 // ---------- Ánimo según el consumo ----------
 function isNight() {
@@ -402,7 +525,7 @@ function updateMood() {
   else if (u >= 50) m = 'ok';
   const angry = !!(state && state.life && state.life.angryUntil > Date.now());
   if (angry) m = 'angry';
-  else if (isNight() && Date.now() - lastInteract > 60000 && Date.now() - lastCursorMove > 60000) m = 'sleep';
+  else if ((state && state.pet && (state.pet.napUntil || 0) > Date.now()) || (isNight() && Date.now() - lastInteract > 60000 && Date.now() - lastCursorMove > 60000)) m = 'sleep';
 
   for (const c of [...body.classList]) if (c.startsWith('mood-')) body.classList.remove(c);
   body.classList.add('mood-' + m);
@@ -410,14 +533,42 @@ function updateMood() {
   if (state && state.pet.fullness < 25) body.classList.add('mood-hungry');
 }
 
-// Evolución, accesorios y colores según el estado.
-const SLOTS = ['head', 'face', 'neck', 'back', 'skin'];
+// Temporada según la fecha (disfraces automáticos).
+function seasonOf(d = new Date()) {
+  const m = d.getMonth() + 1, day = d.getDate();
+  if ((m === 12 && day === 31) || (m === 1 && day === 1)) return 'newyear';
+  if ((m === 12 && day >= 15) || (m === 1 && day <= 6)) return 'xmas';
+  if ((m === 10 && day >= 25) || (m === 11 && day <= 1)) return 'halloween';
+  if (m === 2 && day === 14) return 'valentine';
+  return '';
+}
+function isBirthday() {
+  const born = state && state.pet && state.pet.born;
+  if (!born) return false;
+  const b = new Date(born), n = new Date();
+  return n.getFullYear() > b.getFullYear() && b.getMonth() === n.getMonth() && b.getDate() === n.getDate();
+}
+
+// Evolución, accesorios, colores, necesidades y temporada según el estado.
+const SLOTS = ['head', 'face', 'neck', 'back', 'skin', 'buddy'];
+const SPECIES = ['chick', 'duck', 'cat', 'penguin'];
 function updateLook() {
   if (!state) return;
+  const p = state.pet || {};
+  body.classList.toggle('dirty', (p.clean ?? 100) < 35);
+  body.classList.toggle('sick', !!p.sick);
+  body.classList.toggle('tired', (p.energy ?? 100) < 25 && !p.sick);
+  body.classList.toggle('napping', (p.napUntil || 0) > Date.now());
+  const season = seasonOf();
+  for (const s of ['xmas', 'halloween', 'newyear', 'valentine']) body.classList.toggle('season-' + s, season === s);
+  body.classList.toggle('birthday', isBirthday());
+  body.classList.toggle('focus-mode', !!state.focusMode);
   const stage = (state.stage && state.stage.id) || 'chick';
   body.classList.toggle('stage-young', stage === 'young');
   body.classList.toggle('stage-rooster', stage === 'rooster');
   for (const c of [...body.classList]) if (/^(acc-|skin-|has-)/.test(c)) body.classList.remove(c);
+  const sp = SPECIES.includes(p.species) ? p.species : 'chick';
+  for (const x of SPECIES) body.classList.toggle('species-' + x, sp === x);
   const eq = state.equipped || {};
   for (const slot of SLOTS) {
     const id = eq[slot];
@@ -429,6 +580,13 @@ function updateLook() {
 
 function updateMeter() {
   updateLook();
+  const st = state && state.settings;
+  body.classList.toggle('reduced', !!(st && st.reducedMotion));
+  // Contador de avisos sin leer (clic en el medidor → centro de avisos).
+  const unread = (state && state.unread) || 0;
+  const badge = $('#badge');
+  badge.textContent = unread > 9 ? '9+' : String(unread);
+  badge.classList.toggle('hidden', !unread);
   if (pomo && pomo.endsAt) {
     const left = Math.max(0, Math.round((pomo.endsAt - Date.now()) / 1000));
     const mm = String(Math.floor(left / 60)).padStart(2, '0');
@@ -447,7 +605,7 @@ function updateMeter() {
   meter.className = 'hit';
   if (s) {
     const p = Math.round(s.utilization);
-    meterText.textContent = `${state.muted ? '🔕 ' : ''}5 h · ${p}%`;
+    meterText.textContent = `${state.trackingPausedUntil ? '⏸️ ' : ''}${state.muted ? '🔕 ' : ''}5 h · ${p}%`;
     meter.classList.add(p >= 90 ? 'lvl-max' : p >= 75 ? 'lvl-high' : p >= 50 ? 'lvl-mid' : 'lvl-ok');
     meter.title = lims.map((l) => `${l.label}: ${Math.round(l.utilization)}%`).join('\n');
   } else if (u && u.local && u.local.today.messages) {
@@ -459,7 +617,7 @@ function updateMeter() {
   }
 }
 
-meter.addEventListener('click', () => pm.openPanel('usage'));
+meter.addEventListener('click', () => pm.openPanel(state && state.unread ? 'inbox' : 'usage'));
 
 // ---------- Eventos desde el proceso principal ----------
 pm.onState((s) => {
@@ -495,6 +653,97 @@ pm.onFocus((f) => {
 });
 pm.onAnim(act);
 
+// ---------- Jugar: maíz, pelota y paseo por la barra de tareas ----------
+function chickCenter() {
+  const r = chick.getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + r.height * 0.62 };
+}
+function toy(emoji, cls, x, y) {
+  const el = document.createElement('div');
+  el.className = 'toy ' + (cls || '');
+  el.textContent = emoji;
+  el.style.left = x - 11 + 'px';
+  el.style.top = y - 11 + 'px';
+  document.body.appendChild(el);
+  return el;
+}
+function throwCorn() {
+  wake();
+  const c = chickCenter();
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      const el = toy('🌽', 'corn-drop', c.x + (i - 1) * 14, c.y);
+      setTimeout(() => el.remove(), 1400);
+    }, i * 180);
+  }
+  busyUntil = Date.now() + 2500;
+}
+function playBall() {
+  wake();
+  busyUntil = Date.now() + 7000;
+  const W = window.innerWidth;
+  const floor = chick.getBoundingClientRect().bottom - 14;
+  // La pelota entra botando por el lado con más espacio…
+  const fromLeft = chickCenter().x > W / 2;
+  let x = fromLeft ? -20 : W + 20, y = floor - 80, vx = fromLeft ? 2.4 : -2.4, vy = 0, t = 0, kicked = false, bounces = 0;
+  const ball = toy('⚽', '', x, y);
+  const step = () => {
+    t++;
+    vy += 0.55;
+    x += vx; y += vy;
+    if (y > floor - 11) { y = floor - 11; vy = -Math.abs(vy) * 0.62; if (Math.abs(vy) < 1.2) vy = 0; }
+    ball.style.left = x - 11 + 'px';
+    ball.style.top = y - 11 + 'px';
+    ball.style.transform = `rotate(${x * 4}deg)`;
+    const c = chickCenter();
+    // …el pollito corre hacia ella…
+    if (!kicked && t % 12 === 0) {
+      const target = Math.max(-55, Math.min(55, posX + (x - c.x) * 0.5));
+      body.classList.toggle('left', x < c.x);
+      body.classList.add('walking');
+      walker.style.transitionDuration = '400ms';
+      walker.style.transform = `translateX(${target}px)`;
+      posX = target;
+    }
+    // …y la patea.
+    if (!kicked && Math.abs(x - c.x) < 34) {
+      kicked = true;
+      body.classList.remove('walking');
+      act('hop');
+      vx = fromLeft ? 3.6 : -3.6; // …y la devuelve por donde vino
+      vy = -10;
+      chirp();
+    }
+    // Rebota en los bordes de la ventana un par de veces antes de irse.
+    if (kicked && bounces < 2 && (x < 12 || x > W - 12)) { vx = -vx * 0.8; bounces++; }
+    if (x < -40 || x > W + 40 || t > 600) {
+      ball.remove();
+      body.classList.remove('walking');
+      setTimeout(() => act('dance'), 200);
+      return;
+    }
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+pm.onPlay((kind) => {
+  if (kind === 'corn') throwCorn();
+  if (kind === 'ball') playBall();
+});
+// Paseo: la ventana se mueve desde el proceso principal; aquí solo caminamos.
+pm.onStroll((d) => {
+  if (d) {
+    wake();
+    body.classList.add('walking');
+    body.classList.toggle('left', d.dir === 'left');
+    busyUntil = Date.now() + 60000;
+  } else {
+    body.classList.remove('walking', 'left');
+    busyUntil = Date.now() + 800;
+    act('hop', true);
+  }
+});
+
 pm.getState().then((s) => {
   state = s;
   pomo = s.pomo || null;
@@ -509,3 +758,6 @@ setInterval(updateMood, 15000);
 setTimeout(blink, 1500);
 setTimeout(idle, 4000);
 updateTail();
+
+// Modo foco: se pone la cinta de concentración.
+pm.onFocusMode((on) => body.classList.toggle('focus-mode', !!on));

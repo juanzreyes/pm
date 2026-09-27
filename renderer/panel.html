@@ -5,6 +5,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" />
   <title>PM · Panel</title>
   <link rel="stylesheet" href="panel.css" />
+  <link rel="stylesheet" href="theme.css" />
 </head>
 <body>
   <div id="card">
@@ -16,15 +17,20 @@
         <div id="h-name">PM</div>
         <div id="h-mood">tu pollito Project Manager</div>
       </div>
-      <button id="close" class="icon" title="Cerrar">✕</button>
+      <div class="hbtns">
+        <button id="hb-palette" class="icon" data-icon="search" title="Buscar comando (Ctrl+K)" aria-label="Buscar comando"></button>
+        <button id="hb-inbox" class="icon" data-icon="bell" title="Centro de avisos" aria-label="Centro de avisos"><span id="hb-badge" class="hbadge hidden"></span></button>
+        <button id="hb-settings" class="icon" data-icon="settings" title="Ajustes (Ctrl+,)" aria-label="Ajustes"></button>
+        <button id="close" class="icon" data-icon="x" title="Cerrar (Esc)" aria-label="Cerrar"></button>
+      </div>
     </header>
 
-    <nav>
-      <button data-view="chat" class="active">💬 Chat</button>
-      <button data-view="usage">📊 Uso</button>
-      <button data-view="day">📋 Día</button>
-      <button data-view="agenda">📬 Agenda</button>
-      <button data-view="pet">🐣 Perfil</button>
+    <nav role="tablist">
+      <button data-view="chat" class="active" data-icon="chat" title="Chat (1)">Chat</button>
+      <button data-view="usage" data-icon="gauge" title="Uso (2)">Uso</button>
+      <button data-view="day" data-icon="calendar" title="Día (3)">Día</button>
+      <button data-view="agenda" data-icon="inbox" title="Agenda (4)">Agenda</button>
+      <button data-view="pet" data-icon="user" title="Perfil (5)">Perfil</button>
     </nav>
 
     <main>
@@ -37,6 +43,7 @@
           <button data-q="Tokens de hoy">Hoy</button>
           <button data-q="Mis tareas">Tareas</button>
           <button data-q="Ayuda">?</button>
+          <button type="button" id="chip-prompts" title="Biblioteca de prompts">📚 Prompts</button>
         </div>
         <form id="chat-form">
           <input id="chat-input" autocomplete="off" placeholder="Pregúntame algo… pío 🐣" maxlength="500" />
@@ -65,17 +72,88 @@
           </div>
           <button id="pomo-btn" class="primary">▶ Empezar pomodoro</button>
         </div>
+        <div id="focus-box" class="box focus-box">
+          <div class="row between">
+            <div><b id="focus-title">🎯 Modo foco</b><div class="small muted" id="focus-sub">Solo te molesto con lo urgente; lo demás te espera en avisos.</div></div>
+            <span id="focus-time" class="pomo-time hidden"></span>
+          </div>
+          <div class="row gap" id="focus-start">
+            <button class="soft grow" data-focus="25">25 min</button>
+            <button class="soft grow" data-focus="50">50 min</button>
+            <button class="soft grow" data-focus="90">90 min</button>
+          </div>
+          <button id="focus-stop" class="ghost hidden">🏁 Terminar el foco</button>
+        </div>
 
         <div class="row between">
           <h3 id="day-title">Hoy</h3>
           <span id="day-progress" class="pill"></span>
         </div>
         <ul id="tasks"></ul>
+        <div id="est-insight" class="small muted hidden"></div>
         <form id="task-form" class="row">
           <input id="task-input" placeholder="Añadir tarea…" maxlength="200" autocomplete="off" />
           <button class="primary" type="submit">＋</button>
         </form>
         <div id="day-notes"></div>
+
+        <details id="recurring" class="recurring">
+          <summary><b>🔁 Tareas recurrentes</b> <span id="rec-count" class="pill"></span></summary>
+          <ul id="rec-list" class="editlist"></ul>
+          <form id="rec-form" class="row">
+            <input id="rec-text" placeholder="Revisar métricas…" maxlength="200" autocomplete="off" />
+            <select id="rec-days" aria-label="Cuándo">
+              <option value="1,2,3,4,5">Lun a vie</option>
+              <option value="0,1,2,3,4,5,6">Todos los días</option>
+              <option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option>
+              <option value="4">Jueves</option><option value="5">Viernes</option><option value="6">Sábado</option><option value="0">Domingo</option>
+            </select>
+            <button class="primary" type="submit">＋</button>
+          </form>
+          <div class="small muted">Tip: en la captura rápida escribe <b>cada lunes: revisar métricas</b> 🔁</div>
+        </details>
+
+        <div class="row between">
+          <h3>🗓️ Bloques de tiempo</h3>
+          <button id="btn-blocks" class="ghost mini">Planificar</button>
+        </div>
+        <div id="blocks-next" class="box small"></div>
+
+        <div class="row between">
+          <h3>🎯 Objetivos de la semana</h3>
+          <span id="goals-week" class="pill"></span>
+        </div>
+        <ul id="goals" class="goals"></ul>
+        <form id="goal-form" class="row">
+          <input id="goal-input" placeholder="Un objetivo para esta semana…" maxlength="120" autocomplete="off" />
+          <button class="primary" type="submit">＋</button>
+        </form>
+
+        <div class="row between">
+          <h3>💧 Hábitos</h3>
+          <button id="habit-add" class="ghost mini" title="Nuevo hábito">＋</button>
+        </div>
+        <div id="habits" class="habits"></div>
+        <form id="habit-form" class="row hidden">
+          <input id="habit-emoji" value="⭐" maxlength="4" class="emoji-in" aria-label="Emoji" />
+          <input id="habit-name" placeholder="Nuevo hábito (ej: Meditar)" maxlength="30" autocomplete="off" />
+          <input id="habit-target" type="number" min="1" max="20" value="1" class="num-in" title="Veces al día" />
+          <button class="primary" type="submit">＋</button>
+        </form>
+
+        <div class="row between">
+          <h3>🗒️ Notas del día</h3>
+          <span id="notes-saved" class="muted small"></span>
+        </div>
+        <textarea id="notes" rows="4" placeholder="Apuntes rápidos: ideas, enlaces, decisiones… se guardan solos."></textarea>
+        <input id="notes-search" placeholder="🔍 Buscar en notas de otros días…" autocomplete="off" />
+        <div id="notes-results" class="notes-results"></div>
+
+        <div class="row between">
+          <h3>🤖 Hoy con Claude</h3>
+          <button id="journal-ai" class="ghost mini" title="Resumir con IA">✨ Resumir</button>
+        </div>
+        <div id="claude-journal" class="box small"></div>
 
         <h3>⏰ Recordatorios</h3>
         <ul id="reminders" class="editlist"></ul>
@@ -93,6 +171,7 @@
           <button id="btn-daily-copy" class="ghost grow">📋 Copiar daily</button>
           <button id="btn-report" class="ghost grow">📊 Informe semanal</button>
         </div>
+        <button id="btn-monthly" class="ghost">📄 Informe mensual en PDF</button>
 
         <h3>👀 Productividad de hoy</h3>
         <div id="focus" class="box"></div>
@@ -219,16 +298,33 @@
           <div class="stat"><span>⭐ XP</span><div class="bar"><i id="st-xp"></i></div></div>
           <div class="stat"><span>💛 Felicidad</span><div class="bar"><i id="st-happy"></i></div></div>
           <div class="stat"><span>🌽 Pancita</span><div class="bar"><i id="st-full"></i></div></div>
+          <div class="stat"><span>🧼 Limpieza</span><div class="bar"><i id="st-clean"></i></div></div>
+          <div class="stat"><span>⚡ Energía</span><div class="bar"><i id="st-energy"></i></div></div>
           <div class="muted small" id="st-age"></div>
-          <div class="row gap" style="margin-top:8px">
-            <button id="feed" class="soft grow">🌽 Dar de comer</button>
-            <button id="pet" class="soft grow">💛 Acariciar</button>
+          <div id="st-status" class="pet-status hidden"></div>
+          <div class="care">
+            <button id="feed" class="soft">🌽 Comer</button>
+            <button id="pet" class="soft">💛 Mimos</button>
+            <button id="bath" class="soft">🛁 Bañar</button>
+            <button id="nap" class="soft">😴 Siesta</button>
+            <button id="medicine" class="primary hidden">💊 Medicina · 25 🌽</button>
+          </div>
+          <div class="care">
+            <button id="play-corn" class="ghost">🌽 Lanzar maíz</button>
+            <button id="play-ball" class="ghost">⚽ Pelota</button>
+            <button id="play-stroll" class="ghost">🚶 Pasear</button>
           </div>
         </div>
 
+        <div id="checklist-box" class="box checklist-box">
+          <div class="row between"><b>🚀 Configura tu pollito</b><span id="cl-count" class="pill"></span></div>
+          <div class="progress"><i id="cl-bar"></i></div>
+          <ul id="checklist"></ul>
+        </div>
+
         <div class="row gap">
-          <button id="open-stats" class="soft grow">📈 Estadísticas</button>
-          <button id="open-game" class="soft grow">🎮 Minijuego</button>
+          <button id="open-stats" class="soft grow" data-icon="chart">Estadísticas</button>
+          <button id="open-game" class="soft grow" data-icon="game">Minijuego</button>
         </div>
 
         <div class="row between"><h3>🏅 Logros</h3><span id="ach-count" class="pill"></span></div>
@@ -238,27 +334,8 @@
         <div class="small muted">Ganas 🌽 maíz con cada XP, logros y el minijuego.</div>
         <div id="shop" class="shop-grid"></div>
 
-        <h3>🤖 IA (chat inteligente)</h3>
-        <div class="box small">
-          <p class="muted">Con una API key de Anthropic, el pollito responde cualquier pregunta, prioriza tus tareas, crea recordatorios y mejora tus informes. Consigue la key
-            <button type="button" class="link" data-open="https://console.anthropic.com/settings/keys">aquí</button> (se paga por uso; se guarda cifrada).</p>
-          <form id="ai-form" class="row">
-            <input id="ai-key" type="password" placeholder="sk-ant-…" autocomplete="off" />
-            <button class="soft" type="submit">Usar</button>
-          </form>
-          <label class="row between">Modelo <select id="ai-model" style="width:auto"></select></label>
-          <label class="row between">Usar IA en el chat <input type="checkbox" id="ai-enabled" /></label>
-          <div id="ai-msg" class="small"></div>
-          <button type="button" id="ai-remove" class="link hidden">Quitar API key</button>
-        </div>
-
-        <h3>🌐 Idioma</h3>
-        <div class="box small">
-          <label class="row between">Idioma / Language
-            <select id="lang" style="width:auto"><option value="es">Español</option><option value="en">English</option></select>
-          </label>
-          <label class="row between">Ocultarme al presentar o en pantalla completa <input type="checkbox" id="auto-hide" /></label>
-        </div>
+        <h3>🐾 Especie</h3>
+        <div id="species" class="species"></div>
 
         <h3>Nombre</h3>
         <form id="rename-form" class="row">
@@ -266,73 +343,7 @@
           <button class="primary" type="submit">Guardar</button>
         </form>
 
-        <h3>Rutina</h3>
-        <div class="box">
-          <label class="row between">Pregunta del daily <input type="time" id="s-morning" /></label>
-          <label class="row between">Cierre del día <input type="time" id="s-evening" /></label>
-          <label class="row between">Solo de lunes a viernes <input type="checkbox" id="s-workdays" /></label>
-          <label class="row between">Charlas espontáneas <input type="checkbox" id="s-chatter" /></label>
-          <label class="row between">Vigilar distracciones (YouTube, redes…) <input type="checkbox" id="s-focus" /></label>
-          <label class="row between">Sonidos de pío 🔊 <input type="checkbox" id="s-sounds" /></label>
-          <label class="row between">Iniciar con Windows <input type="checkbox" id="s-autostart" /></label>
-          <button id="mute" class="soft">🔕 Silenciar 1 hora (reunión)</button>
-        </div>
-
-        <h3>🔌 Integraciones</h3>
-        <div class="box small">
-          <div class="row between"><b>🤖 Claude Code</b><span id="cc-status" class="pill"></span></div>
-          <p class="muted">Te aviso cuando Claude termine una tarea o necesite tu permiso, y muestro una burbuja mientras trabaja. Añade unos hooks a tu <code>~/.claude/settings.json</code> (con copia de seguridad).</p>
-          <div class="row gap">
-            <button id="cc-install" class="primary grow">Conectar con Claude Code</button>
-            <button id="cc-uninstall" class="ghost hidden">Quitar</button>
-          </div>
-          <div id="cc-msg"></div>
-        </div>
-        <div class="box small">
-          <div class="row between"><b>🐙 GitHub</b><span id="gh-status" class="pill"></span></div>
-          <p class="muted">PRs que esperan tu revisión, CI fallido, aprobaciones y comentarios. Crea un token personal
-            <button type="button" class="link" data-open="https://github.com/settings/tokens/new?scopes=repo,read:org&description=PM%20Pollito">aquí</button>
-            (permisos <code>repo</code> y <code>read:org</code>) y pégalo. PM solo lo usa para leer; se guarda cifrado.</p>
-          <form id="gh-form" class="row">
-            <input id="gh-token" type="password" placeholder="ghp_… / github_pat_…" autocomplete="off" />
-            <button class="soft" type="submit">Usar</button>
-          </form>
-          <button type="button" id="gh-remove" class="link hidden">Quitar token</button>
-        </div>
-        <div class="box small">
-          <b>💻 Carpetas con tus repos de git</b>
-          <p class="muted">Una por línea. Busco repositorios hasta 2 niveles dentro.</p>
-          <textarea id="git-roots" rows="2"></textarea>
-          <button id="git-roots-save" class="soft">Guardar carpetas</button>
-          <div id="git-roots-msg" class="small muted"></div>
-        </div>
-        <div class="box small">
-          <b>🧘 Salud</b>
-          <label class="row between">Pausa activa cada 50 min <input type="checkbox" id="h-breaks" /></label>
-          <label class="row between">Descanso visual 20-20-20 <input type="checkbox" id="h-eyes" /></label>
-          <label class="row between">Recordar tomar agua <input type="checkbox" id="h-water" /></label>
-        </div>
-
-        <h3>Conexión con Claude</h3>
-        <div class="box small">
-          <div id="web-status"></div>
-          <button id="web-login" class="primary">🌐 Conectar con mi cuenta de Claude</button>
-          <button id="web-logout" class="link hidden">Cerrar sesión de Claude en PM</button>
-          <details>
-            <summary class="muted">Opciones avanzadas</summary>
-            <p class="muted">También puedo usar la sesión de <b>Claude Code</b> de este equipo o un token OAuth que pegues aquí (se guarda cifrado).</p>
-            <form id="token-form" class="row">
-              <input id="token-input" type="password" placeholder="Token (opcional)" autocomplete="off" />
-              <button class="soft" type="submit">Usar</button>
-            </form>
-            <button id="token-clear" class="link hidden">Quitar token manual</button>
-          </details>
-        </div>
-        <div class="row between small muted">
-          <span id="version"></span>
-          <button type="button" id="check-updates" class="ghost mini">Buscar actualizaciones</button>
-        </div>
-        <button id="quit" class="danger">Cerrar PM 😢</button>
+        <button id="open-settings2" class="ghost" data-icon="settings">Ajustes, integraciones y privacidad</button>
       </section>
     </main>
 
@@ -344,6 +355,8 @@
       <form id="onb-form">
         <label>¿Cómo me vas a llamar?</label>
         <input id="onb-name" maxlength="24" placeholder="Ej: Pollito, Kiwi, Sr. Pío…" required />
+        <label>¿Qué quieres que sea?</label>
+        <div id="onb-species" class="species"></div>
         <div id="onb-conn" class="box small"></div>
         <button class="primary big" type="submit">¡Ese es mi nombre! 💛</button>
       </form>
@@ -370,6 +383,19 @@
       </form>
     </div>
 
+    <div id="o-inbox" class="overlay hidden" role="dialog" aria-label="Centro de avisos">
+      <div class="row between">
+        <h2>🔔 Centro de avisos</h2>
+        <button type="button" id="ib-close" class="icon" data-icon="x" title="Cerrar" aria-label="Cerrar"></button>
+      </div>
+      <div id="ib-filters" class="chips"></div>
+      <div id="ib-list" class="ib-list"></div>
+      <div class="row gap">
+        <button type="button" id="ib-read" class="soft grow" data-icon="check">Marcar todo como leído</button>
+        <button type="button" id="ib-clear" class="ghost" data-icon="trash">Vaciar</button>
+      </div>
+    </div>
+
     <div id="o-report" class="overlay hidden">
       <div class="row between">
         <h2 id="rp-title">📊 Informe semanal</h2>
@@ -389,8 +415,59 @@
         <button type="button" id="st-close" class="icon" title="Cerrar">✕</button>
       </div>
       <div id="st-tiles" class="tiles"></div>
+      <button type="button" id="st-pdf" class="soft">📄 Descargar informe del mes en PDF</button>
       <div id="st-charts"></div>
       <div id="st-tip" class="viz-tip hidden"></div>
+    </div>
+
+    <div id="o-prompts" class="overlay hidden">
+      <div class="row between">
+        <h2>📚 Biblioteca de prompts</h2>
+        <button type="button" id="pr-close" class="icon" title="Cerrar">✕</button>
+      </div>
+      <p class="muted small">Clic para copiar y pegar en Claude. <code>{{clipboard}}</code> se reemplaza por lo que tengas copiado.</p>
+      <div id="pr-list" class="pr-list"></div>
+      <form id="pr-form" class="pr-form">
+        <input id="pr-title" placeholder="Título" maxlength="60" required />
+        <textarea id="pr-text" rows="4" placeholder="Texto del prompt… usa {{clipboard}} para incluir lo copiado" required></textarea>
+        <input type="hidden" id="pr-id" />
+        <div class="row gap">
+          <button type="button" id="pr-cancel" class="ghost hidden">Cancelar</button>
+          <button type="submit" class="primary grow" id="pr-save">＋ Guardar prompt</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="o-blocks" class="overlay hidden">
+      <div class="row between">
+        <h2>🗓️ Bloques de hoy</h2>
+        <button type="button" id="bl-close" class="icon" title="Cerrar">✕</button>
+      </div>
+      <p class="muted small">Arrastra una tarea a una hora. Arrastra el borde inferior de un bloque para alargarlo; clic en ✕ para quitarlo.</p>
+      <div class="small muted"><b>🧩 Plantillas de día</b> · clic para aplicarla (se salta lo que choca con reuniones)</div>
+      <div id="bl-templates" class="bl-templates"></div>
+      <form id="tpl-form" class="row">
+        <input id="tpl-name" placeholder="Guardar hoy como plantilla…" maxlength="40" autocomplete="off" />
+        <button class="soft" type="submit">💾</button>
+      </form>
+      <div id="bl-tasks" class="bl-tasks"></div>
+      <input id="bl-free" class="bl-free" value="Foco profundo" maxlength="60" title="Título para el bloque libre" />
+      <div id="bl-timeline" class="bl-timeline"></div>
+    </div>
+
+    <div id="o-whatsnew" class="overlay hidden">
+      <div class="row between">
+        <h2>🎁 Novedades</h2>
+        <button type="button" id="wn-close" class="icon" title="Cerrar">✕</button>
+      </div>
+      <div class="wn-list">
+        <div class="wn"><span>🎯</span><div><b>Modo foco</b><p>Solo te molesto con lo urgente y te regaño al minuto si te distraes. Se activa solo en tus bloques y pomodoros.</p></div></div>
+        <div class="wn"><span>🔁</span><div><b>Tareas recurrentes</b><p>Escribe “cada lunes: revisar métricas” y aparecerá sola en tu daily.</p></div></div>
+        <div class="wn"><span>🧩</span><div><b>Plantillas de día</b><p>Día de foco, de reuniones o de bugs: bloques y tareas de un clic. También puedes guardar las tuyas.</p></div></div>
+        <div class="wn"><span>🔍</span><div><b>Búsqueda global</b><p>Ctrl+Alt+Espacio busca también en tareas, notas, prompts, objetivos, avisos y lo que hiciste con Claude.</p></div></div>
+        <div class="wn"><span>🩺</span><div><b>Diagnóstico</b><p>Ajustes → Diagnóstico: memoria, CPU y últimos errores, con un botón para copiar el informe.</p></div></div>
+      </div>
+      <button type="button" id="wn-ok" class="primary big">¡Genial! 🐣</button>
     </div>
 
     <div id="o-review" class="overlay hidden">
@@ -398,6 +475,14 @@
       <p class="muted">¿Cumpliste con lo que dijiste que harías hoy?</p>
       <form id="rv-form">
         <ul id="rv-tasks" class="checklist"></ul>
+        <label>¿Cómo te sentiste hoy?</label>
+        <div id="rv-mood" class="mood" role="radiogroup" aria-label="Ánimo del día">
+          <button type="button" data-m="5" title="Genial">😄</button>
+          <button type="button" data-m="4" title="Bien">🙂</button>
+          <button type="button" data-m="3" title="Normal">😐</button>
+          <button type="button" data-m="2" title="Regular">😕</button>
+          <button type="button" data-m="1" title="Agotado">😫</button>
+        </div>
         <label>¿Algo que quieras anotar?</label>
         <textarea id="rv-notes" rows="2" placeholder="Bloqueos, logros, pendientes…"></textarea>
         <label class="row"><input type="checkbox" id="rv-carry" checked /> Pasar lo pendiente a mañana</label>
@@ -408,8 +493,22 @@
       </form>
     </div>
   </div>
+  <!-- Aviso inferior con "Deshacer" -->
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"><span id="toast-text"></span><button type="button" id="toast-undo">Deshacer</button></div>
+  <!-- Tour de bienvenida -->
+  <div id="tour-spot" class="tour-spot hidden"></div>
+  <div id="tour-card" class="tour-card hidden" role="dialog" aria-live="polite">
+    <div id="tour-step" class="small muted"></div>
+    <div id="tour-text"></div>
+    <div class="row between">
+      <button type="button" id="tour-skip" class="link">Saltar</button>
+      <div class="row gap"><button type="button" id="tour-prev" class="ghost mini">Atrás</button><button type="button" id="tour-next" class="primary">Siguiente</button></div>
+    </div>
+  </div>
+  <script src="icons.js"></script>
   <script src="../src/i18n.js"></script>
   <script src="panel.js"></script>
+  <script src="panel-extras.js"></script>
   <script src="stats.js"></script>
 </body>
 </html>

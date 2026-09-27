@@ -44,13 +44,80 @@ Widget de escritorio con un pollito tamagotchi que vive encima de todas tus vent
 - **🌐 Mis sitios** (📬 Agenda): vigila URLs (webs, APIs, `localhost`) cada 2 min y avisa si se caen o vuelven.
 - **🌐 Español / English** (🐣 Perfil → Idioma).
 
+### Experiencia de uso
+- **Botones en los avisos**: los bocadillos traen acciones directas (`Unirme`, `Posponer 10 min`, `Es trabajo`, `Hacer daily`, `Otro pomodoro`…).
+- **🔍 Paleta de comandos** (`Ctrl+Alt+Espacio` desde cualquier app, o `Ctrl+K` en el panel): busca y ejecuta cualquier acción; con texto libre, lo anota o se lo pregunta al pollito.
+- **🔔 Centro de avisos**: historial con filtros y contador de no leídos (en el pollito y en el panel).
+- **⚙️ Ventana de ajustes** con buscador: General, Apariencia (tema oscuro, tamaño, modo discreto, menos animación, volumen), Salud, Privacidad y datos (pausar seguimiento, exportar/importar/borrar), Integraciones, Cuenta de Claude, IA, Atajos y Acerca de.
+- **Tareas editables**: doble clic para editar, arrastrar para ordenar, prioridad por colores, hora con recordatorio y "Deshacer" al borrar.
+- **Tour de bienvenida** y lista "Configura tu pollito"; atajos `1`–`5`, `/`, `N`, `P`, `Esc`.
+- **Vida en reposo**: cuando está tranquilo revisa su portapapeles de PM, teclea en su portátil, toma café, hace globos de chicle, canta, se rasca, se acicala, saluda, estornuda, tiene hipo, se sienta, gira y persigue mariposas (según la hora del día).
+- **Acerca de**: *Hecho con ❤️ por Juanzreyes*.
+
+### Claude, bienestar y tamagotchi
+- **🔮 Predicción de consumo**: calcula tu ritmo (%/h) y te avisa antes: *"llegarás al 100% a las 16:40, 1 h antes del reinicio"* (sesión y semanal).
+- **💵 Coste por proyecto**: coste equivalente en la API (hoy, 7 días y por proyecto) a partir de los registros de Claude Code. Pregúntale "¿cuánto me cuesta?".
+- **Icono de la bandeja con anillo**: % de la sesión (verde → rojo) o la cuenta atrás del pomodoro.
+- **⏱️ Cronómetro por tarea** con estimación (doble clic en el reloj): aprende cuánto sueles desviarte.
+- **Ánimo del día** en el cierre, **alerta de agotamiento** (días largos, noches, fines de semana, ánimo bajo) y **🧠 tus patrones** (mejor franja horaria, día más productivo, días de más distracción).
+- **Más tamagotchi**: limpieza 🧼 (bañarlo), energía ⚡ (siesta y dormir de noche) y enfermedad 🤒 (medicina por 25 🌽).
+- **Temporadas y cumpleaños**: gorro de Papá Noel y nieve en Navidad, calabaza y murciélagos en Halloween, fiesta en Año Nuevo, San Valentín y el cumpleaños del pollito.
+- **🔊 Voz**: lee en voz alta los avisos importantes con las voces de Windows (sin internet).
+
+### Planificación, Claude y juego
+- **🤖 Diario automático de Claude Code**: lo que le pediste a Claude en cada proyecto aparece en *Día → Hoy con Claude* (con ✨ resumen por IA), en tu daily de mañana y en el daily para Slack/Teams.
+- **💡 Consejo de modelo**: si vas camino del límite y casi todo es Opus, te sugiere `/model sonnet` (botón para copiarlo) y te avisa al reiniciarse para volver.
+- **📚 Biblioteca de prompts**: tus prompts favoritos a un clic (chat → 📚 Prompts o la paleta). `{{clipboard}}` se sustituye por lo que tengas copiado.
+- **🐞 Portapapeles inteligente**: si copias un error (stack trace, excepción, npm ERR!…), te ofrece preguntar a la IA, copiar un prompt listo para Claude o guardarlo como tarea. Se puede desactivar en Privacidad.
+- **🗓️ Bloques de tiempo**: arrastra tus tareas a una línea de horas (con tus reuniones); te avisa al empezar cada bloque con botones de pomodoro y cronómetro.
+- **🎯 Objetivos semanales** con progreso (aparecen en el informe semanal; los lunes te propone definirlos).
+- **💧 Hábitos con rachas** 🔥: agua, moverte, leer, dormir temprano o los tuyos (clic +1, clic derecho −1).
+- **🗒️ Notas rápidas del día** con autoguardado y buscador en notas de otros días.
+- **Jugar con el pollito**: lánzale maíz 🌽, juega a la pelota ⚽ o sale a **pasear por la barra de tareas** 🚶 (y lo hace solo de vez en cuando).
+- **🐾 Especies**: pollito, patito, gatito o pingüino (Perfil → Especie) y **amiguitos** en la tienda (🐤 / 🦆).
+- **🖥️ Sigue tu monitor**: con varias pantallas, se cambia a la pantalla donde estás trabajando.
+- **💾 Copia de seguridad automática semanal** en OneDrive / Google Drive (o Documentos), conserva las 6 últimas y sin claves.
+- **📄 Informe mensual en PDF**: horas por día, proyectos, tareas, coste de Claude y logros del mes (Día, Estadísticas o la paleta; el día 1 te lo ofrece).
+
+### Foco, rutinas y diagnóstico
+- **🎯 Modo foco ("no me distraigas")**: 25/50/90 min desde *Día*, la paleta o el chat ("modo foco 30 min"). Solo pasan los avisos urgentes (reuniones, recordatorios, Claude, límites); el resto espera en el centro de avisos y te regaña al minuto si te distraes. Se activa solo durante tus bloques de tiempo y pomodoros (configurable en Ajustes → General).
+- **🔁 Tareas recurrentes**: "cada lunes: revisar métricas", "todos los días: leer correo", "cada lunes y jueves: 1:1 con Ana" (chat, paleta o Ctrl+Alt+P). Se añaden solas a tu daily.
+- **🧩 Plantillas de día**: Día de foco, de reuniones o de bugs (bloques + tareas en un clic, saltando lo que choca con reuniones). Guarda tu día como plantilla.
+- **🔍 Búsqueda global**: la paleta (Ctrl+Alt+Espacio) busca también en tareas, recordatorios, notas, prompts, objetivos, avisos y el diario de Claude.
+- **🩺 Diagnóstico** (Ajustes → Diagnóstico): memoria, CPU, últimos errores y "Copiar informe" (sin datos personales). Los errores se guardan en `pm-errors.log`.
+- **🎁 Novedades** al actualizar y elección de especie desde la bienvenida.
+
+### Extensión para VS Code
+En `vscode-extension/`: el pollito en la barra de estado de VS Code (% de sesión, pomodoro, cronómetro, tareas y avisos), menú rápido al hacer clic y `Ctrl+Alt+N` para anotar. Habla solo con la app en `127.0.0.1:47823`.
+```bash
+cd vscode-extension
+npx @vscode/vsce package --allow-missing-repository --skip-license
+code --install-extension pm-pollito-1.0.0.vsix
+```
+
 ## Instalador para Windows
 
 ```bash
 npm run dist
 ```
 
+Además de `dist/`, **cada compilación deja en `public/` la versión lista para compartir** (script `postdist`):
+el instalador `PM-Pollito-Setup-<versión>.exe`, la extensión `pm-pollito-vscode-<versión>.vsix`, un `LEEME.txt` con las instrucciones para cualquier persona y `SHA256.txt` para comprobar los archivos. Solo queda la última versión. (Los binarios están en `.gitignore`: compártelos por Drive, USB o GitHub Releases.) Para regenerarla sin recompilar: `npm run public`.
+
 Genera `dist/PM-Pollito-Setup-<versión>.exe`: doble clic, elegir carpeta, y queda con acceso directo e inicio con Windows. La versión instalada usa la **misma memoria** que la de desarrollo (`%APPDATA%/pm-pollito`). El icono se regenera con `npm run icon`.
+
+### Firmar el instalador (quitar el aviso de SmartScreen)
+Sin firma, Windows muestra "Windows protegió su PC / editor desconocido" al instalar. Para evitarlo:
+1. Consigue un **certificado de firma de código** (OV o EV) de una autoridad (Sectigo, DigiCert, SSL.com…) o usa **Azure Trusted Signing** (más barato, por suscripción).
+2. Con un certificado `.pfx`, define antes de compilar:
+   ```powershell
+   $env:CSC_LINK = "C:\ruta\certificado.pfx"
+   $env:CSC_KEY_PASSWORD = "contraseña-del-certificado"
+   npm run dist
+   ```
+   electron-builder firma el `.exe` automáticamente.
+3. Añade en `package.json` → `build.win` el campo `"publisherName": "<nombre exacto del certificado>"` para que las actualizaciones automáticas verifiquen la firma.
+   (Con Azure Trusted Signing se usa `build.win.azureSignOptions` en lugar de `CSC_LINK`.)
 
 ### Publicar actualizaciones automáticas
 La app instalada busca actualizaciones cada 6 h (y desde 🐣 Perfil → *Buscar actualizaciones*). Para activarlo:
@@ -122,6 +189,12 @@ src/i18n.js        traducción al inglés (main y ventanas)
 renderer/stats.js  gráficos de estadísticas (SVG propio)
 renderer/game.*    minijuego
 scripts/make-icon.js genera el icono de la app
+src/extras.js      diario de Claude, prompts, portapapeles, bloques, objetivos, hábitos, notas, paseos, monitores, copias e informe mensual
+src/diag.js        registro de errores (pm-errors.log) y métricas
+src/journal.js     peticiones a Claude Code por proyecto (~/.claude/projects)
+src/backup.js      copia de seguridad en carpeta sincronizada
+src/monthly.js     HTML del informe mensual (→ PDF)
+renderer/panel-extras.js objetivos, hábitos, notas, prompts y planificador de bloques
 src/brain.js       personalidad y respuestas del chat (100 % local)
 src/store.js       persistencia en %APPDATA%/pm-pollito/pm-data.json
 renderer/pet.*     el pollito (SVG + animaciones CSS)

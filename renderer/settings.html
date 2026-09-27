@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'" />
+  <title>PM · Ajustes</title>
+  <link rel="stylesheet" href="panel.css" />
+  <link rel="stylesheet" href="settings.css" />
+  <link rel="stylesheet" href="theme.css" />
+</head>
+<body>
+  <div class="win">
+    <aside>
+      <div class="brand"><img src="../build/icon.png" alt="" /><b>Ajustes</b></div>
+      <label class="search"><span data-icon="search"></span><input id="search" placeholder="Buscar ajuste…" autocomplete="off" /></label>
+      <nav id="snav">
+        <button data-sec="general" data-icon="settings">General</button>
+        <button data-sec="appearance" data-icon="brush">Apariencia</button>
+        <button data-sec="health" data-icon="activity">Salud</button>
+        <button data-sec="privacy" data-icon="shield">Privacidad y datos</button>
+        <button data-sec="integrations" data-icon="plug">Integraciones</button>
+        <button data-sec="claude" data-icon="gauge">Cuenta de Claude</button>
+        <button data-sec="ai" data-icon="bot">IA</button>
+        <button data-sec="shortcuts" data-icon="keyboard">Atajos</button>
+        <button data-sec="diag" data-icon="activity">Diagnóstico</button>
+        <button data-sec="about" data-icon="info">Acerca de</button>
+      </nav>
+    </aside>
+
+    <section class="content">
+      <div class="titlebar"><span id="sec-title">General</span><button id="close" class="icon" data-icon="x" title="Cerrar" aria-label="Cerrar"></button></div>
+      <div class="scroll">
+
+        <!-- GENERAL -->
+        <div class="sec" id="sec-general" data-title="General">
+          <h2>General</h2>
+          <div class="opt row between"><div><b>Idioma / Language</b><p class="muted small">Idioma de toda la app.</p></div>
+            <select id="lang" style="width:auto"><option value="es">Español</option><option value="en">English</option></select></div>
+          <div class="opt row between"><div><b>Iniciar con Windows</b><p class="muted small">El pollito aparece al encender el PC.</p></div><input type="checkbox" class="switch" id="s-autostart" /></div>
+          <h3>Rutina</h3>
+          <div class="opt row between"><div><b>Pregunta del daily</b><p class="muted small">A esta hora te pregunto qué hiciste ayer y qué harás hoy.</p></div><input type="time" id="s-morning" /></div>
+          <div class="opt row between"><div><b>Cierre del día</b><p class="muted small">Te pregunto si cumpliste lo planeado.</p></div><input type="time" id="s-evening" /></div>
+          <div class="opt row between"><div><b>Solo de lunes a viernes</b></div><input type="checkbox" class="switch" id="s-workdays" /></div>
+          <div class="opt row between"><div><b>Modo foco en bloques de tiempo</b><p class="muted small">Durante tus bloques solo te aviso de lo urgente.</p></div><input type="checkbox" class="switch" id="s-focus-blocks" /></div>
+          <div class="opt row between"><div><b>Modo foco en pomodoros</b></div><input type="checkbox" class="switch" id="s-focus-pomo" /></div>
+          <div class="opt row between"><div><b>Charlas espontáneas</b><p class="muted small">Comentarios y ánimos de vez en cuando.</p></div><input type="checkbox" class="switch" id="s-chatter" /></div>
+          <div class="opt row between"><div><b>Silencio (reuniones)</b><p class="muted small">Solo avisos importantes durante 1 hora.</p></div><button id="mute" class="soft">🔕 Silenciar 1 hora</button></div>
+        </div>
+
+        <!-- APARIENCIA -->
+        <div class="sec" id="sec-appearance" data-title="Apariencia">
+          <h2>Apariencia</h2>
+          <div class="opt row between"><div><b>Tema</b><p class="muted small">Del panel, los ajustes y la paleta.</p></div>
+            <div class="seg" id="theme"><button data-v="system">Sistema</button><button data-v="light" data-icon="sun">Claro</button><button data-v="dark" data-icon="moon">Oscuro</button></div></div>
+          <div class="opt row between"><div><b>Tamaño del pollito</b></div>
+            <div class="seg" id="size"><button data-v="s">Pequeño</button><button data-v="m">Mediano</button><button data-v="l">Grande</button></div></div>
+          <div class="opt row between"><div><b>Modo discreto</b><p class="muted small">Se esconde en el borde de la pantalla y se asoma cuando tiene algo que decirte o pasas el ratón.</p></div><input type="checkbox" class="switch" id="discreet" /></div>
+          <div class="opt row between"><div><b>Ocultarme al presentar</b><p class="muted small">Pantalla completa o compartiendo en Teams: desaparezco yo y mis avisos.</p></div><input type="checkbox" class="switch" id="auto-hide" /></div>
+          <div class="opt row between"><div><b>Menos animación</b><p class="muted small">Movimientos más suaves y sin efectos (accesibilidad).</p></div><input type="checkbox" class="switch" id="reduced" /></div>
+          <div class="opt row between"><div><b>Paseos por la pantalla</b><p class="muted small">De vez en cuando camino por la barra de tareas y vuelvo a mi sitio.</p></div><input type="checkbox" class="switch" id="s-strolls" /></div>
+          <div class="opt row between" id="opt-follow"><div><b>Seguirte entre monitores</b><p class="muted small">Si trabajas en otra pantalla, me cambio a esa pantalla.</p></div><input type="checkbox" class="switch" id="s-follow" /></div>
+          <div class="opt row between"><div><b>Sonidos de pío</b></div><input type="checkbox" class="switch" id="s-sounds" /></div>
+          <div class="opt row between"><div><b>Volumen</b></div><input type="range" id="volume" min="0" max="100" step="5" /></div>
+          <div class="opt row between"><div><b>Voz en avisos importantes</b><p class="muted small">Leo en voz alta reuniones, recordatorios, cuando Claude te necesita o si se cae un sitio. Usa las voces de Windows, sin internet.</p></div>
+            <div class="row gap"><button id="voice-test" class="ghost mini">▶ Probar</button><input type="checkbox" class="switch" id="voice" /></div></div>
+        </div>
+
+        <!-- SALUD -->
+        <div class="sec" id="sec-health" data-title="Salud">
+          <h2>Salud</h2>
+          <p class="muted small">Solo te interrumpo si llevas tiempo trabajando sin parar, nunca en reuniones ni pomodoros.</p>
+          <div class="opt row between"><div><b>Pausa activa cada 50 min</b></div><input type="checkbox" class="switch" id="h-breaks" /></div>
+          <div class="opt row between"><div><b>Descanso visual 20-20-20</b><p class="muted small">Cada 20 min: mira a 6 metros durante 20 segundos.</p></div><input type="checkbox" class="switch" id="h-eyes" /></div>
+          <div class="opt row between"><div><b>Recordar tomar agua</b></div><input type="checkbox" class="switch" id="h-water" /></div>
+        </div>
+
+        <!-- PRIVACIDAD -->
+        <div class="sec" id="sec-privacy" data-title="Privacidad y datos">
+          <h2>Privacidad y datos</h2>
+          <div class="note">🔒 Todo se guarda <b>solo en tu PC</b>. PM no envía tus datos a ningún servidor propio: solo habla con Claude, GitHub o tu correo cuando tú lo conectas.</div>
+          <div class="opt box pause-box">
+            <div class="row between"><b id="pause-status">El seguimiento está activo 👀</b></div>
+            <div class="row gap">
+              <button id="pause-1h" class="soft" data-icon="pause">Pausar 1 hora</button>
+              <button id="pause-day" class="ghost">Hasta mañana</button>
+              <button id="pause-resume" class="primary hidden" data-icon="play">Reanudar</button>
+            </div>
+          </div>
+          <h3>Qué observo</h3>
+          <div class="opt row between"><div><b>Ventana activa</b><p class="muted small">Nombre de la app y título de la ventana, para medir trabajo vs distracciones y el tiempo por proyecto. No hago capturas de pantalla.</p></div><input type="checkbox" class="switch" id="s-focus" /></div>
+          <div class="opt row between"><div><b>Micrófono en uso</b><p class="muted small">Solo si alguna app lo está usando (sí/no) para detectar reuniones. Nunca escucho ni grabo.</p></div><input type="checkbox" class="switch" id="p-mic" /></div>
+          <div class="opt row between"><div><b>Repositorios git</b><p class="muted small">Commits y cambios sin guardar, en modo solo lectura.</p></div><input type="checkbox" class="switch" id="p-git" /></div>
+          <div class="opt row between"><div><b>Portapapeles inteligente</b><p class="muted small">Si copias un error (stack trace, excepción…) te ofrezco ayuda. Solo lo leo en este PC y no guardo lo que copias.</p></div><input type="checkbox" class="switch" id="p-clip" /></div>
+          <div class="opt row between"><div><b>Registros de Claude Code</b><p class="muted small">Tokens y modelos de <code>~/.claude/projects</code> (solo lectura).</p></div><span class="pill">siempre</span></div>
+          <h3>Tus datos</h3>
+          <div class="opt row between"><div><b>Dónde se guardan</b><p class="muted small" id="data-dir"></p></div><button id="open-dir" class="ghost" data-icon="folder">Abrir carpeta</button></div>
+          <div class="opt row between"><div><b>Copia de seguridad</b><p class="muted small">Exporta la memoria del pollito para cambiar de PC. Las claves no se exportan.</p></div>
+            <div class="row gap"><button id="export" class="soft" data-icon="download">Exportar</button><button id="import" class="ghost" data-icon="upload">Importar</button></div></div>
+          <div class="opt row between"><div><b>Copia automática semanal</b><p class="muted small">Guardo una copia cada semana en una carpeta sincronizada (OneDrive / Google Drive) y conservo las 6 últimas.</p><p class="muted small" id="bk-info"></p></div><input type="checkbox" class="switch" id="bk-auto" /></div>
+          <div class="opt row gap wrap"><button id="bk-now" class="soft" data-icon="download">Copiar ahora</button><button id="bk-dir" class="ghost" data-icon="folder">Cambiar carpeta</button><button id="bk-open" class="ghost">Ver copias</button></div>
+          <div class="opt row between danger-zone"><div><b>Borrar todos mis datos</b><p class="muted small">Elimina el pollito, sus recuerdos y tus conexiones de este PC.</p></div><button id="delete" class="danger" data-icon="trash">Borrar todo</button></div>
+          <div id="data-msg" class="small"></div>
+        </div>
+
+        <!-- INTEGRACIONES -->
+        <div class="sec" id="sec-integrations" data-title="Integraciones">
+          <h2>Integraciones</h2>
+          <div class="opt box small">
+            <div class="row between"><b>🤖 Claude Code</b><span id="cc-status" class="pill"></span></div>
+            <p class="muted">Te aviso cuando Claude termine una tarea o necesite tu permiso, y muestro una burbuja mientras trabaja. Añade unos hooks a tu <code>~/.claude/settings.json</code> (con copia de seguridad).</p>
+            <div class="row gap">
+              <button id="cc-install" class="primary grow">Conectar con Claude Code</button>
+              <button id="cc-uninstall" class="ghost hidden">Quitar</button>
+            </div>
+            <div id="cc-msg"></div>
+          </div>
+          <div class="opt box small">
+            <div class="row between"><b>🐙 GitHub</b><span id="gh-status" class="pill"></span></div>
+            <p class="muted">PRs que esperan tu revisión, CI fallido, aprobaciones y comentarios. Crea un token personal
+              <button type="button" class="link" data-open="https://github.com/settings/tokens/new?scopes=repo,read:org&description=PM%20Pollito">aquí</button>
+              (permisos <code>repo</code> y <code>read:org</code>) y pégalo. PM solo lo usa para leer; se guarda cifrado.</p>
+            <form id="gh-form" class="row">
+              <input id="gh-token" type="password" placeholder="ghp_… / github_pat_…" autocomplete="off" />
+              <button class="soft" type="submit">Usar</button>
+            </form>
+            <button type="button" id="gh-remove" class="link hidden">Quitar token</button>
+          </div>
+          <div class="opt box small">
+            <b>💻 Carpetas con tus repos de git</b>
+            <p class="muted">Una por línea. Busco repositorios hasta 2 niveles dentro.</p>
+            <textarea id="git-roots" rows="3"></textarea>
+            <div class="row gap"><button id="git-roots-save" class="soft">Guardar carpetas</button><span id="git-roots-msg" class="small muted"></span></div>
+          </div>
+        </div>
+
+        <!-- CUENTA DE CLAUDE -->
+        <div class="sec" id="sec-claude" data-title="Cuenta de Claude">
+          <h2>Cuenta de Claude</h2>
+          <div class="opt box small">
+            <div id="web-status"></div>
+            <button id="web-login" class="primary">🌐 Conectar con mi cuenta de Claude</button>
+            <button id="web-logout" class="link hidden">Cerrar sesión de Claude en PM</button>
+          </div>
+          <details class="opt box small">
+            <summary class="muted">Opciones avanzadas</summary>
+            <p class="muted">También puedo usar la sesión de <b>Claude Code</b> de este equipo o un token OAuth que pegues aquí (se guarda cifrado).</p>
+            <form id="token-form" class="row">
+              <input id="token-input" type="password" placeholder="Token (opcional)" autocomplete="off" />
+              <button class="soft" type="submit">Usar</button>
+            </form>
+            <button id="token-clear" class="link hidden">Quitar token manual</button>
+          </details>
+        </div>
+
+        <!-- IA -->
+        <div class="sec" id="sec-ai" data-title="IA">
+          <h2>IA (chat inteligente)</h2>
+          <div class="opt box small">
+            <p class="muted">Con una API key de Anthropic, el pollito responde cualquier pregunta, prioriza tus tareas, crea recordatorios y mejora tus informes. Consigue la key
+              <button type="button" class="link" data-open="https://console.anthropic.com/settings/keys">aquí</button> (se paga por uso; se guarda cifrada).</p>
+            <form id="ai-form" class="row">
+              <input id="ai-key" type="password" placeholder="sk-ant-…" autocomplete="off" />
+              <button class="soft" type="submit">Usar</button>
+            </form>
+            <div id="ai-msg" class="small"></div>
+            <button type="button" id="ai-remove" class="link hidden">Quitar API key</button>
+          </div>
+          <div class="opt row between"><div><b>Modelo</b></div><select id="ai-model" style="width:auto"></select></div>
+          <div class="opt row between"><div><b>Usar IA en el chat</b></div><input type="checkbox" class="switch" id="ai-enabled" /></div>
+        </div>
+
+        <!-- ATAJOS -->
+        <div class="sec" id="sec-shortcuts" data-title="Atajos">
+          <h2>Atajos de teclado</h2>
+          <h3>Desde cualquier app</h3>
+          <div class="opt keys"><span><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Espacio</kbd></span><span>Paleta de comandos</span></div>
+          <div class="opt keys"><span><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>P</kbd></span><span>Anotar tarea o recordatorio</span></div>
+          <h3>En el panel</h3>
+          <div class="opt keys"><span><kbd>1</kbd> … <kbd>5</kbd></span><span>Cambiar de pestaña</span></div>
+          <div class="opt keys"><span><kbd>/</kbd></span><span>Escribir en el chat</span></div>
+          <div class="opt keys"><span><kbd>N</kbd></span><span>Nueva tarea</span></div>
+          <div class="opt keys"><span><kbd>P</kbd></span><span>Empezar / detener pomodoro</span></div>
+          <div class="opt keys"><span><kbd>Ctrl</kbd>+<kbd>K</kbd></span><span>Paleta de comandos</span></div>
+          <div class="opt keys"><span><kbd>Ctrl</kbd>+<kbd>,</kbd></span><span>Ajustes</span></div>
+          <div class="opt keys"><span><kbd>Esc</kbd></span><span>Cerrar</span></div>
+          <h3>Con el pollito</h3>
+          <div class="opt keys"><span>Clic</span><span>Abrir el panel</span></div>
+          <div class="opt keys"><span>Clic derecho</span><span>Menú rápido</span></div>
+          <div class="opt keys"><span>Arrastrar</span><span>Moverlo a donde quieras</span></div>
+          <div class="opt keys"><span>Frotar con el ratón</span><span>Acariciarlo 💛</span></div>
+        </div>
+
+        <!-- DIAGNÓSTICO -->
+        <div class="sec" id="sec-diag" data-title="Diagnóstico">
+          <h2>Diagnóstico</h2>
+          <div class="tiles diag-tiles">
+            <div class="opt"><b id="dg-mem">—</b><p class="muted small">memoria</p></div>
+            <div class="opt"><b id="dg-cpu">—</b><p class="muted small">CPU</p></div>
+            <div class="opt"><b id="dg-up">—</b><p class="muted small">activo</p></div>
+            <div class="opt"><b id="dg-err">—</b><p class="muted small">errores</p></div>
+          </div>
+          <div class="opt small muted" id="dg-ver"></div>
+          <h3>Últimos errores</h3>
+          <div id="dg-list" class="dg-list"></div>
+          <h3>Qué pasó (me escondí, me cerraron…)</h3>
+          <div id="dg-events" class="dg-list"></div>
+          <div class="opt row gap wrap">
+            <button id="dg-copy" class="soft" data-icon="copy">Copiar informe</button>
+            <button id="dg-open" class="ghost" data-icon="folder">Abrir registro</button>
+            <button id="dg-refresh" class="ghost" data-icon="refresh">Actualizar</button>
+          </div>
+          <p class="muted small">El registro (<code>pm-errors.log</code>) se queda en tu PC. El informe no incluye tus tareas, notas ni claves, y oculta tu carpeta de usuario.</p>
+        </div>
+
+        <!-- ACERCA DE -->
+        <div class="sec" id="sec-about" data-title="Acerca de">
+          <div class="about">
+            <img src="../build/icon.png" alt="PM Pollito" />
+            <h2>PM Pollito</h2>
+            <div class="muted small" id="version"></div>
+            <p>Tu pollito Project Manager 🐣📋</p>
+            <div class="love">Hecho con <span class="heart">❤️</span> por <b>Juanzreyes</b></div>
+            <div class="row gap center">
+              <button id="check-updates" class="soft" data-icon="refresh">Buscar actualizaciones</button>
+              <button id="tour" class="ghost" data-icon="compass">Ver el tour</button>
+            </div>
+            <div id="upd-msg" class="small muted"></div>
+            <button id="quit" class="danger">Cerrar PM 😢</button>
+            <div class="muted small">© 2026 Juan Ramon Reyes Linares</div>
+          </div>
+        </div>
+
+        <div id="no-results" class="empty hidden">No encontré ningún ajuste con esa palabra 🐣</div>
+      </div>
+    </section>
+  </div>
+  <script src="icons.js"></script>
+  <script src="../src/i18n.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>
