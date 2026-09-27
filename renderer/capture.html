@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+  <title>PM · Anotar</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 520px; height: 150px; background: transparent; overflow: hidden;
+      font-family: "Segoe UI Rounded", "Nunito", "Segoe UI", system-ui, sans-serif; color: #3b2f2f; }
+    .card { position: absolute; inset: 8px; background: #fff9e8; border: 2.5px solid #3b2f2f; border-radius: 20px;
+      box-shadow: 0 4px 0 #3b2f2f; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;
+      animation: pop .25s cubic-bezier(.3, 1.5, .5, 1); }
+    @keyframes pop { from { transform: scale(.9); opacity: 0; } }
+    .row { display: flex; align-items: center; gap: 10px; }
+    .chick { font-size: 26px; animation: bob 1.4s ease-in-out infinite; }
+    @keyframes bob { 50% { transform: translateY(-3px); } }
+    input { flex: 1; font: inherit; font-size: 16px; border: 2px solid #efe2bf; border-radius: 12px; padding: 9px 12px; outline: none; background: #fff; color: #3b2f2f; }
+    input:focus { border-color: #ff9f1c; }
+    .hint { font-size: 11.5px; color: #8a7a6a; }
+    .hint b { color: #3b2f2f; }
+    .msg { font-size: 12.5px; font-weight: 700; color: #1e8a4a; min-height: 16px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="row">
+      <span class="chick">🐣</span>
+      <input id="t" placeholder="¿Qué anoto? Tarea o “recuérdame a las 3 …”" maxlength="300" autocomplete="off" />
+    </div>
+    <div class="hint"><b>Enter</b> guardar · <b>Esc</b> cerrar · Con hora (“a las 4”, “en 20 min”, “mañana a las 9”) se vuelve recordatorio ⏰</div>
+    <div class="msg" id="m"></div>
+  </div>
+  <script src="../src/i18n.js"></script>
+  <script src="capture.js"></script>
+</body>
+</html>

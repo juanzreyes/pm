@@ -1,0 +1,466 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 240px; height: 300px; overflow: hidden;
+  background: transparent;
+  font-family: "Segoe UI Rounded", "Nunito", "Segoe UI", system-ui, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ---------- Bocadillo ---------- */
+#bubble {
+  position: absolute; left: 8px; right: 8px; bottom: 152px;
+  max-height: 140px; overflow: hidden;
+  background: #fffdf5;
+  border: 2.5px solid #3b2f2f;
+  border-radius: 16px;
+  padding: 8px 11px;
+  font-size: 13px; line-height: 1.3; color: #3b2f2f; font-weight: 600;
+  box-shadow: 0 3px 0 #3b2f2f;
+  transform-origin: var(--tail-x, 50%) 100%;
+  animation: pop .35s cubic-bezier(.3, 1.6, .5, 1);
+  cursor: pointer;
+  white-space: pre-line;
+}
+#bubble::after {
+  content: ""; position: absolute; bottom: -9px; left: calc(var(--tail-x, 50%) - 8px);
+  width: 14px; height: 14px; background: #fffdf5;
+  border-right: 2.5px solid #3b2f2f; border-bottom: 2.5px solid #3b2f2f;
+  transform: rotate(45deg); border-bottom-right-radius: 3px;
+}
+#bubble.hidden { display: none; }
+#bubble.out { animation: popout .25s ease-in forwards; }
+@keyframes pop { from { transform: scale(.2); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes popout { to { transform: scale(.3); opacity: 0; } }
+
+/* ---------- Pollito ---------- */
+#walker {
+  position: absolute; bottom: 2px; left: 60px; width: 120px; height: 150px;
+  transition: transform 3s ease-in-out;
+}
+#chick { position: relative; width: 120px; height: 130px; cursor: grab; }
+#chick:active { cursor: grabbing; }
+#chick svg { overflow: visible; display: block; }
+svg * { transform-box: fill-box; }
+
+#shadow { fill: #000; opacity: .16; transform-origin: center; animation: shadow 1.7s ease-in-out infinite; }
+#flip { transform-origin: 60px 110px; transform-box: view-box; }
+#chick svg { transition: transform .25s; }
+.left svg { transform: scaleX(-1); }
+
+#bod { transform-origin: 50% 100%; animation: breathe 1.7s ease-in-out infinite; }
+#body { fill: url(#gBody); stroke: #d99a14; stroke-width: 1.5; }
+#belly { fill: #fff6c4; opacity: .75; }
+.wing ellipse { transform-box: view-box; fill: url(#gWing); stroke: #d99a14; stroke-width: 1.4; }
+#wingL { transform-origin: 90% 20%; animation: swayL 3.4s ease-in-out infinite; }
+#wingR { transform-origin: 10% 20%; animation: swayR 3.4s ease-in-out infinite; }
+#tuft path { fill: #FFD84A; stroke: #d99a14; stroke-width: 1.2; }
+#tuft { transform-origin: 50% 100%; animation: tuft 2.6s ease-in-out infinite; }
+#cheeks ellipse { fill: #ff8fa3; opacity: .55; transition: opacity .3s; }
+.pupil { fill: #2b1d1d; }
+.shine { fill: #fff; }
+#eyes { transition: transform .12s ease-out; }
+.eye { transform-origin: center; transition: transform .08s; }
+#eyesHappy, #eyesClosed, #eyesDizzy { display: none; }
+#eyesHappy path, #eyesClosed path, #eyesDizzy path { fill: none; stroke: #2b1d1d; stroke-width: 3; stroke-linecap: round; }
+#beakTop { fill: #FF9F1C; stroke: #d97706; stroke-width: 1; }
+#beakBottom { fill: #f28705; stroke: #d97706; stroke-width: 1; transform-origin: 50% 0%; transform: scaleY(.25); transition: transform .08s; }
+#feet path { fill: #FF9F1C; stroke: #d97706; stroke-width: 1; }
+#footL { transform-origin: 50% 0%; }
+#footR { transform-origin: 50% 0%; }
+#badge rect { fill: #4d7cfe; stroke: #2f55c7; stroke-width: 1; }
+#badge text { font-size: 7px; font-weight: 900; fill: #fff; font-family: "Segoe UI", sans-serif; }
+#badge { transform-origin: 50% 0%; transform: rotate(-8deg); }
+#badge text { transform-origin: center; }
+.left #badge text { transform: scaleX(-1); }
+#sweat { fill: #8fd3ff; stroke: #4aa8e0; stroke-width: .8; opacity: 0; }
+#tear { fill: #8fd3ff; opacity: 0; }
+#shell { display: none; }
+#shell path { fill: url(#gShell); stroke: #cbbd9f; stroke-width: 1.5; }
+
+/* ---------- Animaciones base ---------- */
+@keyframes breathe {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  50% { transform: translateY(-3px) scale(1.02, .98); }
+}
+@keyframes shadow { 0%, 100% { transform: scale(1); } 50% { transform: scale(.9); opacity: .12; } }
+@keyframes swayL { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-6deg); } }
+@keyframes swayR { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(6deg); } }
+@keyframes tuft { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(5deg); } }
+
+/* Parpadeo */
+.blink .eye { transform: scaleY(.1); }
+
+/* Hablando */
+.talking #beakBottom { animation: talk .18s ease-in-out infinite alternate; }
+@keyframes talk { from { transform: scaleY(.25); } to { transform: scaleY(1.1); } }
+
+/* Caminando */
+.walking #footL { animation: step .32s ease-in-out infinite alternate; }
+.walking #footR { animation: step .32s ease-in-out infinite alternate-reverse; }
+.walking #bod { animation: waddle .32s ease-in-out infinite alternate; }
+@keyframes step { from { transform: rotate(-18deg) translateY(-2px); } to { transform: rotate(14deg); } }
+@keyframes waddle { from { transform: rotate(-4deg) translateY(-2px); } to { transform: rotate(4deg); } }
+
+/* Hover: se esponja */
+.hover #bod { animation-duration: 1s; }
+.hover #cheeks ellipse { opacity: .85; }
+
+/* Arrastrado: patitas colgando y aleteo */
+.dragged #bod { animation: none; transform: rotate(-4deg); }
+.dragged #footL { animation: dangle .25s ease-in-out infinite alternate; }
+.dragged #footR { animation: dangle .25s ease-in-out infinite alternate-reverse; }
+.dragged #wingL { animation: flapL .12s linear infinite alternate; }
+.dragged #wingR { animation: flapR .12s linear infinite alternate; }
+.dragged #beakBottom { transform: scaleY(1.1); }
+.dragged .eye { transform: scale(1.15); }
+@keyframes dangle { from { transform: rotate(-25deg); } to { transform: rotate(25deg); } }
+@keyframes flapL { from { transform: rotate(-5deg); } to { transform: rotate(55deg); } }
+@keyframes flapR { from { transform: rotate(5deg); } to { transform: rotate(-55deg); } }
+
+/* ---------- Acciones ---------- */
+.a-hop #flip { animation: hop .9s ease-out; }
+@keyframes hop {
+  0%, 100% { transform: translateY(0); }
+  15% { transform: translateY(0) scale(1.08, .9); }
+  35% { transform: translateY(-22px) scale(.95, 1.06); }
+  55% { transform: translateY(0) scale(1.06, .94); }
+  70% { transform: translateY(-9px); }
+  85% { transform: translateY(0); }
+}
+
+.a-peck #bod { animation: peck .9s ease-in-out; transform-origin: 50% 100%; }
+@keyframes peck {
+  0%, 100% { transform: rotate(0); }
+  20%, 60% { transform: rotate(14deg) translateY(4px); }
+  40%, 80% { transform: rotate(0); }
+}
+
+.a-flap #wingL, .a-alarm-soft #wingL { animation: flapL .13s linear 10 alternate; }
+.a-flap #wingR, .a-alarm-soft #wingR { animation: flapR .13s linear 10 alternate; }
+.a-flap #flip, .a-alarm-soft #flip { animation: hop 1.2s ease-out; }
+
+.a-dance #bod { animation: dance .5s ease-in-out 4 alternate; }
+.a-dance #wingL { animation: flapL .25s linear 8 alternate; }
+.a-dance #wingR { animation: flapR .25s linear 8 alternate; }
+@keyframes dance { from { transform: rotate(-12deg) translateY(-4px); } to { transform: rotate(12deg); } }
+
+.a-love #eyesOpen, .a-celebrate #eyesOpen, .a-hug #eyesOpen, .a-eat #eyesOpen { display: none; }
+.a-love #eyesHappy, .a-celebrate #eyesHappy, .a-hug #eyesHappy, .a-eat #eyesHappy { display: inline; }
+.a-love #cheeks ellipse, .a-hug #cheeks ellipse { opacity: 1; }
+.a-love #bod { animation: squish .45s ease-in-out 4 alternate; }
+@keyframes squish { from { transform: scale(1.06, .94); } to { transform: scale(.97, 1.04); } }
+
+.a-celebrate #flip { animation: celebrate 1.4s cubic-bezier(.3, .8, .4, 1); }
+.a-celebrate #wingL { animation: flapL .12s linear 12 alternate; }
+.a-celebrate #wingR { animation: flapR .12s linear 12 alternate; }
+@keyframes celebrate {
+  0% { transform: translateY(0); }
+  15% { transform: translateY(2px) scale(1.1, .88); }
+  45% { transform: translateY(-40px) rotate(180deg); }
+  70% { transform: translateY(-10px) rotate(360deg); }
+  85% { transform: translateY(0) rotate(360deg) scale(1.08, .92); }
+  100% { transform: translateY(0) rotate(360deg); }
+}
+
+.a-hug #wingL { animation: none; transform: rotate(-60deg); transition: transform .3s; }
+.a-hug #wingR { animation: none; transform: rotate(60deg); transition: transform .3s; }
+
+.a-alert #flip { animation: shake .09s linear 10; }
+.a-alarm #flip { animation: shake .06s linear 25; }
+.a-alarm #sweat, .a-alert #sweat { animation: sweat 1s ease-in 2; }
+.a-alarm .eye, .a-alert .eye { transform: scale(1.2); }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px) rotate(-2deg); }
+  75% { transform: translateX(3px) rotate(2deg); }
+}
+
+.a-sad #bod { animation: sad 2.4s ease-in-out; }
+.a-sad #tear { animation: tear 1.2s ease-in 2; }
+.a-sad #tuft { animation: none; transform: rotate(-30deg); }
+@keyframes sad { 0%, 100% { transform: scale(1); } 30%, 70% { transform: scale(1.05, .9) translateY(4px); } }
+@keyframes tear { 0% { opacity: 0; transform: translateY(0); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(16px); } }
+
+.a-faint #flip { animation: faint 3.2s ease-in-out; }
+.a-faint #eyesOpen { display: none; }
+.a-faint #eyesDizzy { display: inline; }
+@keyframes faint {
+  0% { transform: rotate(0); }
+  20%, 75% { transform: rotate(-80deg) translate(-10px, 14px); }
+  100% { transform: rotate(0); }
+}
+
+.a-eat #bod { animation: peck .45s ease-in-out 4; }
+
+.a-wobble #bod { animation: wobble .3s ease-in-out 4 alternate; }
+@keyframes wobble { from { transform: rotate(-8deg) scale(1.06, .95); } to { transform: rotate(8deg) scale(1.06, .95); } }
+
+.a-look #eyes { transform: translateX(4px) !important; }
+.a-look #bod { animation: tilt 1.6s ease-in-out; }
+@keyframes tilt { 0%, 100% { transform: rotate(0); } 30%, 70% { transform: rotate(8deg); } }
+
+.a-hatch #shell { display: inline; animation: shellDrop 2.8s ease-in forwards; }
+.a-hatch #bod { animation: hatch 2.8s ease-out; }
+@keyframes hatch {
+  0%, 30% { transform: translateY(18px) scale(.8); }
+  40% { transform: translateY(-14px) scale(1.05); }
+  55%, 100% { transform: translateY(0) scale(1); }
+}
+@keyframes shellDrop {
+  0%, 30% { transform: translateY(0); opacity: 1; }
+  33% { transform: translateY(-2px) rotate(-3deg); }
+  36% { transform: translateY(0) rotate(3deg); }
+  60% { transform: translateY(40px) rotate(20deg); opacity: 1; }
+  100% { transform: translateY(40px) rotate(20deg); opacity: 0; }
+}
+
+/* ---------- Estados de ánimo ---------- */
+.mood-happy #bod { animation-duration: 1.3s; }
+.mood-worried #sweat { animation: sweat 3s ease-in infinite; }
+.mood-worried #tuft { animation-duration: 1.2s; }
+.mood-panic #bod { animation: panic .5s ease-in-out infinite; }
+.mood-panic #sweat { animation: sweat 1.2s ease-in infinite; }
+.mood-panic .eye { transform: scale(1.18); }
+@keyframes panic { 0%, 100% { transform: translateX(-1px) scale(1.02, .98); } 50% { transform: translateX(1px) translateY(-2px); } }
+@keyframes sweat { 0% { opacity: 0; transform: translateY(-4px); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(14px); } }
+.mood-exhausted #bod { animation-duration: 3.2s; }
+.mood-exhausted .eye { transform: scaleY(.45) translateY(3px); }
+.mood-exhausted #tuft { animation: none; transform: rotate(-28deg); }
+.mood-exhausted #wingL { transform: rotate(12deg); }
+.mood-exhausted #wingR { transform: rotate(-12deg); }
+.mood-hungry #belly { animation: grumble 4s ease-in-out infinite; }
+@keyframes grumble { 0%, 85%, 100% { transform: scale(1); } 88%, 94% { transform: scale(1.08, .95); } 91%, 97% { transform: scale(.96, 1.04); } }
+
+.mood-sleep #eyesOpen { display: none; }
+.mood-sleep #eyesClosed { display: inline; }
+.mood-sleep #bod { animation: breathe 3.6s ease-in-out infinite; }
+.mood-sleep #tuft { animation: none; transform: rotate(-20deg); }
+.mood-sleep #beakBottom { transform: scaleY(.25) !important; }
+
+/* ---------- Enojo, juicio y aburrimiento ---------- */
+#brows { display: none; }
+#brows path { fill: none; stroke: #2b1d1d; stroke-width: 3.2; stroke-linecap: round; }
+#browL, #browR { transform-origin: center; transition: transform .2s; }
+#flush { fill: #ff3b3b; opacity: 0; transition: opacity .4s; pointer-events: none; }
+
+/* Enojado: cejas en V, cachetes rojos, copete temblando, brazos cruzados */
+.mood-angry #brows, .fuming #brows, .a-angry #brows { display: inline; }
+.mood-angry #flush, .fuming #flush, .a-angry #flush { opacity: .16; }
+.mood-angry #cheeks ellipse, .fuming #cheeks ellipse, .a-angry #cheeks ellipse { fill: #ff4d4d; opacity: .9; }
+.mood-angry #tuft, .fuming #tuft { animation: quiver .12s linear infinite alternate; }
+.mood-angry #bod, .fuming #bod { animation: huff 1.1s ease-in-out infinite; }
+.mood-angry #wingL, .fuming #wingL { animation: none; transform: rotate(28deg); }
+.mood-angry #wingR, .fuming #wingR { animation: none; transform: rotate(-28deg); }
+.mood-angry #beakBottom, .fuming #beakBottom { transform: scaleY(.1); }
+@keyframes quiver { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+@keyframes huff { 0%, 100% { transform: scale(1); } 45% { transform: scale(1.05, .96) translateY(1px); } }
+
+.a-angry #flip { animation: stomp .5s ease-in-out 4; }
+.a-angry #footL { animation: stompFoot .25s ease-in-out 8 alternate; }
+.a-angry #footR { animation: stompFoot .25s ease-in-out 8 alternate-reverse; }
+.a-angry .eye { transform: scaleY(.75); }
+@keyframes stomp {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px) rotate(-3deg); }
+  60% { transform: translateY(0) scale(1.05, .95); }
+  80% { transform: translateX(2px) rotate(2deg); }
+}
+@keyframes stompFoot { from { transform: translateY(-4px) rotate(-10deg); } to { transform: translateY(0); } }
+
+/* Juzgando: una ceja levantada y ojos entrecerrados 🤨 */
+.judging #brows, .a-judge #brows { display: inline; }
+.judging #browL, .a-judge #browL { transform: translateY(-4px) rotate(-22deg); }
+.judging #browR, .a-judge #browR { transform: translateY(1px) rotate(-8deg); }
+.judging .eye, .a-judge .eye { transform: scaleY(.55); }
+.judging #beakBottom { transform: scaleY(.1); }
+.a-judge #bod { animation: tilt 2s ease-in-out; }
+
+/* Aburrido (llevas rato sin tocar nada) */
+.bored #bod { animation-duration: 3s; }
+.bored .eye { transform: scaleY(.6) translateY(2px); }
+.a-yawn #beakBottom { animation: none; transform: scaleY(2.2); transition: transform .5s; }
+.a-yawn #eyesOpen { display: none; }
+.a-yawn #eyesClosed { display: inline; }
+.a-yawn #bod { animation: yawn 2.2s ease-in-out; }
+.a-yawn #wingL { animation: none; transform: rotate(50deg); transition: transform .5s; }
+.a-yawn #wingR { animation: none; transform: rotate(-50deg); transition: transform .5s; }
+@keyframes yawn { 0%, 100% { transform: scale(1); } 40%, 70% { transform: scale(.97, 1.07) translateY(-2px); } }
+
+/* ---------- Efectos ---------- */
+#fx { position: absolute; inset: -60px -40px 0 -40px; pointer-events: none; overflow: visible; }
+.p {
+  position: absolute; font-size: 18px; pointer-events: none;
+  animation: floatUp var(--d, 1.6s) ease-out forwards;
+  left: var(--x); top: var(--y);
+}
+@keyframes floatUp {
+  0% { transform: translate(0, 0) scale(.3) rotate(0); opacity: 0; }
+  15% { opacity: 1; transform: translate(0, -6px) scale(1); }
+  100% { transform: translate(var(--dx, 0), -70px) scale(.9) rotate(var(--r, 0deg)); opacity: 0; }
+}
+.confetti {
+  position: absolute; width: 7px; height: 11px; border-radius: 2px;
+  left: var(--x); top: var(--y); background: var(--c);
+  animation: confetti var(--d, 1.8s) cubic-bezier(.2, .6, .4, 1) forwards;
+}
+@keyframes confetti {
+  0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) rotate(var(--r)); opacity: 0; }
+}
+.fall { animation: fall var(--d, 1s) ease-in forwards; }
+@keyframes fall {
+  0% { transform: translateY(-30px); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(40px); opacity: 0; }
+}
+.zzz {
+  position: absolute; font-weight: 900; color: #7b8cde; font-size: 15px;
+  animation: zzz 3s ease-out forwards; left: var(--x); top: var(--y);
+}
+@keyframes zzz {
+  0% { opacity: 0; transform: translate(0, 0) scale(.5); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(26px, -50px) scale(1.3); }
+}
+.bang {
+  position: absolute; left: 105px; top: 40px; font-size: 26px; font-weight: 900; color: #ff4d4d;
+  -webkit-text-stroke: 1.5px #3b2f2f; animation: bang 1.4s ease-out forwards;
+}
+@keyframes bang {
+  0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+  20% { transform: scale(1.3) rotate(10deg); opacity: 1; }
+  35%, 80% { transform: scale(1) rotate(0); opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ---------- Medidor ---------- */
+#meter {
+  position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(255, 253, 245, .92); border: 1.5px solid #3b2f2f; border-radius: 99px;
+  padding: 1px 7px; font-size: 10.5px; font-weight: 800; color: #3b2f2f;
+  white-space: nowrap; opacity: .85; transition: opacity .2s;
+}
+#meter:hover { opacity: 1; }
+#meter-dot { width: 7px; height: 7px; border-radius: 50%; background: #aaa; }
+#meter.lvl-ok #meter-dot { background: #3cc46b; }
+#meter.lvl-mid #meter-dot { background: #f5c518; }
+#meter.lvl-high #meter-dot { background: #ff8c1a; }
+#meter.lvl-max #meter-dot { background: #ff3b3b; animation: pulse .8s ease-in-out infinite; }
+@keyframes pulse { 50% { transform: scale(1.6); } }
+
+/* ---------- Accesorios por nivel ---------- */
+#bowtie, #crown { display: none; }
+#bowtie path { fill: #e63946; stroke: #9d1d27; stroke-width: 1; }
+#bowtie circle { fill: #c1121f; }
+#crown path { fill: #ffc300; stroke: #b8860b; stroke-width: 1.2; stroke-linejoin: round; }
+#crown .gem { fill: #4d7cfe; }
+#crown { transform-origin: 50% 100%; animation: tuft 2.6s ease-in-out infinite; }
+.lvl3 #bowtie { display: inline; }
+.lvl8 #crown { display: inline; }
+.lvl8 #tuft { display: none; }
+.lvl8 #badge { display: none; }
+
+/* ---------- En reunión: audífonos puestos 🎧 ---------- */
+#headset { display: none; }
+#headset .band { fill: none; stroke: #3b3f58; stroke-width: 4.5; stroke-linecap: round; }
+#headset .cup { fill: #4d7cfe; stroke: #2f55c7; stroke-width: 1.2; }
+#headset .boom { fill: none; stroke: #3b3f58; stroke-width: 2.2; stroke-linecap: round; }
+#headset .mic { fill: #3b3f58; }
+.meeting #headset { display: inline; }
+.meeting #tuft { transform: scaleY(.6); }
+.meeting #bod { animation: nod 2.4s ease-in-out infinite; }
+.meeting #beakBottom { animation: talk .3s ease-in-out infinite alternate; animation-play-state: var(--talk, paused); }
+@keyframes nod { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(3deg) translateY(1px); } 60% { transform: rotate(-2deg); } }
+
+/* ---------- Pomodoro: bandana de concentración 🍅 ---------- */
+#bandana { display: none; }
+#bandana .band, #bandana .tail { fill: #e63946; stroke: #9d1d27; stroke-width: 1; }
+#bandana .dot { fill: #fff; }
+.pomo-focus #bandana { display: inline; }
+.pomo-focus #tuft { transform: scaleY(.7); }
+.pomo-focus .eye { transform: scaleY(.85); }
+#meter.pomo { background: #ffe3e3; }
+#meter.pomo-break { background: #e3f7ea; }
+
+/* ---------- Claude trabajando: burbuja de "pensando" ---------- */
+#thinking {
+  position: absolute; left: 92px; top: 4px; display: none; gap: 3px; align-items: center;
+  background: #fffdf5; border: 2px solid #3b2f2f; border-radius: 12px; padding: 4px 7px; z-index: 2;
+}
+#thinking::before { content: "🤖"; font-size: 11px; margin-right: 2px; }
+#thinking span { width: 5px; height: 5px; border-radius: 50%; background: #d97757; animation: think 1.2s ease-in-out infinite; }
+#thinking span:nth-child(2) { animation-delay: .2s; }
+#thinking span:nth-child(3) { animation-delay: .4s; }
+@keyframes think { 0%, 100% { transform: translateY(0); opacity: .4; } 50% { transform: translateY(-3px); opacity: 1; } }
+.claude-working #thinking { display: flex; }
+
+/* ---------- Pausa activa: se estira ---------- */
+.a-stretch #bod { animation: stretch 2.6s ease-in-out; }
+.a-stretch #wingL { animation: none; transform: rotate(70deg); transition: transform .5s; }
+.a-stretch #wingR { animation: none; transform: rotate(-70deg); transition: transform .5s; }
+.a-stretch #eyesOpen { display: none; }
+.a-stretch #eyesHappy { display: inline; }
+@keyframes stretch {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(.94, 1.12) translateY(-4px); }
+  50% { transform: scale(.94, 1.12) translateY(-4px) rotate(-6deg); }
+  75% { transform: scale(.94, 1.12) translateY(-4px) rotate(6deg); }
+}
+
+/* ---------- Evolución ---------- */
+#grow { transform-box: view-box; transform-origin: 60px 122px; transition: transform .8s cubic-bezier(.3, 1.4, .5, 1); }
+.stage-young #grow { transform: scale(1.05, 1.1); }
+.stage-rooster #grow { transform: scale(1.08, 1.14); }
+#tail-young, #tail-rooster, #comb, #wattle { display: none; }
+#tail-young path { fill: #FFD84A; stroke: #d99a14; stroke-width: 1.2; }
+.stage-young #tail-young { display: inline; }
+.stage-rooster #tail-rooster { display: inline; }
+#tail-rooster .f1 { fill: #2a78d6; } #tail-rooster .f2 { fill: #1baf7a; } #tail-rooster .f3 { fill: #eb6834; }
+#tail-rooster path { stroke: #3b2f2f; stroke-width: 1; }
+#tail-rooster { transform-origin: 0% 100%; animation: tuft 3s ease-in-out infinite; }
+#comb, #wattle { fill: #e63946; stroke: #9d1d27; stroke-width: 1.2; }
+.stage-rooster #comb, .stage-rooster #wattle { display: inline; }
+.stage-rooster #tuft { display: none; }
+#comb { transform-origin: 50% 100%; animation: tuft 2.6s ease-in-out infinite; }
+
+/* ---------- Accesorios de la tienda ---------- */
+.acc { display: none; }
+.acc-glasses-sun #acc-glasses-sun, .acc-glasses-nerd #acc-glasses-nerd, .acc-hat-party #acc-hat-party,
+.acc-hat-cowboy #acc-hat-cowboy, .acc-hat-cap #acc-hat-cap, .acc-hat-wizard #acc-hat-wizard,
+.acc-neck-scarf #acc-neck-scarf, .acc-neck-tie #acc-neck-tie, .acc-back-cape #acc-back-cape { display: inline; }
+.has-head #tuft, .has-head #comb, .has-head #crown { display: none !important; }
+.has-neck #bowtie { display: none !important; }
+.has-face #eyes { transform: none !important; }
+
+#acc-glasses-sun rect { fill: #1f1f24; stroke: #000; stroke-width: 1; }
+#acc-glasses-sun .bridge { stroke: #1f1f24; stroke-width: 2.5; fill: none; }
+#acc-glasses-sun .shine { stroke: #fff; stroke-width: 1.5; stroke-linecap: round; opacity: .7; }
+#acc-glasses-nerd circle { fill: rgba(255, 255, 255, .25); stroke: #3b2f2f; stroke-width: 2.5; }
+#acc-glasses-nerd path { stroke: #3b2f2f; stroke-width: 2.5; fill: none; stroke-linecap: round; }
+#acc-hat-party .cone { fill: #a066ff; stroke: #5b3aa7; stroke-width: 1.2; }
+#acc-hat-party .stripe { stroke: #ffd23f; stroke-width: 3; fill: none; stroke-linecap: round; }
+#acc-hat-party .pom { fill: #ff5d8f; }
+#acc-hat-party { transform-origin: 50% 100%; transform: rotate(6deg); }
+#acc-hat-cowboy .brim, #acc-hat-cowboy .crown { fill: #a0612d; stroke: #6b3d17; stroke-width: 1.2; }
+#acc-hat-cowboy .band { fill: #3b2f2f; }
+#acc-hat-cap .dome { fill: #4d7cfe; stroke: #2f55c7; stroke-width: 1.2; }
+#acc-hat-cap .visor { fill: #2f55c7; }
+#acc-hat-cap .btn { fill: #2f55c7; }
+#acc-hat-wizard .cone, #acc-hat-wizard .brim { fill: #4a3aa7; stroke: #2e2370; stroke-width: 1.2; }
+#acc-hat-wizard .star { fill: #ffd23f; }
+#acc-hat-wizard { transform-origin: 50% 100%; transform: rotate(-4deg); }
+#acc-neck-scarf .wrap, #acc-neck-scarf .tail { fill: #e63946; stroke: #9d1d27; stroke-width: 1.2; }
+#acc-neck-scarf .stripe { stroke: #fff; stroke-width: 2; }
+#acc-neck-tie .knot, #acc-neck-tie .body { fill: #2a78d6; stroke: #1c5cab; stroke-width: 1; }
+#acc-neck-tie .stripe { stroke: #cde2fb; stroke-width: 1.6; }
+#acc-back-cape path { fill: #e63946; stroke: #9d1d27; stroke-width: 1.5; }
+#acc-back-cape { transform-origin: 50% 0%; animation: cape 2.2s ease-in-out infinite; }
+@keyframes cape { 0%, 100% { transform: skewX(0); } 50% { transform: skewX(4deg); } }
+
+/* ---------- Colores de plumas ---------- */
+.skin-blue #body, .skin-blue .wing ellipse, .skin-blue #tuft path, .skin-blue #belly, .skin-blue #tail-young path { filter: hue-rotate(170deg) saturate(.75); }
+.skin-pink #body, .skin-pink .wing ellipse, .skin-pink #tuft path, .skin-pink #belly, .skin-pink #tail-young path { filter: hue-rotate(290deg) saturate(.85); }
+.skin-mint #body, .skin-mint .wing ellipse, .skin-mint #tuft path, .skin-mint #belly, .skin-mint #tail-young path { filter: hue-rotate(95deg) saturate(.65); }
+.skin-gold #body, .skin-gold .wing ellipse, .skin-gold #tuft path { filter: saturate(1.6) brightness(1.05) drop-shadow(0 0 3px #ffd700); }

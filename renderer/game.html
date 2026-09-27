@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+  <title>PM · Minijuego</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 460px; height: 400px; background: transparent; overflow: hidden; user-select: none;
+      font-family: "Segoe UI Rounded", "Nunito", "Segoe UI", system-ui, sans-serif; color: #3b2f2f; }
+    .card { position: absolute; inset: 8px; background: #fff9e8; border: 2.5px solid #3b2f2f; border-radius: 22px;
+      box-shadow: 0 4px 0 #3b2f2f; overflow: hidden; display: flex; flex-direction: column; }
+    header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: linear-gradient(#ffe78a, #ffd84a);
+      border-bottom: 2px solid #3b2f2f; -webkit-app-region: drag; font-weight: 900; }
+    header button { -webkit-app-region: no-drag; width: 28px; height: 28px; border-radius: 10px; border: 2px solid #3b2f2f; background: #fff6d0; cursor: pointer; font-weight: 900; }
+    .hud { display: flex; gap: 14px; font-size: 13px; }
+    canvas { display: block; background: linear-gradient(#bfe6ff, #eaf7ff 70%, #cfe9b0 70%); cursor: none; }
+    .overlay { position: absolute; left: 8px; right: 8px; top: 52px; bottom: 8px; display: grid; place-items: center; text-align: center; background: rgba(255, 249, 232, .9); }
+    .overlay.hidden { display: none; }
+    .overlay h2 { font-size: 22px; margin-bottom: 6px; }
+    .overlay p { font-size: 13px; margin-bottom: 12px; }
+    .btn { background: #ff9f1c; color: #fff; border: 2px solid #3b2f2f; border-radius: 14px; padding: 9px 20px; font: inherit; font-weight: 900; box-shadow: 0 2px 0 #3b2f2f; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <header>
+      <span>🎮 Atrapa el maíz</span>
+      <span class="hud"><span id="score">🌽 0</span><span id="time">⏱ 45</span></span>
+      <button id="x" title="Cerrar">✕</button>
+    </header>
+    <canvas id="c" width="440" height="330"></canvas>
+  </div>
+  <div id="ov" class="overlay">
+    <div>
+      <h2 id="ov-title">🐣 ¡A comer!</h2>
+      <p id="ov-text">Mueve el pollito con el ratón o las flechas.<br>Atrapa 🌽 (+1) y ⭐ (+5). Esquiva las 🪨 (−3).<br>Cada grano es maíz para la tienda.</p>
+      <button id="play" class="btn">▶ Jugar</button>
+    </div>
+  </div>
+  <script src="../src/i18n.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

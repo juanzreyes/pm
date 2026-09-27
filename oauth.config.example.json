@@ -1,0 +1,10 @@
+{
+  "_ayuda": "IDs de aplicación para el inicio de sesión web. Se registran UNA vez (ver README → 'Configurar inicio de sesión con Microsoft y Google'). Los usuarios solo pulsan 'Conectar'.",
+  "microsoft": {
+    "clientId": ""
+  },
+  "google": {
+    "clientId": "",
+    "clientSecret": ""
+  }
+}

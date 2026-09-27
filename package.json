@@ -1,0 +1,63 @@
+{
+  "name": "pm-pollito",
+  "version": "1.0.0",
+  "description": "PM, tu pollito project manager: widget flotante que vigila tus límites de Claude y te acompaña en tu día.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "icon": "electron scripts/make-icon.js",
+    "dist": "electron-builder --win --publish never",
+    "release": "electron-builder --win --publish always"
+  },
+  "author": "Juan Ramon Reyes Linares",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
+    "electron-updater": "^6.8.9",
+    "ical.js": "^2.2.1",
+    "imapflow": "^2.0.7"
+  },
+  "build": {
+    "appId": "com.pm.pollito",
+    "productName": "PM Pollito",
+    "copyright": "© 2026 Juan Ramon Reyes Linares",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "renderer/**/*",
+      "oauth.config.example.json",
+      "package.json",
+      "build/icon.png"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PM Pollito",
+      "runAfterFinish": true,
+      "artifactName": "PM-Pollito-Setup-${version}.${ext}"
+    }
+  }
+}

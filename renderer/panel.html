@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" />
+  <title>PM · Panel</title>
+  <link rel="stylesheet" href="panel.css" />
+</head>
+<body>
+  <div id="card">
+    <header>
+      <div class="avatar">
+        <svg viewBox="0 0 40 40"><circle cx="20" cy="22" r="15" fill="#FFD84A" stroke="#d99a14" stroke-width="1.2"/><path d="M19 7 q-2 -5 1 -6 q0 3 1 6z" fill="#FFD84A" stroke="#d99a14" stroke-width=".8"/><ellipse cx="15" cy="20" rx="2" ry="2.6" fill="#2b1d1d"/><ellipse cx="25" cy="20" rx="2" ry="2.6" fill="#2b1d1d"/><circle cx="15.8" cy="19" r=".8" fill="#fff"/><circle cx="25.8" cy="19" r=".8" fill="#fff"/><path d="M17 24 q3 -2.4 6 0 q-3 2.4 -6 0z" fill="#FF9F1C"/><ellipse cx="11" cy="25" rx="2.4" ry="1.5" fill="#ff8fa3" opacity=".6"/><ellipse cx="29" cy="25" rx="2.4" ry="1.5" fill="#ff8fa3" opacity=".6"/></svg>
+      </div>
+      <div class="who">
+        <div id="h-name">PM</div>
+        <div id="h-mood">tu pollito Project Manager</div>
+      </div>
+      <button id="close" class="icon" title="Cerrar">✕</button>
+    </header>
+
+    <nav>
+      <button data-view="chat" class="active">💬 Chat</button>
+      <button data-view="usage">📊 Uso</button>
+      <button data-view="day">📋 Día</button>
+      <button data-view="agenda">📬 Agenda</button>
+      <button data-view="pet">🐣 Perfil</button>
+    </nav>
+
+    <main>
+      <!-- CHAT -->
+      <section id="v-chat" class="view active">
+        <div id="messages"></div>
+        <div class="chips">
+          <button data-q="¿Cuánto llevo?">¿Cuánto llevo?</button>
+          <button data-q="¿Cuándo se reinicia?">⏳ Reinicio</button>
+          <button data-q="Tokens de hoy">Hoy</button>
+          <button data-q="Mis tareas">Tareas</button>
+          <button data-q="Ayuda">?</button>
+        </div>
+        <form id="chat-form">
+          <input id="chat-input" autocomplete="off" placeholder="Pregúntame algo… pío 🐣" maxlength="500" />
+          <button type="submit" class="primary">➤</button>
+        </form>
+      </section>
+
+      <!-- USO -->
+      <section id="v-usage" class="view">
+        <div id="conn" class="box"></div>
+        <div id="limits"></div>
+        <h3>Actividad local en Claude Code</h3>
+        <div id="local" class="grid"></div>
+        <div class="row between muted small">
+          <span id="fetched"></span>
+          <button id="refresh" class="ghost">↻ Actualizar</button>
+        </div>
+      </section>
+
+      <!-- DÍA -->
+      <section id="v-day" class="view">
+        <div id="pomo-box" class="box pomo-box">
+          <div class="row between">
+            <div><b id="pomo-title">🍅 Pomodoro</b><div class="small muted" id="pomo-sub">25 min de concentración · 5 de descanso</div></div>
+            <span id="pomo-time" class="pomo-time">25:00</span>
+          </div>
+          <button id="pomo-btn" class="primary">▶ Empezar pomodoro</button>
+        </div>
+
+        <div class="row between">
+          <h3 id="day-title">Hoy</h3>
+          <span id="day-progress" class="pill"></span>
+        </div>
+        <ul id="tasks"></ul>
+        <form id="task-form" class="row">
+          <input id="task-input" placeholder="Añadir tarea…" maxlength="200" autocomplete="off" />
+          <button class="primary" type="submit">＋</button>
+        </form>
+        <div id="day-notes"></div>
+
+        <h3>⏰ Recordatorios</h3>
+        <ul id="reminders" class="editlist"></ul>
+        <form id="rem-form" class="row">
+          <input id="rem-input" placeholder="a las 3 revisar el informe · en 20 min llamar a Ana" maxlength="200" autocomplete="off" />
+          <button class="primary" type="submit">⏰</button>
+        </form>
+        <div class="small muted">Tip: pulsa <b>Ctrl+Alt+P</b> desde cualquier app para anotar tareas o recordatorios al vuelo ✍️</div>
+
+        <div class="row gap">
+          <button id="btn-standup" class="soft grow">☀️ Daily</button>
+          <button id="btn-review" class="soft grow">🌇 Cierre</button>
+        </div>
+        <div class="row gap">
+          <button id="btn-daily-copy" class="ghost grow">📋 Copiar daily</button>
+          <button id="btn-report" class="ghost grow">📊 Informe semanal</button>
+        </div>
+
+        <h3>👀 Productividad de hoy</h3>
+        <div id="focus" class="box"></div>
+
+        <div class="row between">
+          <h3>⏱️ Tiempo por proyecto</h3>
+          <button id="btn-csv" class="ghost mini" title="Exportar últimos 30 días a Excel">⬇ CSV</button>
+        </div>
+        <div id="projects" class="box"></div>
+
+        <div class="row between">
+          <h3>💻 Git hoy</h3>
+          <button id="git-refresh" class="ghost mini" title="Actualizar">↻</button>
+        </div>
+        <div id="gitbox" class="box"></div>
+        <h3>Últimos días</h3>
+        <div id="history"></div>
+      </section>
+
+      <!-- AGENDA: reuniones + correo -->
+      <section id="v-agenda" class="view">
+        <div id="meeting-now" class="box live hidden"></div>
+
+        <!--
+          INICIO DE SESIÓN WEB CON MICROSOFT / GOOGLE (OAuth) — DESACTIVADO POR AHORA.
+          Necesita registrar los IDs de aplicación en oauth.config.json (ver README).
+          Para reactivarlo: quita la clase "hidden" de este div y pon WEB_ACCOUNTS_ENABLED = true en panel.js.
+        -->
+        <div id="accounts" class="box hidden">
+          <div id="acc-list"></div>
+          <button type="button" class="acc-btn ms" data-connect="microsoft">
+            <span class="logo">
+              <svg viewBox="0 0 20 20" width="18" height="18"><rect x="1" y="1" width="8.5" height="8.5" fill="#f25022"/><rect x="10.5" y="1" width="8.5" height="8.5" fill="#7fba00"/><rect x="1" y="10.5" width="8.5" height="8.5" fill="#00a4ef"/><rect x="10.5" y="10.5" width="8.5" height="8.5" fill="#ffb900"/></svg>
+            </span>
+            <span><b>Conectar con Microsoft</b><small>Outlook · Hotmail · Microsoft 365 · Teams</small></span>
+          </button>
+          <button type="button" class="acc-btn gg" data-connect="google">
+            <span class="logo">
+              <svg viewBox="0 0 48 48" width="18" height="18"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+            </span>
+            <span><b>Conectar con Google</b><small>Gmail · Google Calendar · Meet</small></span>
+          </button>
+          <div id="acc-msg" class="small"></div>
+          <p class="muted small">🔒 Se abre tu navegador con la página oficial para iniciar sesión. PM nunca ve tu contraseña: solo lee remitente y asunto de tus correos sin leer y tus reuniones.</p>
+        </div>
+
+        <div class="row between">
+          <h3>📅 Reuniones de hoy</h3>
+          <button id="cal-refresh" class="ghost mini" title="Actualizar">↻</button>
+        </div>
+        <div id="meetings"></div>
+
+        <div class="row between">
+          <h3>🐙 GitHub</h3>
+          <button id="gh-refresh" class="ghost mini" title="Actualizar">↻</button>
+        </div>
+        <div id="ghbox"></div>
+
+        <div class="row between">
+          <h3>🌐 Mis sitios</h3>
+          <button id="mon-refresh" class="ghost mini" title="Actualizar">↻</button>
+        </div>
+        <div id="monitors"></div>
+        <form id="mon-form" class="row">
+          <input id="mon-url" placeholder="miweb.com · localhost:3000 · api.miapp.com/health" autocomplete="off" />
+          <button class="primary" type="submit">＋</button>
+        </form>
+
+        <div class="row between">
+          <h3>📧 Correo</h3>
+          <button id="mail-refresh" class="ghost mini" title="Actualizar">↻</button>
+        </div>
+        <div id="mailbox"></div>
+
+        <!-- Mientras el inicio de sesión web esté desactivado, estas son las formas de conectar. -->
+        <div id="advanced" class="small">
+          <h3>🔗 Conectar</h3>
+        <details id="cal-setup" class="box small">
+          <summary>🔗 Calendario por enlace ICS</summary>
+          <p><b>Outlook / Microsoft 365</b> (tus reuniones de Teams):</p>
+          <ol>
+            <li>Abre tu calendario en Outlook web:
+              <button type="button" class="link" data-open="https://outlook.office.com/calendar">cuenta de trabajo</button> ·
+              <button type="button" class="link" data-open="https://outlook.live.com/calendar">cuenta personal</button></li>
+            <li>⚙️ Configuración → <b>Calendario</b> → <b>Calendarios compartidos</b>.</li>
+            <li>En <b>Publicar un calendario</b> elige tu calendario, “Puede ver todos los detalles” y pulsa <b>Publicar</b>.</li>
+            <li>Copia el enlace <b>ICS</b> y pégalo aquí 👇</li>
+          </ol>
+          <p><b>Google Calendar:</b> <button type="button" class="link" data-open="https://calendar.google.com/calendar/r/settings">Configuración</button> → tu calendario → “Dirección secreta en formato iCal”.</p>
+          <form id="cal-form" class="row">
+            <input id="cal-url" type="password" placeholder="https://…/calendar.ics" autocomplete="off" />
+            <button class="primary" type="submit">Conectar</button>
+          </form>
+          <div id="cal-msg" class="small"></div>
+          <button type="button" id="cal-remove" class="link hidden">Desconectar calendario</button>
+        </details>
+
+        <details id="mail-setup" class="box small">
+          <summary>🔗 Correo por IMAP (contraseña de aplicación)</summary>
+          <form id="mail-form">
+            <label>Proveedor
+              <select id="mail-provider"></select>
+            </label>
+            <div id="mail-help" class="muted"></div>
+            <input id="mail-user" type="email" placeholder="tu@correo.com" autocomplete="off" />
+            <input id="mail-pass" type="password" placeholder="Contraseña de APLICACIÓN (no la normal)" autocomplete="off" />
+            <div id="mail-custom" class="row hidden">
+              <input id="mail-host" placeholder="imap.servidor.com" />
+              <input id="mail-port" placeholder="993" style="width:70px" />
+            </div>
+            <button class="primary" type="submit">Conectar correo</button>
+          </form>
+          <div id="mail-msg" class="small"></div>
+          <button type="button" id="mail-remove" class="link hidden">Desconectar correo</button>
+          <p class="muted">🔒 Solo leo remitente y asunto de tus correos sin leer. La contraseña se guarda cifrada en tu PC.</p>
+        </details>
+        </div>
+      </section>
+
+      <!-- MASCOTA / AJUSTES -->
+      <section id="v-pet" class="view">
+        <div class="box">
+          <div class="row between"><b id="lv-title">Nivel 1</b><span class="pill" id="lv-num">Nv 1</span></div>
+          <div class="stat"><span>⭐ XP</span><div class="bar"><i id="st-xp"></i></div></div>
+          <div class="stat"><span>💛 Felicidad</span><div class="bar"><i id="st-happy"></i></div></div>
+          <div class="stat"><span>🌽 Pancita</span><div class="bar"><i id="st-full"></i></div></div>
+          <div class="muted small" id="st-age"></div>
+          <div class="row gap" style="margin-top:8px">
+            <button id="feed" class="soft grow">🌽 Dar de comer</button>
+            <button id="pet" class="soft grow">💛 Acariciar</button>
+          </div>
+        </div>
+
+        <div class="row gap">
+          <button id="open-stats" class="soft grow">📈 Estadísticas</button>
+          <button id="open-game" class="soft grow">🎮 Minijuego</button>
+        </div>
+
+        <div class="row between"><h3>🏅 Logros</h3><span id="ach-count" class="pill"></span></div>
+        <div id="achievements" class="ach-grid"></div>
+
+        <div class="row between"><h3>🛍️ Tienda</h3><span id="coins" class="pill coins"></span></div>
+        <div class="small muted">Ganas 🌽 maíz con cada XP, logros y el minijuego.</div>
+        <div id="shop" class="shop-grid"></div>
+
+        <h3>🤖 IA (chat inteligente)</h3>
+        <div class="box small">
+          <p class="muted">Con una API key de Anthropic, el pollito responde cualquier pregunta, prioriza tus tareas, crea recordatorios y mejora tus informes. Consigue la key
+            <button type="button" class="link" data-open="https://console.anthropic.com/settings/keys">aquí</button> (se paga por uso; se guarda cifrada).</p>
+          <form id="ai-form" class="row">
+            <input id="ai-key" type="password" placeholder="sk-ant-…" autocomplete="off" />
+            <button class="soft" type="submit">Usar</button>
+          </form>
+          <label class="row between">Modelo <select id="ai-model" style="width:auto"></select></label>
+          <label class="row between">Usar IA en el chat <input type="checkbox" id="ai-enabled" /></label>
+          <div id="ai-msg" class="small"></div>
+          <button type="button" id="ai-remove" class="link hidden">Quitar API key</button>
+        </div>
+
+        <h3>🌐 Idioma</h3>
+        <div class="box small">
+          <label class="row between">Idioma / Language
+            <select id="lang" style="width:auto"><option value="es">Español</option><option value="en">English</option></select>
+          </label>
+          <label class="row between">Ocultarme al presentar o en pantalla completa <input type="checkbox" id="auto-hide" /></label>
+        </div>
+
+        <h3>Nombre</h3>
+        <form id="rename-form" class="row">
+          <input id="rename-input" maxlength="24" placeholder="Nombre del pollito" />
+          <button class="primary" type="submit">Guardar</button>
+        </form>
+
+        <h3>Rutina</h3>
+        <div class="box">
+          <label class="row between">Pregunta del daily <input type="time" id="s-morning" /></label>
+          <label class="row between">Cierre del día <input type="time" id="s-evening" /></label>
+          <label class="row between">Solo de lunes a viernes <input type="checkbox" id="s-workdays" /></label>
+          <label class="row between">Charlas espontáneas <input type="checkbox" id="s-chatter" /></label>
+          <label class="row between">Vigilar distracciones (YouTube, redes…) <input type="checkbox" id="s-focus" /></label>
+          <label class="row between">Sonidos de pío 🔊 <input type="checkbox" id="s-sounds" /></label>
+          <label class="row between">Iniciar con Windows <input type="checkbox" id="s-autostart" /></label>
+          <button id="mute" class="soft">🔕 Silenciar 1 hora (reunión)</button>
+        </div>
+
+        <h3>🔌 Integraciones</h3>
+        <div class="box small">
+          <div class="row between"><b>🤖 Claude Code</b><span id="cc-status" class="pill"></span></div>
+          <p class="muted">Te aviso cuando Claude termine una tarea o necesite tu permiso, y muestro una burbuja mientras trabaja. Añade unos hooks a tu <code>~/.claude/settings.json</code> (con copia de seguridad).</p>
+          <div class="row gap">
+            <button id="cc-install" class="primary grow">Conectar con Claude Code</button>
+            <button id="cc-uninstall" class="ghost hidden">Quitar</button>
+          </div>
+          <div id="cc-msg"></div>
+        </div>
+        <div class="box small">
+          <div class="row between"><b>🐙 GitHub</b><span id="gh-status" class="pill"></span></div>
+          <p class="muted">PRs que esperan tu revisión, CI fallido, aprobaciones y comentarios. Crea un token personal
+            <button type="button" class="link" data-open="https://github.com/settings/tokens/new?scopes=repo,read:org&description=PM%20Pollito">aquí</button>
+            (permisos <code>repo</code> y <code>read:org</code>) y pégalo. PM solo lo usa para leer; se guarda cifrado.</p>
+          <form id="gh-form" class="row">
+            <input id="gh-token" type="password" placeholder="ghp_… / github_pat_…" autocomplete="off" />
+            <button class="soft" type="submit">Usar</button>
+          </form>
+          <button type="button" id="gh-remove" class="link hidden">Quitar token</button>
+        </div>
+        <div class="box small">
+          <b>💻 Carpetas con tus repos de git</b>
+          <p class="muted">Una por línea. Busco repositorios hasta 2 niveles dentro.</p>
+          <textarea id="git-roots" rows="2"></textarea>
+          <button id="git-roots-save" class="soft">Guardar carpetas</button>
+          <div id="git-roots-msg" class="small muted"></div>
+        </div>
+        <div class="box small">
+          <b>🧘 Salud</b>
+          <label class="row between">Pausa activa cada 50 min <input type="checkbox" id="h-breaks" /></label>
+          <label class="row between">Descanso visual 20-20-20 <input type="checkbox" id="h-eyes" /></label>
+          <label class="row between">Recordar tomar agua <input type="checkbox" id="h-water" /></label>
+        </div>
+
+        <h3>Conexión con Claude</h3>
+        <div class="box small">
+          <div id="web-status"></div>
+          <button id="web-login" class="primary">🌐 Conectar con mi cuenta de Claude</button>
+          <button id="web-logout" class="link hidden">Cerrar sesión de Claude en PM</button>
+          <details>
+            <summary class="muted">Opciones avanzadas</summary>
+            <p class="muted">También puedo usar la sesión de <b>Claude Code</b> de este equipo o un token OAuth que pegues aquí (se guarda cifrado).</p>
+            <form id="token-form" class="row">
+              <input id="token-input" type="password" placeholder="Token (opcional)" autocomplete="off" />
+              <button class="soft" type="submit">Usar</button>
+            </form>
+            <button id="token-clear" class="link hidden">Quitar token manual</button>
+          </details>
+        </div>
+        <div class="row between small muted">
+          <span id="version"></span>
+          <button type="button" id="check-updates" class="ghost mini">Buscar actualizaciones</button>
+        </div>
+        <button id="quit" class="danger">Cerrar PM 😢</button>
+      </section>
+    </main>
+
+    <!-- OVERLAYS -->
+    <div id="o-onboarding" class="overlay hidden">
+      <div class="hero">🥚➜🐣</div>
+      <h2>¡Pío! Acabo de nacer</h2>
+      <p>Seré tu <b>Project Manager</b>: vigilaré cuánto gastas de Claude, te avisaré cuando te acerques al límite y cada mañana te preguntaré qué vas a hacer.</p>
+      <form id="onb-form">
+        <label>¿Cómo me vas a llamar?</label>
+        <input id="onb-name" maxlength="24" placeholder="Ej: Pollito, Kiwi, Sr. Pío…" required />
+        <div id="onb-conn" class="box small"></div>
+        <button class="primary big" type="submit">¡Ese es mi nombre! 💛</button>
+      </form>
+    </div>
+
+    <div id="o-standup" class="overlay hidden">
+      <h2>☀️ ¡Buenos días!</h2>
+      <p class="muted" id="su-intro">Cuéntame para organizar el día.</p>
+      <form id="su-form">
+        <label>1. ¿Qué hiciste ayer?</label>
+        <textarea id="su-yesterday" rows="3" placeholder="Terminé el login, revisé PRs…"></textarea>
+        <label>2. ¿Qué vas a hacer hoy? <span class="muted small">(Enter para añadir cada tarea)</span></label>
+        <div class="row">
+          <input id="su-task" placeholder="Una tarea…" maxlength="200" autocomplete="off" />
+          <button type="button" id="su-add" class="soft">＋</button>
+        </div>
+        <ul id="su-tasks" class="editlist"></ul>
+        <label>3. ¿En qué puedo ayudarte?</label>
+        <textarea id="su-help" rows="2" placeholder="Recuérdame hacer pausas, avísame si me paso de límite…"></textarea>
+        <div class="row gap">
+          <button type="button" id="su-later" class="ghost">Más tarde</button>
+          <button type="submit" class="primary grow">¡Listo! 🐣</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="o-report" class="overlay hidden">
+      <div class="row between">
+        <h2 id="rp-title">📊 Informe semanal</h2>
+        <button type="button" id="rp-close" class="icon" title="Cerrar">✕</button>
+      </div>
+      <p class="muted small" id="rp-sub">Listo para pegar en Slack, Teams o un correo.</p>
+      <textarea id="rp-text" class="report" readonly></textarea>
+      <div class="row gap">
+        <button type="button" id="rp-ai" class="ghost">✨ Mejorar con IA</button>
+        <button type="button" id="rp-copy" class="primary big grow">📋 Copiar</button>
+      </div>
+    </div>
+
+    <div id="o-stats" class="overlay hidden">
+      <div class="row between">
+        <h2>📈 Estadísticas</h2>
+        <button type="button" id="st-close" class="icon" title="Cerrar">✕</button>
+      </div>
+      <div id="st-tiles" class="tiles"></div>
+      <div id="st-charts"></div>
+      <div id="st-tip" class="viz-tip hidden"></div>
+    </div>
+
+    <div id="o-review" class="overlay hidden">
+      <h2>🌇 Cierre del día</h2>
+      <p class="muted">¿Cumpliste con lo que dijiste que harías hoy?</p>
+      <form id="rv-form">
+        <ul id="rv-tasks" class="checklist"></ul>
+        <label>¿Algo que quieras anotar?</label>
+        <textarea id="rv-notes" rows="2" placeholder="Bloqueos, logros, pendientes…"></textarea>
+        <label class="row"><input type="checkbox" id="rv-carry" checked /> Pasar lo pendiente a mañana</label>
+        <div class="row gap">
+          <button type="button" id="rv-later" class="ghost">Más tarde</button>
+          <button type="submit" class="primary grow">Guardar cierre ✅</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script src="../src/i18n.js"></script>
+  <script src="panel.js"></script>
+  <script src="stats.js"></script>
+</body>
+</html>

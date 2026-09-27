@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" />
+  <title>PM</title>
+  <link rel="stylesheet" href="pet.css" />
+</head>
+<body>
+  <div id="bubble" class="hidden hit"><span id="bubble-text"></span></div>
+
+  <div id="walker">
+    <div id="fx"></div>
+    <div id="thinking" title="Claude está trabajando"><span></span><span></span><span></span></div>
+    <div id="chick" class="hit">
+      <svg viewBox="0 0 120 130" width="120" height="130" aria-label="Pollito PM">
+        <defs>
+          <radialGradient id="gBody" cx="40%" cy="35%" r="70%">
+            <stop offset="0%" stop-color="#FFF08A" />
+            <stop offset="60%" stop-color="#FFD84A" />
+            <stop offset="100%" stop-color="#F9BE2A" />
+          </radialGradient>
+          <radialGradient id="gWing" cx="40%" cy="30%" r="80%">
+            <stop offset="0%" stop-color="#FFE45C" />
+            <stop offset="100%" stop-color="#F3AE1C" />
+          </radialGradient>
+          <linearGradient id="gShell" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#FFFDF6" />
+            <stop offset="100%" stop-color="#EDE3CF" />
+          </linearGradient>
+        </defs>
+
+        <ellipse id="shadow" cx="60" cy="123" rx="30" ry="5" />
+
+        <g id="flip"><g id="grow">
+          <g id="feet">
+            <path id="footL" d="M47 108 q-2 9 -7 11 q5 0 7 -3 q1 4 5 4 q-4 -3 -2 -12z" />
+            <path id="footR" d="M73 108 q2 9 7 11 q-5 0 -7 -3 q-1 4 -5 4 q4 -3 2 -12z" />
+          </g>
+
+          <g id="bod">
+            <!-- Capa (detrás del cuerpo) -->
+            <g id="acc-back-cape" class="acc"><path d="M26 62 Q16 108 32 119 L88 119 Q104 108 94 62 Q60 76 26 62z" /></g>
+            <!-- Cola: pollo joven y gallo -->
+            <g id="tail-young"><path d="M92 90 q20 -6 22 -24 q-8 12 -22 14z" /><path d="M94 96 q16 0 20 -12 q-8 8 -20 6z" /></g>
+            <g id="tail-rooster">
+              <path class="f1" d="M88 84 q24 -30 30 -52 q2 26 -22 58z" />
+              <path class="f2" d="M90 92 q30 -18 34 -40 q-2 26 -30 46z" />
+              <path class="f3" d="M90 100 q28 -4 34 -24 q-4 22 -32 30z" />
+            </g>
+            <g id="wingL" class="wing"><ellipse cx="22" cy="78" rx="11" ry="17" transform="rotate(20 22 78)" /></g>
+            <g id="wingR" class="wing"><ellipse cx="98" cy="78" rx="11" ry="17" transform="rotate(-20 98 78)" /></g>
+
+            <ellipse id="body" cx="60" cy="72" rx="40" ry="41" />
+            <ellipse id="belly" cx="60" cy="90" rx="24" ry="17" />
+            <ellipse id="flush" cx="60" cy="72" rx="40" ry="41" />
+
+            <g id="tuft">
+              <path d="M58 33 q-6 -12 2 -16 q-2 8 3 14z" />
+              <path d="M61 32 q2 -13 11 -12 q-7 4 -7 13z" />
+              <path d="M56 33 q-9 -6 -9 -12 q5 5 11 8z" />
+            </g>
+            <!-- Cresta de gallo -->
+            <path id="comb" d="M44 36 q-4 -10 5 -11 q-1 -9 8 -8 q3 -9 11 -4 q8 -3 8 6 q7 3 1 11 q-16 -4 -33 6z" />
+
+            <g id="cheeks">
+              <ellipse cx="35" cy="80" rx="7" ry="4.5" />
+              <ellipse cx="85" cy="80" rx="7" ry="4.5" />
+            </g>
+
+            <g id="eyes">
+              <g id="eyesOpen">
+                <g class="eye" id="eyeL">
+                  <ellipse cx="45" cy="66" rx="6" ry="7.5" class="pupil" />
+                  <circle cx="47.2" cy="63" r="2.4" class="shine" />
+                  <circle cx="43.2" cy="69" r="1.1" class="shine" />
+                </g>
+                <g class="eye" id="eyeR">
+                  <ellipse cx="75" cy="66" rx="6" ry="7.5" class="pupil" />
+                  <circle cx="77.2" cy="63" r="2.4" class="shine" />
+                  <circle cx="73.2" cy="69" r="1.1" class="shine" />
+                </g>
+              </g>
+              <g id="eyesHappy">
+                <path d="M39 67 q6 -8 12 0" />
+                <path d="M69 67 q6 -8 12 0" />
+              </g>
+              <g id="eyesClosed">
+                <path d="M39 66 q6 5 12 0" />
+                <path d="M69 66 q6 5 12 0" />
+              </g>
+              <g id="eyesDizzy">
+                <path d="M41 62 l8 8 M49 62 l-8 8" />
+                <path d="M71 62 l8 8 M79 62 l-8 8" />
+              </g>
+            </g>
+
+            <g id="brows">
+              <path id="browL" d="M37 53 l14 5" />
+              <path id="browR" d="M83 53 l-14 5" />
+            </g>
+
+            <g id="beak">
+              <path id="beakBottom" d="M53 80 q7 9 14 0z" />
+              <path id="beakTop" d="M51 77 q9 -7 18 0 q-9 7 -18 0z" />
+            </g>
+
+            <g id="badge">
+              <rect x="70" y="95" width="17" height="11" rx="3" />
+              <text x="78.5" y="103.2" text-anchor="middle">PM</text>
+            </g>
+
+            <g id="bowtie">
+              <path d="M51 87 l8.5 5 l-8.5 5z M69 87 l-8.5 5 l8.5 5z" />
+              <circle cx="60" cy="92" r="2.6" />
+            </g>
+            <g id="crown">
+              <path d="M45 30 l2 -11 l6 6 l7 -9 l7 9 l6 -6 l2 11z" />
+              <circle cx="60" cy="16.5" r="1.8" class="gem" />
+            </g>
+
+            <!-- Barbilla de gallo -->
+            <path id="wattle" d="M56 84 q-1 12 4 12 q5 0 4 -12z" />
+
+            <!-- Accesorios de la tienda -->
+            <g id="acc-glasses-sun" class="acc">
+              <rect x="34" y="59" width="20" height="13" rx="5" /><rect x="66" y="59" width="20" height="13" rx="5" />
+              <path class="bridge" d="M54 64 h12" /><path class="shine" d="M38 62 l5 0 M70 62 l5 0" />
+            </g>
+            <g id="acc-glasses-nerd" class="acc">
+              <circle cx="45" cy="66" r="9.5" /><circle cx="75" cy="66" r="9.5" /><path d="M54.5 65 h11 M35.5 64 l-6 -2 M84.5 64 l6 -2" />
+            </g>
+            <g id="acc-hat-party" class="acc">
+              <path class="cone" d="M43 35 L62 1 L78 33 Q60 40 43 35z" />
+              <path class="stripe" d="M49 24 q12 4 22 -1 M54 14 q8 3 14 -1" />
+              <circle cx="62" cy="2" r="4.5" class="pom" />
+            </g>
+            <g id="acc-hat-cowboy" class="acc">
+              <ellipse class="brim" cx="60" cy="34" rx="40" ry="7" />
+              <path class="crown" d="M40 34 q0 -24 20 -22 q20 -2 20 22 q-20 5 -40 0z" />
+              <path class="band" d="M40 30 q20 5 40 0 l0 4 q-20 5 -40 0z" />
+            </g>
+            <g id="acc-hat-cap" class="acc">
+              <path class="dome" d="M34 40 q26 -34 52 0 q-26 -6 -52 0z" />
+              <path class="visor" d="M74 37 q20 -2 26 6 q-14 3 -27 -2z" />
+              <circle cx="60" cy="22" r="2.5" class="btn" />
+            </g>
+            <g id="acc-hat-wizard" class="acc">
+              <path class="cone" d="M40 36 L64 -10 L80 36z" />
+              <ellipse class="brim" cx="60" cy="36" rx="28" ry="5" />
+              <path class="star" d="M60 14 l2 4 4 1 -3 3 1 4 -4 -2 -4 2 1 -4 -3 -3 4 -1z" />
+              <circle cx="69" cy="26" r="1.8" class="star" /><circle cx="54" cy="28" r="1.4" class="star" />
+            </g>
+            <g id="acc-neck-scarf" class="acc">
+              <path class="wrap" d="M27 86 q33 15 66 0 l0 9 q-33 15 -66 0z" />
+              <path class="tail" d="M70 96 l4 22 l9 -2 l-4 -21z" />
+              <path class="stripe" d="M72 104 l8 -1 M73 110 l8 -1" />
+            </g>
+            <g id="acc-neck-tie" class="acc">
+              <path class="knot" d="M55 84 h10 l-2 6 h-6z" />
+              <path class="body" d="M57 90 h6 l5 18 l-8 7 l-8 -7z" />
+              <path class="stripe" d="M58 96 l6 3 M57 103 l8 3" />
+            </g>
+
+            <g id="bandana">
+              <path class="band" d="M22 50 Q60 36 98 50 L97 58 Q60 44 23 58z" />
+              <path class="tail" d="M97 52 q10 -2 14 4 q-8 0 -12 3z M97 55 q9 4 10 11 q-6 -4 -11 -6z" />
+              <circle cx="60" cy="45" r="3" class="dot" />
+            </g>
+
+            <g id="headset">
+              <path class="band" d="M21 66 C 19 20, 101 20, 99 66" />
+              <rect x="13" y="58" width="11" height="19" rx="5" class="cup" />
+              <rect x="96" y="58" width="11" height="19" rx="5" class="cup" />
+              <path class="boom" d="M102 75 C 100 88, 88 90, 76 86" />
+              <circle cx="75" cy="86" r="3.2" class="mic" />
+            </g>
+
+            <path id="sweat" d="M95 46 q5 8 0 11 q-5 -3 0 -11z" />
+            <path id="tear" d="M40 74 q3 6 0 8 q-3 -2 0 -8z" />
+          </g>
+
+          <g id="shell">
+            <path d="M16 84 l10 -8 l9 9 l9 -10 l8 9 l8 -9 l9 10 l9 -9 l9 9 l9 -8 l1 10 q-4 35 -45 35 q-41 0 -45 -35z" />
+          </g>
+        </g></g>
+      </svg>
+    </div>
+    <div id="meter" class="hit"><span id="meter-dot"></span><span id="meter-text">…</span></div>
+  </div>
+
+  <script src="../src/i18n.js"></script>
+  <script src="pet.js"></script>
+</body>
+</html>
