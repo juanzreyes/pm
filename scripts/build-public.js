@@ -13,7 +13,8 @@ const root = path.join(__dirname, '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 const version = pkg.version;
 const pub = path.join(root, 'public');
-const dist = path.join(root, 'dist');
+// PM_DIST_DIR: si compilaste en otra carpeta (p. ej. porque dist\ quedó bloqueada por el antivirus).
+const dist = path.join(root, process.env.PM_DIST_DIR || 'dist');
 const extDir = path.join(root, 'vscode-extension');
 
 fs.mkdirSync(pub, { recursive: true });
@@ -31,6 +32,15 @@ if (!fs.existsSync(setupSrc)) {
   process.exit(1);
 }
 fs.copyFileSync(setupSrc, path.join(pub, setup));
+
+// ¿Salió firmado? (con CSC_LINK / Azure Trusted Signing, ver README → Firmar el instalador)
+let signer = '';
+if (process.platform === 'win32') {
+  try {
+    signer = execSync(`powershell -NoProfile -Command "$s = Get-AuthenticodeSignature -LiteralPath '${path.join(pub, setup).replace(/'/g, "''")}'; if ($s.Status -eq 'Valid') { $s.SignerCertificate.GetNameInfo('SimpleName', $false) }"`, { encoding: 'utf8' }).trim();
+  } catch { /* sin PowerShell: se asume sin firma */ }
+}
+if (!signer) console.warn('\n⚠️  El instalador NO está firmado: Windows mostrará "Windows protegió su PC". Ver README → Firmar el instalador.');
 
 // 3) Extensión de VS Code (opcional: si falla, se sigue sin ella).
 let vsix = null;
@@ -68,9 +78,9 @@ REQUISITOS
 
 INSTALAR (1 minuto)
 1. Haz doble clic en  ${setup}  (${mb(setup)} MB).
-2. Si Windows muestra "Windows protegió su PC", pulsa "Más información" y luego
+${signer ? `2. El instalador está firmado por "${signer}": Windows lo mostrará como editor verificado.` : `2. Si Windows muestra "Windows protegió su PC", pulsa "Más información" y luego
    "Ejecutar de todas formas". (Aparece porque el instalador aún no está firmado
-   con un certificado; el archivo es seguro: puedes comprobarlo con SHA256.txt.)
+   con un certificado; el archivo es seguro: puedes comprobarlo con SHA256.txt.)`}
 3. Elige la carpeta (o deja la que viene) y pulsa Instalar.
 4. Al terminar, el pollito sale de su huevo en tu escritorio: ponle nombre. 🥚➜🐣
 5. Para ver tus límites de Claude: clic en el pollito → pestaña "Uso" →
@@ -93,6 +103,10 @@ PRIVACIDAD
 Todo se guarda solo en tu PC (%APPDATA%\\pm-pollito). No hay servidores propios:
 PM solo habla con Claude, GitHub o tu correo si tú los conectas. En Ajustes →
 Privacidad puedes pausar el seguimiento, exportar o borrar todos tus datos.
+
+ACTUALIZACIONES
+PM busca versiones nuevas solo (cada 6 horas) y te avisa: pulsa "Actualizar ahora"
+o se instalará la próxima vez que lo cierres. No hace falta volver a descargar nada.
 
 DESINSTALAR
 Configuración de Windows → Aplicaciones → "PM Pollito" → Desinstalar.
@@ -147,6 +161,8 @@ h2{margin-top:36px}h3{margin:18px 0 6px}ul{margin:0;padding-left:20px}footer{mar
   <div class="card"><b>📊 Tus límites de Claude</b>Cuánto llevas, cuándo se reinicia y a qué hora llegarás al 100%.</div>
   <div class="card"><b>🧩 Dentro de Claude Code</b>MCP, línea de estado, sesiones en vivo y memoria de proyecto.</div>
   <div class="card"><b>☀️ Tu día organizado</b>Daily, tareas, bloques de tiempo, foco, hábitos, notas e informes.</div>
+  <div class="card"><b>🎫 Para equipos</b>Tickets de Jira, GitHub, Linear y Azure DevOps, daily en Slack o Teams y avisos al celular.</div>
+  <div class="card"><b>▶️ Claude trabaja por ti</b>Tu cola de peticiones se ejecuta sola en una copia aparte del repo; tú revisas y aceptas.</div>
   <div class="card"><b>🐣 Un tamagotchi</b>Aliméntalo, decórale la casita, colecciona huevos y elige su personalidad.</div>
 </div>
 <h2>Novedades</h2>${changes}

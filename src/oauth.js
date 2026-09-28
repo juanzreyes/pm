@@ -41,6 +41,14 @@ const DONE_PAGE = (ok, rawMsg, msg = esc(rawMsg)) => `<!doctype html><html lang=
 
 let pending = null; // solo un inicio de sesión a la vez
 
+/** URLs del proveedor. Microsoft: con `tenant` (ID o dominio de tu empresa) en vez de "common" si la app es de un solo inquilino. */
+function urls(providerKey, cfg) {
+  const p = PROVIDERS[providerKey];
+  const tenant = providerKey === 'microsoft' && cfg && /^[\w.-]+$/.test(cfg.tenant || '') ? cfg.tenant : '';
+  if (!tenant) return { authUrl: p.authUrl, tokenUrl: p.tokenUrl };
+  return { authUrl: p.authUrl.replace('/common/', `/${tenant}/`), tokenUrl: p.tokenUrl.replace('/common/', `/${tenant}/`) };
+}
+
 function isLoopback(addr) {
   return addr === '127.0.0.1' || addr === '::1' || addr === '::ffff:127.0.0.1';
 }
@@ -91,7 +99,7 @@ function authorize(providerKey, cfg) {
         return finish(new Error(q.get('error_description') || q.get('error')));
       }
       try {
-        const tokens = await postForm(p.tokenUrl, {
+        const tokens = await postForm(urls(providerKey, cfg).tokenUrl, {
           client_id: cfg.clientId,
           ...(cfg.clientSecret ? { client_secret: cfg.clientSecret } : {}),
           grant_type: 'authorization_code',
@@ -134,7 +142,7 @@ function authorize(providerKey, cfg) {
         code_challenge_method: 'S256',
         ...p.extra,
       });
-      shell.openExternal(`${p.authUrl}?${params}`);
+      shell.openExternal(`${urls(providerKey, cfg).authUrl}?${params}`);
     });
     server.on('error', (e) => finish(e));
   });
@@ -142,7 +150,7 @@ function authorize(providerKey, cfg) {
 
 async function refresh(providerKey, cfg, refreshToken) {
   const p = PROVIDERS[providerKey];
-  return postForm(p.tokenUrl, {
+  return postForm(urls(providerKey, cfg).tokenUrl, {
     client_id: cfg.clientId,
     ...(cfg.clientSecret ? { client_secret: cfg.clientSecret } : {}),
     grant_type: 'refresh_token',
@@ -151,4 +159,4 @@ async function refresh(providerKey, cfg, refreshToken) {
   });
 }
 
-module.exports = { authorize, refresh, PROVIDERS };
+module.exports = { authorize, refresh, urls, PROVIDERS };

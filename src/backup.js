@@ -5,7 +5,7 @@ const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
 
-const SECRETS = ['manualToken', 'aiKey', 'githubToken', 'calendarUrl', 'backupPass'];
+const SECRETS = ['manualToken', 'aiKey', 'githubToken', 'calendarUrl', 'backupPass', 'trackers', 'teamWebhook', 'telegramToken', 'telegramChatId', 'telegramPairCode'];
 
 /** Carpeta sugerida para las copias. */
 function suggestDir() {

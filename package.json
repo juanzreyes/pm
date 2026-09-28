@@ -1,18 +1,19 @@
 {
   "name": "pm-pollito",
-  "version": "1.5.2",
+  "version": "1.6.0",
   "description": "PM, tu pollito project manager: widget flotante que vigila tus límites de Claude y te acompaña en tu día.",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "icon": "electron scripts/make-icon.js",
     "dist": "electron-builder --win --publish never",
+    "prerelease": "node scripts/check-release.js && npm run test:all",
     "release": "electron-builder --win --publish always",
     "postdist": "node scripts/build-public.js",
     "public": "node scripts/build-public.js",
     "test": "node --test tests/*.test.js",
     "dist:mac": "electron-builder --mac --publish never",
-    "test:ui": "node --test --test-concurrency=1 tests/ui/",
+    "test:ui": "node --test --test-concurrency=1 tests/ui/*.test.js",
     "test:all": "npm run typecheck && npm test && npm run test:ui",
     "typecheck": "tsc -p tsconfig.json"
   },
@@ -44,6 +45,7 @@
       "src/**/*",
       "renderer/**/*",
       "oauth.config.example.json",
+      "oauth.config.json",
       "package.json",
       "build/icon.png",
       "mcp/**/*",
@@ -102,6 +104,14 @@
     },
     "dmg": {
       "artifactName": "PM-Pollito-${version}-${arch}.${ext}"
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "juanzreyes",
+        "repo": "pm",
+        "releaseType": "release"
+      }
+    ]
   }
 }

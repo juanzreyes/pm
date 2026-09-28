@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { execFileSync } = require('child_process');
 const { _electron: electron } = require('playwright');
 
 const ROOT = path.join(__dirname, '..', '..');
@@ -23,12 +24,26 @@ async function waitPage(name, ms = 15000) {
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+let reposDir;
 test.before(async () => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pm-ui-'));
+  // Un repo de verdad y un "claude" falso para probar la cola que se ejecuta sola.
+  reposDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pm-ui-repos-'));
+  const repo = path.join(reposDir, 'demo');
+  fs.mkdirSync(repo);
+  const g = (...a) => execFileSync('git', a, { cwd: repo, stdio: 'pipe' });
+  g('init', '-q', '-b', 'main'); g('config', 'user.name', 'Test'); g('config', 'user.email', 'test@example.com');
+  fs.writeFileSync(path.join(repo, 'README.md'), '# demo\n');
+  g('add', '-A'); g('commit', '-q', '-m', 'inicio');
+  const fakeClaude = path.join(reposDir, 'claude.js');
+  fs.writeFileSync(fakeClaude, `let p = ''; process.stdin.on('data', (d) => (p += d)); process.stdin.on('end', () => {
+    require('fs').writeFileSync('HECHO.md', p);
+    console.log(JSON.stringify({ type: 'result', is_error: false, result: 'Creé HECHO.md', total_cost_usd: 0.05, num_turns: 2, session_id: 'ses-ui' }));
+  });`);
   const now = Date.now();
   fs.writeFileSync(path.join(dir, 'pm-data.json'), JSON.stringify({
     pet: { name: 'Testito', born: now - 3 * 864e5, happiness: 80, fullness: 80, xp: 20, coins: 500 },
-    settings: { autoStartAsked: true, lang: 'es', focusWatch: false, chatter: false, sounds: false, voice: false, gitWatch: false, micWatch: false },
+    settings: { autoStartAsked: true, lang: 'es', focusWatch: false, chatter: false, sounds: false, voice: false, gitWatch: false, micWatch: false, gitRoots: [reposDir], claudeBin: fakeClaude },
     flags: { tourDone: true },
     life: { running: false, lastQuitHow: 'update', lastQuitAt: now },
   }));
@@ -44,7 +59,7 @@ test.before(async () => {
 
 test.after(async () => {
   if (app) await app.close().catch(() => {});
-  try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* Windows a veces tarda en soltar archivos */ }
+  for (const d of [dir, reposDir]) try { fs.rmSync(d, { recursive: true, force: true }); } catch { /* Windows a veces tarda en soltar archivos */ }
 });
 
 test('el pollito lleva su gafete de PM y el contador es otro elemento', async () => {
@@ -117,6 +132,78 @@ test('paleta: comandos y búsqueda global en tus datos', async () => {
   await pal.fill('#q', 'biblioteca');
   await pal.waitForFunction(() => document.querySelector('#list').innerText.includes('Biblioteca de prompts'), null, { timeout: 5000 });
   await pal.keyboard.press('Escape');
+});
+
+test('cola de Claude: ▶️ la ejecuta en una copia aparte y se acepta en una rama', async () => {
+  const panel = await waitPage('panel');
+  await panel.evaluate(() => pm.command('panel', 'day'));
+  await panel.waitForFunction(() => document.querySelectorAll('#queue-project option').length > 1, null, { timeout: 8000 });
+  await panel.fill('#queue-input', 'crea HECHO.md con un saludo');
+  await panel.selectOption('#queue-project', 'demo');
+  await panel.press('#queue-input', 'Enter');
+  await panel.waitForSelector('#claude-queue .q-run', { timeout: 5000 });
+  await panel.click('#claude-queue .q-run');
+  await panel.waitForSelector('#claude-runs .run.review', { timeout: 30000 });
+  const repo = path.join(reposDir, 'demo');
+  assert.equal(fs.existsSync(path.join(repo, 'HECHO.md')), false, 'tu carpeta no se toca');
+  const txt = await panel.textContent('#claude-runs .run.review');
+  assert.match(txt, /1 archivo/);
+  assert.equal(await panel.evaluate(() => (window.state || state).claudeQueue.length), 0, 'sale de la cola');
+  await panel.click('#claude-runs .run.review .run-accept');
+  await panel.waitForSelector('#claude-runs .run.accepted', { timeout: 15000 });
+  const branches = execFileSync('git', ['branch', '--list', 'pm/claude-*'], { cwd: repo }).toString();
+  assert.match(branches, /pm\/claude-/);
+  const b = branches.replace('*', '').trim();
+  assert.match(execFileSync('git', ['show', '--stat', '--format=%s', b], { cwd: repo }).toString(), /claude: crea HECHO\.md[\s\S]*HECHO\.md/);
+});
+
+test('ajustes: tickets, cola automática y avisos fuera del PC se pintan', async () => {
+  const panel = await waitPage('panel');
+  // Sin gestores conectados, la caja de tickets no estorba.
+  assert.equal(await panel.evaluate(() => document.querySelector('#tickets').classList.contains('hidden')), true);
+  await panel.evaluate(() => pm.openSettings('remote'));
+  const st = await waitPage('settings');
+  await st.waitForFunction(() => !document.querySelector('#sec-remote').classList.contains('hidden'), null, { timeout: 8000 });
+  await st.evaluate(() => pm.remoteSave({ phoneOn: true, phoneVia: 'ntfy' }));
+  await st.waitForFunction(() => /^pm-[0-9a-f]{16}$/.test(document.querySelector('#ntfy-topic').textContent), null, { timeout: 5000 });
+  const r = await st.evaluate(async () => {
+    const bad = await pm.remoteSave({ teamWebhook: 'http://inseguro.example' });
+    const s = await pm.getState();
+    return { bad: bad.ok, secretOut: 'teamWebhook' in s.settings || 'telegramToken' in s.settings, trackers: document.querySelectorAll('details.tk[data-p]').length, runBin: document.querySelector('#run-bin').textContent };
+  });
+  assert.deepEqual({ ...r, runBin: !!r.runBin }, { bad: false, secretOut: false, trackers: 4, runBin: true });
+  const jira = await st.evaluate(() => pm.ticketsSave('jira', { site: 'no-es-url', token: 'x' }));
+  assert.equal(jira.ok, false);
+  assert.match(jira.error, /https/);
+});
+
+test('Microsoft 365: al pegar el ID de aplicación aparece "Conectar" en Agenda', async () => {
+  const panel = await waitPage('panel');
+  await panel.evaluate(() => pm.command('panel', 'agenda'));
+  await sleep(400);
+  assert.equal(await panel.evaluate(() => document.querySelector('#accounts').classList.contains('hidden')), true);
+  const bad = await panel.evaluate(() => pm.saveOauth({ microsoft: { clientId: 'no-es-guid' } }));
+  assert.equal(bad.ok, false);
+  const ok = await panel.evaluate(() => pm.saveOauth({ microsoft: { clientId: '11111111-2222-3333-4444-555555555555', tenant: 'contoso.onmicrosoft.com' } }));
+  assert.deepEqual(ok, { ok: true, ready: { microsoft: true, google: false } });
+  await panel.waitForFunction(() => !document.querySelector('#accounts').classList.contains('hidden'), null, { timeout: 5000 });
+  assert.equal(await panel.evaluate(() => document.querySelector('.acc-btn.ms').disabled), false);
+  assert.equal(fs.existsSync(path.join(dir, 'oauth.config.json')), true, 'se guarda en la carpeta de datos, no en la app');
+});
+
+test('panel: agenda y centro de avisos (en sus propios archivos) funcionan', async () => {
+  const panel = await waitPage('panel');
+  await panel.evaluate(() => pm.command('panel', 'agenda'));
+  await sleep(300);
+  // El proveedor de correo cambia la ayuda (código de panel-agenda.js).
+  await panel.waitForFunction(() => document.querySelectorAll('#mail-provider option').length > 1, null, { timeout: 5000 });
+  await panel.evaluate(() => { const s = document.querySelector('#mail-provider'); s.value = 'yahoo'; s.dispatchEvent(new Event('change')); });
+  assert.match(await panel.innerHTML('#mail-help'), /Generar contraseña de app/);
+  await panel.evaluate(() => pm.command('inbox'));
+  await panel.waitForFunction(() => !document.querySelector('#o-inbox').classList.contains('hidden'), null, { timeout: 5000 });
+  const n = await panel.evaluate(() => document.querySelectorAll('#ib-list [data-id], #ib-list .ib').length);
+  assert.ok(n > 0, 'el centro de avisos lista algo');
+  await panel.click('#ib-close');
 });
 
 test('ajustes: diagnóstico sin errores de la app', async () => {

@@ -15,13 +15,50 @@ module.exports = function install(M) {
   }
 
   // ----- cuentas con inicio de sesión web (Microsoft / Google) -----
+  // Los IDs de aplicación se buscan primero en tu carpeta de datos (se guardan desde Ajustes, sin
+  // recompilar) y luego junto a la app (oauth.config.json que viaja dentro del instalador).
+  const userOauthFile = () => M.path.join(M.app.getPath('userData'), 'oauth.config.json');
   function oauthConfig() {
-    for (const f of ['oauth.config.json', 'oauth.config.example.json']) {
+    const out = {};
+    for (const f of [M.path.join(M.APP_DIR, 'oauth.config.example.json'), M.path.join(M.APP_DIR, 'oauth.config.json'), userOauthFile()]) {
       try {
-        return JSON.parse(M.fs.readFileSync(M.path.join(M.APP_DIR, f), 'utf8'));
-      } catch { /* prueba el siguiente */ }
+        const c = JSON.parse(M.fs.readFileSync(f, 'utf8'));
+        for (const p of ['microsoft', 'google']) if (c[p] && c[p].clientId) out[p] = c[p];
+      } catch { /* no existe */ }
     }
-    return {};
+    return out;
+  }
+  /** Guarda los IDs pegados en Ajustes (un campo vacío deja el que había). */
+  function saveOauthConfig(patch) {
+    let cur = {};
+    try { cur = JSON.parse(M.fs.readFileSync(userOauthFile(), 'utf8')); } catch { /* primera vez */ }
+    const clean = (s) => String(s || '').trim();
+    if (patch.microsoft) {
+      const m = { ...(cur.microsoft || {}) };
+      if (clean(patch.microsoft.clientId)) m.clientId = clean(patch.microsoft.clientId);
+      if ('tenant' in patch.microsoft) m.tenant = clean(patch.microsoft.tenant);
+      if (m.clientId && !/^[0-9a-f-]{36}$/i.test(m.clientId)) throw new Error('El ID de aplicación de Microsoft es un GUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)');
+      if (m.tenant && !/^[\w.-]+$/.test(m.tenant)) throw new Error('El inquilino debe ser un ID o un dominio (ej. tuempresa.onmicrosoft.com)');
+      cur.microsoft = m;
+    }
+    if (patch.google) {
+      const g = { ...(cur.google || {}) };
+      if (clean(patch.google.clientId)) g.clientId = clean(patch.google.clientId);
+      if (clean(patch.google.clientSecret)) g.clientSecret = clean(patch.google.clientSecret);
+      if (g.clientId && !/\.apps\.googleusercontent\.com$/.test(g.clientId)) throw new Error('El ID de cliente de Google termina en .apps.googleusercontent.com');
+      cur.google = g;
+    }
+    if (patch.remove) delete cur[patch.remove];
+    M.fs.mkdirSync(M.path.dirname(userOauthFile()), { recursive: true });
+    M.fs.writeFileSync(userOauthFile(), JSON.stringify(cur, null, 2));
+    return oauthReady();
+  }
+  function oauthInfo() {
+    const c = oauthConfig();
+    return {
+      microsoft: { clientId: (c.microsoft && c.microsoft.clientId) || '', tenant: (c.microsoft && c.microsoft.tenant) || '' },
+      google: { clientId: (c.google && c.google.clientId) || '', hasSecret: !!(c.google && c.google.clientSecret) },
+    };
   }
   function oauthReady() {
     const c = oauthConfig();
@@ -194,7 +231,7 @@ module.exports = function install(M) {
     // Los secretos nunca salen del proceso principal.
     s.hasAiKey = !!s.aiKey;
     s.hasGithubToken = !!s.githubToken;
-    for (const k of ['manualToken', 'aiKey', 'githubToken', 'calendarUrl', 'accounts', 'backupPass']) delete s[k];
+    for (const k of ['manualToken', 'aiKey', 'githubToken', 'calendarUrl', 'accounts', 'backupPass', 'trackers', 'teamWebhook', 'telegramToken', 'telegramPairCode', 'telegramChatId']) delete s[k];
     s.hasBackupPass = !!M.store.data.settings.backupPass;
     if (s.mail) s.mail = { provider: s.mail.provider, user: s.mail.user };
     const recent = {};
@@ -258,6 +295,7 @@ module.exports = function install(M) {
       calendar: { ...calState, configured: !!M.store.data.settings.calendarUrl || connectedAccounts().length > 0, ics: !!M.store.data.settings.calendarUrl },
       accounts: connectedAccounts().map((a) => ({ provider: a.provider, email: a.email, error: accountErrors[a.provider] || null })),
       oauthReady: oauthReady(),
+      oauthInfo: oauthInfo(),
       meetingNow,
       ...ps,
       ...(M.ex ? M.ex.snapshot() : {}),
@@ -265,6 +303,9 @@ module.exports = function install(M) {
       ...(M.pl ? M.pl.snapshot() : {}),
       pushChecks: M.store.data.pushChecks || {},
       claudeSessions: M.sess ? M.sess.list() : [],
+      tickets: M.work.ticketsState(),
+      ...M.work.runsState(),
+      remote: M.remote.remoteState(),
       audioListen: M.audioState || null,
       integrations: M.integrationsState(),
       profiles: { ...M.profiles.list(), activeId: M.profiles.active().id },
@@ -288,6 +329,7 @@ module.exports = function install(M) {
     mailConfig,
     oauthConfig,
     oauthReady,
+    saveOauthConfig,
     accountIo,
     connectedAccounts,
     PROVIDER_LABEL,

@@ -104,7 +104,6 @@ let petWin = null;
 let panelWin = null;
 let tray = null;
 let usage = { limits: [], local: null, connection: { status: 'checking' }, fetchedAt: null };
-let prevSession = null;
 let drag = null;
 let quitting = false;
 let quitHow = null; // 'user' | 'shutdown'
@@ -468,9 +467,11 @@ function logInbox(text, cat, actions, target) {
 }
 
 function say(text, anim, ms, opts = {}) {
-  if (!petWin || petWin.isDestroyed()) return;
   const raw = String(text);
   const cat = opts.cat || inferCat(raw);
+  // Lo importante también sale del PC: canal del equipo y celular (src/main/remote.js).
+  try { if (mods.remote) mods.remote.onSay(raw, cat, opts); } catch (e) { diag.log('main', 'Avisos fuera del PC: ' + e.message); }
+  if (!petWin || petWin.isDestroyed()) return;
   const actions = (opts.actions || inferActions(raw, cat) || []).map((a) => ({ ...a, label: T(a.label) }));
   text = T(raw);
   const target = targetFor(raw, cat, opts, actions);
@@ -659,7 +660,10 @@ function getUpdater() {
       updater.autoInstallOnAppQuit = true;
       updater.on('update-downloaded', (info) => {
         quitHow = 'update';
-        say(`🎁 ¡Hay una versión nueva (${info.version})! Se instalará cuando cierres PM.`, 'celebrate', 12000);
+        // PM casi nunca se cierra (vive en la bandeja): mejor ofrecer instalarla ya.
+        say(`🎁 ¡Hay una versión nueva (${info.version})! Se instalará cuando cierres PM, o ahora mismo si quieres (tardo unos segundos).`, 'celebrate', 20000, {
+          cat: 'pet', actions: [{ label: '🔄 Actualizar ahora', cmd: 'update.install' }, { label: 'Luego', cmd: 'ack' }],
+        });
       });
       updater.on('error', () => {}); // sin servidor configurado o sin internet: silencio
     } catch {
@@ -677,8 +681,10 @@ async function checkUpdates(manual) {
     if (manual) say(v && v !== app.getVersion() ? `Descargando la versión ${v}… 🎁` : '¡Ya tienes la última versión! ✅', 'peck', 7000);
     return { ok: true, version: v || app.getVersion() };
   } catch (e) {
+    // Primero "sin versiones publicadas": su mensaje ("No published versions") también contiene "publish".
+    const noRelease = /404|Unable to find latest version|No published versions/i.test(e.message);
     const noServer = /app-update\.yml|ENOENT|publish/i.test(e.message);
-    return { ok: false, error: noServer ? 'No hay servidor de actualizaciones configurado (ver README → Publicar actualizaciones).' : e.message };
+    return { ok: false, error: noRelease ? `Aún no hay versiones publicadas: tienes la ${app.getVersion()}.` : noServer ? 'No hay servidor de actualizaciones configurado (ver README → Publicar actualizaciones).' : e.message };
   }
 }
 
@@ -793,379 +799,9 @@ function reloadUi() {
 
 // → src/main/tray.js (bandeja del sistema: icono dinámico y menú)
 
-// ---------- consumo ----------
-let refreshing = false;
-async function refreshUsage(manual = false) {
-  if (refreshing) return usage;
-  refreshing = true;
-  try {
-    let local = null;
-    try { local = usageApi.localStats(); } catch (e) { console.error('Stats locales:', e.message); }
+// → src/main/usagewatch.js (consumo de Claude: límites, predicción y umbrales)
 
-    // Fuentes por orden de preferencia: cuenta web (navegador) → token manual → Claude Code.
-    const sources = [];
-    if (store.data.web.orgId) {
-      sources.push({
-        source: 'web',
-        plan: store.data.web.orgName,
-        run: () => claudeWeb.fetchLimits(store.data.web.orgId),
-        bad: 'Tu sesión de claude.ai caducó. Pulsa “Conectar con mi cuenta de Claude” para volver a entrar.',
-      });
-    }
-    const manualTok = manualToken();
-    if (manualTok) {
-      sources.push({ source: 'manual', run: () => usageApi.fetchLimits(manualTok), bad: 'El token que pegaste no es válido o caducó.' });
-    }
-    const cc = usageApi.readClaudeCodeSession();
-    if (cc.found && !(cc.expiresAt && cc.expiresAt < Date.now())) {
-      sources.push({
-        source: 'claude-code',
-        plan: cc.plan,
-        run: () => usageApi.fetchLimits(cc.token),
-        bad: 'La sesión de Claude Code de este equipo ya no es válida.',
-      });
-    }
-
-    let connection = null;
-    let limits = [];
-    for (const src of sources) {
-      try {
-        limits = await src.run();
-        connection = { source: src.source, plan: src.plan, status: 'ok' };
-        break;
-      } catch (e) {
-        const invalid = e.status === 401 || e.status === 403;
-        if (!connection) {
-          connection = {
-            source: src.source,
-            status: invalid ? 'invalid' : 'error',
-            message: invalid ? src.bad : 'No pude contactar con Claude (' + e.message + '). Reintentaré pronto.',
-          };
-        }
-      }
-    }
-    if (!connection) {
-      connection = { source: null, status: 'missing', message: 'Aún no me has conectado a tu cuenta de Claude.' };
-    }
-    // Conserva los últimos límites conocidos si solo fue un fallo de red.
-    if (connection.status === 'error' && usage.limits) limits = usage.limits;
-
-    usage = { limits, local, connection, fetchedAt: Date.now() };
-    if (connection.status === 'ok') updateForecasts();
-    processThresholds();
-    M.broadcast();
-    if (manual) {
-      const s = limits.find((l) => l.key === 'five_hour');
-      say(connection.status === 'ok'
-        ? (s ? `¡Actualizado! Sesión al ${Math.round(s.utilization)}% 📊` : '¡Actualizado! 📊')
-        : '¡Ups! No pude conectarme a Claude 😿', connection.status === 'ok' ? 'peck' : 'sad');
-    }
-    return usage;
-  } finally {
-    refreshing = false;
-  }
-}
-
-// ---------- predicción de consumo ----------
-function updateForecasts() {
-  const hist = store.data.usageHist || (store.data.usageHist = {});
-  const now = Date.now();
-  usage.forecast = {};
-  for (const [key, windowMs] of [['five_hour', 90 * 60e3], ['seven_day', 36 * 3600e3]]) {
-    const l = (usage.limits || []).find((x) => x.key === key);
-    if (!l || !l.resetsAt) continue;
-    const list = hist[key] || (hist[key] = []);
-    list.push({ t: now, u: l.utilization, r: Date.parse(l.resetsAt) });
-    hist[key] = list.filter((s) => now - s.t < 3 * 864e5).slice(-300);
-    const f = forecastMod.forecast(hist[key], l, windowMs);
-    if (!f) continue;
-    usage.forecast[key] = f;
-    // Aviso anticipado (una vez por ventana): sesión si llegas al 100% en < 2,5 h; semanal si en < 2 días.
-    const soon = key === 'five_hour' ? 2.5 * 3600e3 : 2 * 864e5;
-    const bucket = Math.round(f.resetAt / 600000);
-    const alertKey = `forecast|${key}|${bucket}`;
-    if (key === 'five_hour' && ex && usage.local) {
-      const models = Object.entries(usage.local.today.models || {}).sort((a, b) => b[1] - a[1]);
-      ex.modelAdvice(f, l.utilization, models.length ? models[0][0] : '', bucket);
-    }
-    if (f.willHit && f.eta - now < soon && l.utilization >= 25 && l.utilization < 95 && !store.data.alerts[alertKey]) {
-      store.data.alerts[alertKey] = [1];
-      const at = new Date(f.eta).toLocaleString(lang() === 'en' ? 'en' : 'es', key === 'five_hour' ? { hour: '2-digit', minute: '2-digit' } : { weekday: 'long', hour: '2-digit', minute: '2-digit' });
-      const early = brain.fmtDur(f.beforeReset / 1000);
-      const what = key === 'five_hour' ? 'tu sesión' : 'tu límite semanal';
-      say(`🔮 A este ritmo (+${Math.round(f.rate)}%/h) llenarás ${what} a las ${at}, ${early} antes del reinicio. ¿Bajamos el ritmo o pasamos a un modelo más ligero?`, 'alert', 15000, {
-        cat: 'usage', actions: [{ label: '📊 Ver uso', cmd: 'panel.usage' }, { label: '👍 Entendido', cmd: 'ack' }],
-      });
-    }
-  }
-  store.save();
-}
-
-function processThresholds() {
-  const now = Date.now();
-  // Limpieza de avisos viejos.
-  for (const k of Object.keys(store.data.alerts)) {
-    const t = Number(k.split('|')[1]);
-    if (t && t < now - 864e5) delete store.data.alerts[k];
-  }
-
-  let best = null;
-  for (const l of usage.limits || []) {
-    const bucket = l.resetsAt ? Math.round(Date.parse(l.resetsAt) / 600000) * 600000 : 0;
-    const key = `${l.key}|${bucket}`;
-    const done = store.data.alerts[key] || [];
-    const important = l.key === 'five_hour' || l.key === 'seven_day';
-    const crossed = THRESHOLDS.filter((t) => l.utilization >= t && !done.includes(t) && (important || t >= 75));
-    if (crossed.length) {
-      store.data.alerts[key] = [...done, ...crossed];
-      const t = Math.max(...crossed);
-      if (!best || t > best.t) best = { l, t };
-    }
-  }
-
-  const s = (usage.limits || []).find((l) => l.key === 'five_hour');
-  if (s && prevSession && prevSession.utilization >= 30 && s.utilization < 10 && s.resetsAt !== prevSession.resetsAt) {
-    say('¡Tu límite de sesión se reinició! 🎉 Energía al 100%', 'celebrate', 9000);
-    pushChat('pet', '¡Tu límite de sesión de 5 h se reinició! 🎉');
-    if (ex) setTimeout(() => ex.onSessionReset(), 10000);
-  } else if (best) {
-    const m = brain.thresholdMessage(best.l, best.t);
-    say(m.text, m.anim, 10000);
-    pushChat('pet', m.text);
-  }
-  if (s) prevSession = s;
-  store.save();
-}
-
-// ---------- horario: daily a las 8 y cierre antes de las 5 ----------
-function checkSchedule() {
-  const now = new Date();
-  const dow = now.getDay();
-  if (store.data.settings.workdaysOnly && (dow === 0 || dow === 6)) return;
-  if (!store.data.pet.name || isMuted() || M.meetingNow) return; // primero el onboarding; en silencio o reunión no molesta
-  const nowMin = now.getHours() * 60 + now.getMinutes();
-  const morning = toMinutes(store.data.settings.morningTime);
-  const evening = toMinutes(store.data.settings.eveningTime);
-  const day = today();
-  const t = Date.now();
-
-  if (nowMin >= morning && nowMin < evening && !day.standup && !(day.snoozeStandup > t)) {
-    day.snoozeStandup = t + 30 * 60000; // si no contestas, vuelvo a preguntar en 30 min
-    store.save();
-    const n = M.todaysMeetings().length;
-    const agenda = M.calState.status === 'ok' ? ` Hoy tienes ${n} reunion${n === 1 ? '' : 'es'} 📅` : '';
-    const inbox = M.mailState.status === 'ok' && M.mailState.unseen ? ` y ${M.mailState.unseen} correos sin leer 📧` : '';
-    say(`¡Buenos días! ☀️ ¿Qué hiciste ayer y qué vas a hacer hoy?${agenda}${inbox}`, 'alarm-soft', 14000);
-    M.openPanel('standup');
-  }
-
-  const tasks = day.standup && day.standup.today;
-  if (nowMin >= evening && tasks && tasks.length && !day.review && !(day.snoozeReview > t)) {
-    day.snoozeReview = t + 30 * 60000;
-    store.save();
-    say('¡Casi termina el día! 🌇 ¿Cumpliste lo que dijiste?', 'alarm-soft', 12000);
-    M.openPanel('review');
-  }
-
-  // Viernes después del cierre: informe semanal listo para copiar.
-  const weekKey = `${now.getFullYear()}-w${Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / (7 * 864e5))}`;
-  if (dow === 5 && nowMin >= evening + 5 && (day.review || !tasks) && store.data.lastWeeklyReport !== weekKey) {
-    store.data.lastWeeklyReport = weekKey;
-    store.save();
-    say('¡Es viernes! 🎉 Tu informe semanal está listo para copiar y enviar 📊', 'celebrate', 12000);
-    M.openPanel('report');
-  }
-}
-
-// ---------- vida de la mascota ----------
-function petTick() {
-  const p = store.data.pet;
-  const now = Date.now();
-  const last = p.lastTick || now;
-  const mins = Math.min((now - last) / 60000, 60 * 24);
-  p.fullness = clamp(p.fullness - mins / 15);
-  p.happiness = clamp(p.happiness - mins / 25);
-  // Limpieza: se ensucia poco a poco.
-  p.clean = clamp((p.clean ?? 100) - mins / 40);
-  // Energía: duerme de noche (o en la siesta) y se cansa de día.
-  const h = new Date().getHours();
-  const napping = (p.napUntil || 0) > now;
-  const userAway = !fx.lastSampleAt || now - fx.lastSampleAt > 60e3 || (fx.idleSince && now - fx.idleSince > 15 * 60e3);
-  if (napping) p.energy = clamp((p.energy ?? 100) + mins * 12);
-  else if ((h >= 23 || h < 7) && userAway) p.energy = clamp((p.energy ?? 100) + mins * 1.5);
-  else p.energy = clamp((p.energy ?? 100) - mins / 10);
-  // Enfermedad: si pasa mucha hambre y está muy sucio.
-  if (!p.sick && (p.fullness <= 0 || p.clean <= 1 || (p.fullness <= 5 && p.clean <= 15))) {
-    p.sick = true;
-    p.sickSince = now;
-    p.happiness = clamp(p.happiness - 15);
-    setTimeout(() => say('🤒 No me siento bien… creo que me enfermé. ¿Me das una medicina?', 'sad', 20000, {
-      cat: 'pet', actions: [{ label: '💊 Medicina (25 🌽)', cmd: 'medicine' }, { label: '🌽 Dar maíz', cmd: 'feed' }],
-    }), 2000);
-  }
-  p.lastTick = now;
-  store.data.life.lastSeen = now; // latido: sirve para saber cuánto estuvo apagado
-  store.save();
-  M.broadcast();
-}
-
-// ---------- memoria entre aperturas ----------
-function markStarted() {
-  const life = store.data.life;
-  const now = Date.now();
-  const bootAt = now - os.uptime() * 1000;
-  let how = null;
-  if (life.lastStart) {
-    if (life.running) {
-      // No se cerró bien. Si el PC se reinició después, fue un apagado; si no, lo mataron.
-      how = (life.lastSeen || life.lastStart) < bootAt ? 'shutdown' : 'killed';
-      if (how === 'killed') life.crashes = (life.crashes || 0) + 1;
-    } else {
-      how = life.lastQuitHow || 'user';
-    }
-  }
-  const lastAlive = life.running ? life.lastSeen || life.lastStart : life.lastQuitAt;
-  startup = { how, awayMs: lastAlive ? now - lastAlive : 0 };
-  life.running = true;
-  life.lastStart = now;
-  life.lastSeen = now;
-  store.flush();
-}
-
-function markStopped(how) {
-  const life = store.data.life;
-  if (!life.running) return;
-  life.running = false;
-  life.lastQuitAt = Date.now();
-  life.lastQuitHow = how || 'user';
-  if (life.lastQuitHow === 'user') life.closes = (life.closes || 0) + 1;
-  store.flush();
-}
-
-function greetOnStart() {
-  const p = store.data.pet;
-  if (!p.name) {
-    say('¡Pío! Acabo de nacer 🐣 ¿Cómo me llamo?', 'hatch', 15000);
-    setTimeout(() => M.openPanel('onboarding'), 1200);
-    return;
-  }
-  const life = store.data.life;
-  if (startup && startup.how) {
-    const g = brain.returnGreeting({
-      name: p.name, how: startup.how, awayMs: startup.awayMs, crashes: life.crashes, closes: life.closes, pending: firstPending(),
-    });
-    if (g.angry) {
-      life.angryUntil = Date.now() + 15 * 60000; // se le pasa con mimos, comida o pidiéndole perdón
-      store.flush();
-    }
-    say(g.text, g.anim, 14000);
-    pushChat('pet', g.text);
-    M.broadcast();
-    return;
-  }
-  const h = new Date().getHours();
-  const hi = h < 12 ? '¡Buenos días' : h < 19 ? '¡Buenas tardes' : '¡Buenas noches';
-  say(`${hi}! ${p.name} reportándose 🫡`, 'hop', 7000);
-}
-
-async function confirmQuit(from = 'menú') {
-  if (typeof from !== 'string') from = 'menú';
-  const name = store.data.pet.name || 'PM';
-  say('¿Me vas a cerrar? 🥺', 'sad', 8000);
-  const parent = panelWin && panelWin.isVisible() ? panelWin : petWin;
-  const r = await dialog.showMessageBox(parent, {
-    type: 'question',
-    buttons: ['No, quédate 💛', 'Sí, ciérrate'],
-    defaultId: 0,
-    cancelId: 0,
-    title: name,
-    message: `¿Seguro que quieres cerrar a ${name}? 🥺`,
-    detail: 'Se acordará… y la próxima vez que lo abras estará enojado 😤',
-  });
-  if (r.response === 1) {
-    quitHow = 'user';
-    diag.log('info', `Cerrado por el usuario desde: ${from}`);
-    app.quit();
-  } else {
-    say('¡Yay! Sabía que me querías 💛', 'love', 6000);
-  }
-}
-
-let nextChatterAt = Date.now() + 20 * 60000;
-let lastHungryAt = 0;
-function chatter() {
-  const now = Date.now();
-  const h = new Date().getHours();
-  if (h < 7 || h >= 23 || !store.data.pet.name || isMuted() || M.meetingNow) return;
-  const p = store.data.pet;
-  if (p.fullness < 25 && now - lastHungryAt > 60 * 60000) {
-    lastHungryAt = now;
-    say('Pío… tengo hambre 🥺 ¿Me das maicito? 🌽', 'sad', 9000);
-    return;
-  }
-  if ((p.clean ?? 100) < 30 && now - (p.lastDirtyMsg || 0) > 2 * 3600e3) {
-    p.lastDirtyMsg = now;
-    say('Huelo un poquito raro… 🪰 ¿Un bañito? 🛁', 'wobble', 12000, { cat: 'pet', actions: [{ label: '🛁 Bañar', cmd: 'bath' }] });
-    return;
-  }
-  if ((p.energy ?? 100) < 20 && !(p.napUntil > now) && now - (p.lastTiredMsg || 0) > 2 * 3600e3) {
-    p.lastTiredMsg = now;
-    say('Estoy agotado… 😪 ¿Me dejas dormir una siestita?', 'yawn', 12000, { cat: 'pet', actions: [{ label: '😴 Siesta (3 min)', cmd: 'nap' }] });
-    return;
-  }
-  if (store.data.settings.chatter && now >= nextChatterAt) {
-    nextChatterAt = now + (25 + Math.random() * 25) * 60000;
-    say(pl && Math.random() < 0.4 ? pl.chatter() : brain.idleChatter({ usage, day: today(), pet: p, name: p.name }), 'flap', 8000);
-  }
-}
-
-function feed() {
-  const p = store.data.pet;
-  if (p.fullness >= 98) {
-    say('¡Estoy llenito! No me cabe ni un grano 🫃', 'wobble');
-    return;
-  }
-  p.fullness = clamp(p.fullness + 25);
-  p.happiness = clamp(p.happiness + 5);
-  p.clean = clamp((p.clean ?? 100) - 6); // come como un pollito: se mancha
-  M.addXp(2);
-  store.save();
-  animate('eat');
-  if (!calmDown(5)) say('¡Ñam ñam! 🌽 Gracias 💛', 'eat');
-  M.broadcast();
-}
-
-function petPet() {
-  const p = store.data.pet;
-  const now = Date.now();
-  if (now - (p.lastPetAt || 0) > 3000) {
-    p.happiness = clamp(p.happiness + 3);
-    p.lastPetAt = now;
-    M.addXp(1);
-    store.save();
-    animate('love');
-    calmDown(4);
-    M.broadcast();
-  } else {
-    animate('love');
-  }
-}
-
-// Cronómetro por tarea (solo uno en marcha a la vez).
-function taskTimer(index, action) {
-  const list = today().standup && today().standup.today;
-  const t = list && list[index];
-  if (!t) return false;
-  const now = Date.now();
-  for (const x of list) if (x.startedAt) { x.spent = (x.spent || 0) + (now - x.startedAt) / 1000; delete x.startedAt; }
-  if (action === 'start') {
-    t.startedAt = now;
-    if (!t.est) say(`⏱️ Cronómetro en marcha para "${t.text}". Tip: doble clic en el reloj para poner cuánto estimas.`, 'peck', 6000, { log: false });
-  }
-  store.save();
-  M.broadcast();
-  return true;
-}
+// → src/main/petcare.js (daily y cierre, vida de la mascota, memoria entre aperturas, comida, mimos y cronómetro)
 
 // → src/main/ipc.js (mensajes entre las ventanas y el proceso principal (ipc))
 
@@ -1276,8 +912,6 @@ const M = {
   set tray(v) { tray = v; },
   get usage() { return usage; },
   set usage(v) { usage = v; },
-  get prevSession() { return prevSession; },
-  set prevSession(v) { prevSession = v; },
   get drag() { return drag; },
   set drag(v) { drag = v; },
   get quitting() { return quitting; },
@@ -1358,25 +992,19 @@ const M = {
   get runCommand() { return runCommand; },
   get paletteCommands() { return paletteCommands; },
   get reloadUi() { return reloadUi; },
-  get refreshing() { return refreshing; },
-  set refreshing(v) { refreshing = v; },
-  get refreshUsage() { return refreshUsage; },
-  get updateForecasts() { return updateForecasts; },
-  get processThresholds() { return processThresholds; },
-  get checkSchedule() { return checkSchedule; },
-  get petTick() { return petTick; },
-  get markStarted() { return markStarted; },
-  get markStopped() { return markStopped; },
-  get greetOnStart() { return greetOnStart; },
-  get confirmQuit() { return confirmQuit; },
-  get nextChatterAt() { return nextChatterAt; },
-  set nextChatterAt(v) { nextChatterAt = v; },
-  get lastHungryAt() { return lastHungryAt; },
-  set lastHungryAt(v) { lastHungryAt = v; },
-  get chatter() { return chatter; },
-  get feed() { return feed; },
-  get petPet() { return petPet; },
-  get taskTimer() { return taskTimer; },
+  get refreshUsage() { return mods.usagewatch.refreshUsage; },
+  get updateForecasts() { return mods.usagewatch.updateForecasts; },
+  get processThresholds() { return mods.usagewatch.processThresholds; },
+  get checkSchedule() { return mods.petcare.checkSchedule; },
+  get petTick() { return mods.petcare.petTick; },
+  get markStarted() { return mods.petcare.markStarted; },
+  get markStopped() { return mods.petcare.markStopped; },
+  get greetOnStart() { return mods.petcare.greetOnStart; },
+  get confirmQuit() { return mods.petcare.confirmQuit; },
+  get chatter() { return mods.petcare.chatter; },
+  get feed() { return mods.petcare.feed; },
+  get petPet() { return mods.petcare.petPet; },
+  get taskTimer() { return mods.petcare.taskTimer; },
   get mailState() { return mods.agenda.mailState; },
   set mailState(v) { mods.agenda.mailState = v; },
   get calState() { return mods.agenda.calState; },
@@ -1387,6 +1015,7 @@ const M = {
   get mailConfig() { return mods.agenda.mailConfig; },
   get oauthConfig() { return mods.agenda.oauthConfig; },
   get oauthReady() { return mods.agenda.oauthReady; },
+  get saveOauthConfig() { return mods.agenda.saveOauthConfig; },
   get accountIo() { return mods.agenda.accountIo; },
   get connectedAccounts() { return mods.agenda.connectedAccounts; },
   get PROVIDER_LABEL() { return mods.agenda.PROVIDER_LABEL; },
@@ -1493,6 +1122,8 @@ const M = {
   get latestBackup() { return mods.safemode.latestBackup; },
   get checkSafeMode() { return mods.safemode.checkSafeMode; },
 };
+mods.usagewatch = require('./src/main/usagewatch')(M);
+mods.petcare = require('./src/main/petcare')(M);
 mods.agenda = require('./src/main/agenda')(M);
 mods.wellbeing = require('./src/main/wellbeing')(M);
 mods.watcher = require('./src/main/watcher')(M);
@@ -1506,256 +1137,15 @@ mods.audio = require('./src/main/audio')(M);
 // Escucha de audio (¿música o voz?): sus funciones también van en M.
 for (const k of ['audioStart', 'audioStop', 'audioOnMedia', 'audioVerdict', 'setupAudioCapture', 'isAudioPage']) Object.defineProperty(M, k, { get: () => mods.audio[k] });
 Object.defineProperty(M, 'audioState', { get: () => mods.audio.audioState });
+// Tickets del equipo y cola de Claude que se ejecuta sola; avisos al canal y al celular.
+mods.work = require('./src/main/work')(M);
+mods.remote = require('./src/main/remote')(M);
+M.work = mods.work;
+mods.boot = require('./src/main/boot')(M);
+M.remote = mods.remote;
 
-app.whenReady().then(async () => {
-  if (process.platform === 'win32') app.setAppUserModelId('com.pm.pollito');
-  if (process.platform === 'darwin' && app.dock) app.dock.hide(); // en Mac vive en la barra de menús, sin icono en el Dock
-  await M.checkSafeMode();
-  profiles = profilesMod.create(app.getPath('userData'));
-  store = new Store(app.getPath('userData'), profiles.fileFor(profiles.active().id));
-  markStarted();
-  // Permisos: portapapeles para todos; capturar el sonido del sistema, solo la ventana oculta de escucha.
-  require('electron').session.defaultSession.setPermissionRequestHandler((wc, perm, cb) => cb(['clipboard-sanitized-write', 'clipboard-read'].includes(perm) || (['media', 'display-capture'].includes(perm) && M.isAudioPage(wc.getURL()))));
-  M.setupIpc();
-  M.setupAudioCapture();
-  createPet();
-  createPanel();
-  M.buildTray();
-  // Si el proceso de una ventana se cae (memoria, GPU…), se recarga sola en vez de desaparecer.
-  const revive = (getWin, name) => {
-    const w = getWin();
-    if (!w) return;
-    w.webContents.on('render-process-gone', (_e, d) => {
-      if (quitting || d.reason === 'clean-exit') return;
-      diag.log('main', `La ventana ${name} se cayó (${d.reason}); la recupero`);
-      setTimeout(() => { const x = getWin(); if (x && !x.isDestroyed()) x.webContents.reload(); }, 800);
-    });
-  };
-  revive(() => petWin, 'del pollito');
-  // (el panel se recupera solo: ver createPanel)
-  // La GPU caída deja las ventanas transparentes en blanco o invisibles: recarga el pollito.
-  app.on('child-process-gone', (_e, d) => {
-    if (quitting) return;
-    diag.log('main', `Proceso ${d.type} caído (${d.reason})`);
-    if (d.type === 'GPU' && petWin && !petWin.isDestroyed()) setTimeout(() => petWin.webContents.reload(), 1500);
-  });
-  if (startup && startup.how === 'killed') diag.log('main', 'La sesión anterior terminó de golpe (proceso terminado desde fuera o fallo grave).');
-
-  // Los ojos siguen al cursor.
-  let lastCursor = '';
-  setInterval(() => {
-    if (!petWin || petWin.isDestroyed() || !petWin.isVisible()) return;
-    const c = screen.getCursorScreenPoint();
-    const b = petWin.getBounds();
-    const k = `${c.x - b.x},${c.y - b.y}`;
-    if (k !== lastCursor) {
-      lastCursor = k;
-      const f = b.width / PET_W; // con zoom, las coordenadas de la página son más pequeñas
-      petWin.webContents.send('pet:cursor', { x: (c.x - b.x) / f, y: (c.y - b.y) / f });
-    }
-  }, 90);
-
-  petWin.webContents.once('did-finish-load', () => {
-    petTick();
-    M.applyPetSize();
-    if (store.data.settings.discreet) setTimeout(() => M.dockPet(false), 1500);
-    setTimeout(greetOnStart, 800);
-  });
-  // Apagado o cierre de sesión de Windows: no cuenta como "me cerraste".
-  petWin.on('session-end', () => {
-    quitHow = 'shutdown';
-    markStopped('shutdown');
-  });
-
-  prod = productivity.create({
-    store,
-    appDir: __dirname,
-    command: (cmd, arg) => runCommand(cmd, arg),
-    // Dónde buscar repos si el usuario no configuró carpetas: en desarrollo, junto a este proyecto;
-    // instalado, en las carpetas habituales de cualquier persona.
-    defaultGitRoots: () => {
-      if (!app.isPackaged) return [path.dirname(__dirname)];
-      const h = os.homedir();
-      return ['Desktop', 'Escritorio', 'Documents', 'Documentos', path.join('source', 'repos'), 'repos', 'dev', 'projects', 'Proyectos', 'code']
-        .map((d) => path.join(h, d))
-        .filter((d) => { try { return fs.statSync(d).isDirectory(); } catch { return false; } });
-    },
-    say,
-    animate,
-    send: sendPet,
-    pushChat,
-    broadcast: M.broadcast,
-    addXp: M.addXp,
-    isMuted,
-    getMeeting: () => M.meetingNow,
-    today,
-    notify,
-    openUrl: openSafeUrl,
-    decrypt,
-    encrypt,
-    addTask,
-    getUsage: () => usage,
-    petName: () => store.data.pet.name || 'PM',
-    weekGoals: () => (ex ? ex.goals() : []),
-    onPomodoroDone: () => pl && pl.onPomodoroDone(),
-    trackBranch: (name, dt) => dev && dev.trackBranch(name, dt),
-    onGitStatuses: (statuses, repos) => { if (dev) { dev.setBranches(statuses); dev.prePushAll(repos); } },
-    onClaudeDone: (proj) => (plan ? plan.onClaudeDone(proj) : false),
-    onClaudeRaw: (ev) => { if (sess) sess.onEvent(ev); },
-    captureHook: (text) => {
-      const q = text.match(/^(?:tarea:\s*)?(?:para claude|for claude|cola)(?:\[([^\]]*)\])?\s*:\s*([\s\S]+)$/i);
-      if (q && plan) {
-        plan.queueAdd(q[2], q[1] || '');
-        const msg = `🤖 En la cola de Claude (${plan.snapshot().claudeQueue.length}). Te la recuerdo cuando Claude termine.`;
-        say(msg, 'peck', 6000, { log: false, target: { cmd: 'panel', arg: 'day#claude-queue' } });
-        return msg;
-      }
-      const r = ex && ex.parseRecurring(text.replace(/^(tarea|todo|task)s*:s*/i, ''));
-      if (!r) return null;
-      ex.addRecurring(r);
-      const st = ex.snapshot().recurring.slice(-1)[0];
-      const msg = `🔁 ¡Anotado! "${r.text}" se añadirá a tus tareas ${st ? st.label : ''}.`;
-      say(msg, 'peck', 7000, { log: false, target: { cmd: 'panel', arg: 'day#recurring' } });
-      return msg;
-    },
-    claudeToday: () => (ex ? ex.journalText(ex.claudeJournal().today, '').map((l) => l.trim()) : []),
-  });
-  if (!M.SAFE) prod.start({ status: extStatus, command: extCommand, capture: (text) => M.extCapture(text), devEvent: (ev) => (dev ? dev.devEvent(ev) : false),
-    mcpToken: M.mcpToken, mcp: (msg) => mcpMod.handle(msg, M.mcpRun, { version: app.getVersion() }), statusline: M.statusLineText });
-
-  ai = aiMod.create({
-    apiKey: () => decrypt(store.data.settings.aiKey),
-    model: () => store.data.settings.aiModel || aiMod.DEFAULT_MODEL,
-    lang,
-    name: () => store.data.pet.name || 'PM',
-    persona: () => (pl ? pl.aiTone() : ''),
-    context: aiContext,
-    actions: {
-      addTask: (text) => { addTask(text); animate('peck'); },
-      completeTask: (i) => {
-        const t = today().standup && today().standup.today[i];
-        if (!t) return false;
-        if (!t.done) { t.done = true; if (!t.xp) { t.xp = true; M.addXp(10); } }
-        store.save();
-        M.broadcast();
-        animate('dance');
-        return true;
-      },
-      addReminder: (at, text) => prod.addReminderAt(at, text),
-      startPomodoro: () => prod.pomoStart(),
-    },
-  });
-
-  ex = extrasMod.create({
-    store, say, broadcast: M.broadcast, animate, sendPet, today, addTask, addXp: M.addXp, isMuted, trackingPaused, aiAvailable, lang,
-    clipboard, screen, dialog, shell, app, BrowserWindow,
-    appDir: __dirname,
-    version: app.getVersion(),
-    achievements: gami.ACHIEVEMENTS,
-    ai: () => ai,
-    usage: () => usage,
-    getMeeting: () => M.meetingNow,
-    meetingsToday: () => M.todaysMeetings(),
-    isPresenting: () => !!presenting,
-    petWin: () => (petWin && !petWin.isDestroyed() ? petWin : null),
-    dragging: () => !!drag,
-    onMoved: () => { if (tray) tray.refreshMenu && tray.refreshMenu(); },
-    askChat: (text) => { M.openPanel('chat'); setTimeout(() => panelSend('chat:ask', text), 300); },
-    backupPassword: M.backupPassword,
-  });
-  if (!M.SAFE) ex.start();
-  const common = {
-    store, say, broadcast: M.broadcast, animate, send: sendPet, today, addTask, addXp: M.addXp, isMuted, clipboard,
-    aiAvailable, ai: () => ai, usage: () => usage, getMeeting: () => M.meetingNow, isPresenting: () => !!presenting,
-    meetingsToday: () => M.todaysMeetings(), insights: () => M.insights(),
-    askChat: (text) => { M.openPanel('chat'); setTimeout(() => panelSend('chat:ask', text), 300); },
-    audioVerdict: () => M.audioVerdict(),
-    audioOnMedia: (playing) => M.audioOnMedia(playing),
-  };
-  M.mcpToken(); // clave local para MCP y el comando pm
-  dev = devtoolsMod.create(common);
-  sess = sessionsMod.create(common);
-  if (!M.SAFE) sess.start();
-  plan = plannerMod.create({ ...common, setBlocks: (l) => ex.setBlocks(l), saveGoal: (g) => ex.saveGoal(g) });
-  if (!M.SAFE) plan.start();
-  pl = petlifeMod.create(common);
-  if (!M.SAFE) pl.start();
-  setInterval(focusTick, 5000);
-  setTimeout(() => M.syncNow(false), 20000);
-  setInterval(() => M.syncNow(false), 5 * 60e3);
-  setInterval(() => {
-    const s = store.data.settings;
-    if (!s.autoMarkdown || !s.markdownDir || new Date().getHours() < 21) return;
-    if (store.data.lastMarkdownAt && new Date(store.data.lastMarkdownAt).toDateString() === new Date().toDateString()) return;
-    M.exportObsidian(false).catch((e) => diag.log('main', 'Markdown: ' + e.message));
-  }, 10 * 60e3);
-  // Novedades: la primera vez que arranca una versión nueva.
-  setTimeout(() => {
-    const v = app.getVersion();
-    // Quien ya usaba la app antes de guardar la versión también ve las novedades.
-    const seen = store.data.lastVersionSeen || (store.data.chat.length ? '1.1.0' : null);
-    store.data.lastVersionSeen = v;
-    store.save();
-    if (seen && seen !== v && store.data.pet.name) {
-      say(`🎁 ¡Me actualicé a la ${v}! Tengo cosas nuevas: modo foco, tareas recurrentes, plantillas de día y búsqueda global.`, 'celebrate', 15000, {
-        cat: 'pet', actions: [{ label: '✨ Ver novedades', cmd: 'whatsnew' }],
-      });
-    }
-  }, 20000);
-
-  // Monitor de sitios cada 2 min, logros cada 5 min, actualizaciones cada 6 h.
-  if (!M.SAFE) {
-    setTimeout(() => M.checkMonitors(false), 6000);
-    setInterval(() => M.checkMonitors(true), 2 * 60 * 1000);
-  }
-  setTimeout(M.checkAchievements, 15000);
-  setInterval(M.checkAchievements, 5 * 60 * 1000);
-  if (!TEST) setTimeout(() => checkUpdates(false), 30000);
-  setInterval(() => checkUpdates(false), 6 * 3600 * 1000);
-
-  // Captura rápida desde cualquier app.
-  if (!globalShortcut.register('CommandOrControl+Alt+Space', M.openPalette)) {
-    console.error('No se pudo registrar Ctrl+Alt+Espacio (¿lo usa otra app?)');
-  }
-  nativeTheme.on('updated', M.broadcast);
-  if (!globalShortcut.register('CommandOrControl+Alt+P', M.openCapture)) {
-    console.error('No se pudo registrar Ctrl+Alt+P (¿lo usa otra app?)');
-  }
-
-  if (!M.SAFE) stopFocus = focus.start(M.onFocusSample);
-
-  // En la versión instalada, el inicio con Windows debe apuntar al .exe instalado (no al de desarrollo).
-  if (app.isPackaged && store.data.settings.autoStart) M.setAutoStart(true);
-
-  // "Siempre debe estar ahí": activa el inicio con Windows una vez (se puede quitar en Ajustes).
-  if (!store.data.settings.autoStartAsked && store.data.pet.name) {
-    store.data.settings.autoStartAsked = true;
-    M.setAutoStart(true);
-  }
-
-  await refreshUsage();
-  setInterval(() => refreshUsage(), USAGE_EVERY_MS);
-  // Icono de la bandeja: cada 5 s (la cuenta atrás del pomodoro se ve moverse).
-  M.updateTrayIcon();
-  setInterval(M.updateTrayIcon, 5000);
-  if (M.SAFE) {
-    if (tray) tray.setToolTip('PM Pollito · modo seguro');
-    say('🩺 Estoy en modo seguro: solo lo básico. Mira Ajustes → Diagnóstico y reiníciame cuando quieras.', 'peck', 15000, {
-      cat: 'pet', actions: [{ label: '🩺 Diagnóstico', cmd: 'diag' }, { label: '🔄 Reiniciar normal', cmd: 'restart' }],
-    });
-    return;
-  }
-  M.refreshCalendar();
-  M.refreshMail();
-  setInterval(() => M.refreshCalendar(), 10 * 60 * 1000);
-  setInterval(() => M.refreshMail(), 3 * 60 * 1000);
-  setInterval(M.meetingReminders, 20 * 1000);
-  setInterval(petTick, 60 * 1000);
-  setInterval(() => { checkSchedule(); chatter(); M.checkWellbeing(); M.checkBirthday(); }, 30 * 1000);
-  setTimeout(checkSchedule, 5000);
-  // Reafirma "siempre encima" por si otra app lo tapa.
-  setInterval(() => { if (petWin && petWin.isVisible()) petWin.setAlwaysOnTop(true, 'screen-saver'); }, 15000);
-});
+// → src/main/boot.js (arranque: datos, ventanas, módulos y temporizadores)
+app.whenReady().then(() => mods.boot.boot());
 
 app.on('second-instance', () => M.openPanel('chat'));
 app.on('will-quit', () => globalShortcut.unregisterAll());
@@ -1764,8 +1154,9 @@ app.on('before-quit', () => {
   M.writeBoot({ pending: false, fails: 0, at: Date.now() });
   if (store) try { M.syncNow(false); } catch { /* al cerrar, sin drama */ }
   if (stopFocus) stopFocus();
+  if (mods.remote) mods.remote.stopPolling();
   if (store) {
-    markStopped(quitHow || 'user');
+    M.markStopped(quitHow || 'user');
     store.flush();
   }
 });

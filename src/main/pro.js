@@ -112,7 +112,7 @@ module.exports = function install(M) {
     const roots = M.prod.snapshot().git.roots || [];
     return require('../git').discover(roots).find((r) => M.path.basename(r).toLowerCase() === String(name || '').toLowerCase()) || null;
   }
-  function completeTaskBy({ index, text }) {
+  function completeTaskBy({ index, text, by }) {
     const list = (M.today().standup && M.today().standup.today) || [];
     let i = Number.isInteger(index) ? index : -1;
     if (i < 0 && text) i = list.findIndex((t) => !t.done && t.text.toLowerCase().includes(String(text).toLowerCase()));
@@ -124,7 +124,9 @@ module.exports = function install(M) {
       if (!t.xp) { t.xp = true; M.addXp(10); }
       M.store.save();
       M.broadcast();
-      M.say(`🤖 Claude marcó como hecha: "${t.text}" ✅`, 'dance', 7000, { cat: 'claude' });
+      if (by === 'telegram') M.say(`📱 Marcaste desde el celular: "${t.text}" ✅`, 'dance', 7000, { remote: false });
+      else M.say(`🤖 Claude marcó como hecha: "${t.text}" ✅`, 'dance', 7000, { cat: 'claude' });
+      M.work.onTaskDone(t);
     }
     return `Hecha: ${t.text}`;
   }

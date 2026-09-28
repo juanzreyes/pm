@@ -1,5 +1,15 @@
 # Novedades de PM Pollito
 
+## 1.6.0 — PM de equipo
+- **🎫 Tus tickets del equipo**: conecta Jira, GitHub Issues, Linear o Azure DevOps (Ajustes → Integraciones). Tus tickets asignados aparecen en 📋 Día para añadirlos a tus tareas; te aviso cuando te asignan uno nuevo. Al completar la tarea, el ticket pasa a "Hecho" en su gestor y (Jira y Azure DevOps) se carga el tiempo que mediste con el cronómetro.
+- **▶️ La cola de Claude se ejecuta sola**: pulsa ▶ en una petición de la cola y Claude Code la hace en una copia aparte del repo (tu carpeta y tu rama no se tocan). Al terminar te aviso para **ver los cambios, aceptarlos** (quedan en una rama `pm/claude-…`) **o descartarlos**. Modo automático opcional: cuando termina una, empieza la siguiente.
+- **📣 Canal del equipo**: pega el webhook de Slack, Teams o Discord y publico tu daily cada mañana, el informe semanal los viernes y avisos de sitios caídos o CI roto.
+- **📱 Avisos al celular** con ntfy o Telegram (por defecto solo si no estás en el PC): Claude terminó o te necesita, reuniones, recordatorios y límites. Desde el bot de Telegram también anotas tareas y recordatorios, ves /tareas y /estado, marcas /hecha y mandas peticiones a la /cola de Claude.
+- **📅 Microsoft 365 y Google**: el inicio de sesión para calendario y correo se activa pegando el ID de aplicación en Ajustes (sin recompilar), con soporte para el inquilino de tu empresa.
+- **🔄 Actualizaciones de verdad**: las versiones se publican en GitHub y, cuando hay una nueva, puedes pulsar "Actualizar ahora" (antes solo se instalaba al cerrar PM, que casi nunca se cierra).
+- Arreglado: ir a Ajustes → Diagnóstico con la ventana ya abierta no cargaba los datos.
+- Por dentro: `main.js` y el panel partidos en módulos más pequeños (arranque, consumo, rutina del pollito, agenda, avisos) y 14 tests nuevos (entre ellos, la cola de Claude de punta a punta con un repo real).
+
 ## 1.5.2
 - **🎵 Música o alguien hablando**: mientras algo suena, el pollito escucha el sonido del PC (no el micrófono) y solo baila si es música. Con vídeos o podcasts de gente hablando, ni con música de fondo, no baila. En los vídeos de reacción baila con la canción y no se para por comentarios cortos. Se analiza al momento en tu PC, sin grabar ni guardar nada, y se puede desactivar en Ajustes → General.
 

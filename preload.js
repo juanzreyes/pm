@@ -53,6 +53,7 @@ contextBridge.exposeInMainWorld('pm', {
   viewChanged: (v) => ipcRenderer.send('panel:view-changed', v),
   connectAccount: (provider) => ipcRenderer.invoke('account:connect', provider),
   removeAccount: (provider) => ipcRenderer.invoke('account:remove', provider),
+  saveOauth: (patch) => ipcRenderer.invoke('oauth:save', patch),
   saveMail: (cfg) => ipcRenderer.invoke('mail:save', cfg),
   removeMail: () => ipcRenderer.invoke('mail:remove'),
   refreshMail: () => ipcRenderer.invoke('mail:refresh'),
@@ -194,5 +195,22 @@ contextBridge.exposeInMainWorld('pm', {
   updateProjectMemory: (repo) => ipcRenderer.invoke('projmem:update', repo),
   gitRepos: () => ipcRenderer.invoke('git:repos'),
   onHatch: on('pet:hatch'),
+  // Cola de Claude que se ejecuta sola
+  runStart: (queueId) => ipcRenderer.invoke('runs:start', queueId),
+  runAccept: (id) => ipcRenderer.invoke('runs:accept', id),
+  runDiscard: (id) => ipcRenderer.invoke('runs:discard', id),
+  runOpen: (id) => ipcRenderer.invoke('runs:open', id),
+  runStop: (id) => ipcRenderer.invoke('runs:stop', id),
+  runsClear: () => ipcRenderer.invoke('runs:clear'),
+  chooseClaudeBin: () => ipcRenderer.invoke('claude:bin'),
+  // Tickets del equipo
+  ticketsSave: (provider, patch) => ipcRenderer.invoke('tickets:save', { provider, patch }),
+  ticketsRefresh: () => ipcRenderer.invoke('tickets:refresh'),
+  ticketAdd: (key) => ipcRenderer.invoke('tickets:add', key),
+  ticketOpen: (key) => ipcRenderer.invoke('tickets:open', key),
+  // Avisos fuera del PC
+  remoteSave: (patch) => ipcRenderer.invoke('remote:save', patch),
+  remoteTest: (which) => ipcRenderer.invoke('remote:test', which),
+  remotePost: (what) => ipcRenderer.invoke('remote:post', what),
   quit: () => ipcRenderer.send('app:quit'),
 });

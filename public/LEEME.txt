@@ -1,5 +1,5 @@
-﻿PM POLLITO 1.5.2 🐣  —  tu pollito Project Manager
-Hecho con ❤️ por Juanzreyes · 27 de septiembre de 2026
+﻿PM POLLITO 1.6.0 🐣  —  tu pollito Project Manager
+Hecho con ❤️ por Juanzreyes · 28 de septiembre de 2026
 =====================================================================
 
 QUÉ ES
@@ -13,7 +13,7 @@ REQUISITOS
 - Opcional: una cuenta de Claude (Pro o Max) para ver tus límites de uso.
 
 INSTALAR (1 minuto)
-1. Haz doble clic en  PM-Pollito-Setup-1.5.2.exe  (78.7 MB).
+1. Haz doble clic en  PM-Pollito-Setup-1.6.0.exe  (78.7 MB).
 2. Si Windows muestra "Windows protegió su PC", pulsa "Más información" y luego
    "Ejecutar de todas formas". (Aparece porque el instalador aún no está firmado
    con un certificado; el archivo es seguro: puedes comprobarlo con SHA256.txt.)
@@ -40,8 +40,12 @@ Todo se guarda solo en tu PC (%APPDATA%\pm-pollito). No hay servidores propios:
 PM solo habla con Claude, GitHub o tu correo si tú los conectas. En Ajustes →
 Privacidad puedes pausar el seguimiento, exportar o borrar todos tus datos.
 
+ACTUALIZACIONES
+PM busca versiones nuevas solo (cada 6 horas) y te avisa: pulsa "Actualizar ahora"
+o se instalará la próxima vez que lo cierres. No hace falta volver a descargar nada.
+
 DESINSTALAR
 Configuración de Windows → Aplicaciones → "PM Pollito" → Desinstalar.
 
 COMPROBAR LOS ARCHIVOS (opcional)
-En PowerShell:  Get-FileHash .\PM-Pollito-Setup-1.5.2.exe  y compara con SHA256.txt.
+En PowerShell:  Get-FileHash .\PM-Pollito-Setup-1.6.0.exe  y compara con SHA256.txt.

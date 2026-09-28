@@ -19,6 +19,7 @@
         <button data-sec="health" data-icon="activity">Salud</button>
         <button data-sec="privacy" data-icon="shield">Privacidad y datos</button>
         <button data-sec="integrations" data-icon="plug">Integraciones</button>
+        <button data-sec="remote" data-icon="bell">Avisos fuera del PC</button>
         <button data-sec="claude" data-icon="gauge">Cuenta de Claude</button>
         <button data-sec="ai" data-icon="bot">IA</button>
         <button data-sec="shortcuts" data-icon="keyboard">Atajos</button>
@@ -139,6 +140,47 @@
             <div class="opt row between"><div><b>Línea de estado en Claude Code</b><p class="muted small" id="sl-info">Abajo en Claude Code: 🐣 42% · 🍅 12:30 · ✅ 3/7</p></div><input type="checkbox" class="switch" id="mcp-statusline" /></div>
             <div id="mcp-msg" class="small"></div>
           </div>
+          <div class="opt box small" id="runner-box">
+            <div class="row between"><b>▶️ Cola de Claude que se ejecuta sola</b><span id="run-status" class="pill"></span></div>
+            <p class="muted">Pulsa ▶️ en una petición de la cola (📋 Día) y Claude Code la hace en una <b>copia aparte del repo</b> (git worktree): tu carpeta y tu rama no se tocan. Al terminar te aviso para ver los cambios, aceptarlos (quedan en una rama <code>pm/claude-…</code>) o descartarlos.</p>
+            <div class="opt row between"><div><b>Claude Code</b><p class="muted small" id="run-bin"></p></div><button id="run-bin-pick" class="ghost mini">Elegir…</button></div>
+            <div class="opt row between"><div><b>Ejecutar la cola automáticamente</b><p class="muted small">Cuando Claude termina una, empieza la siguiente (solo peticiones con proyecto; máximo 3 esperando tu revisión).</p></div><input type="checkbox" class="switch" id="run-auto" /></div>
+            <div class="opt row between"><div><b>Permisos de Claude</b><p class="muted small">"Editar archivos" no deja ejecutar comandos. "Todo" también ejecuta comandos (tests, instalar…) dentro de la copia aparte.</p></div>
+              <div class="seg" id="run-perm"><button data-v="acceptEdits">Editar archivos</button><button data-v="bypassPermissions">Todo</button></div></div>
+          </div>
+          <div class="opt box small" id="trackers-box">
+            <div class="row between"><b>🎫 Tickets del equipo</b><span id="tk-status" class="pill"></span></div>
+            <p class="muted">Tus tickets asignados aparecen en 📋 Día para añadirlos a tus tareas. Al completar la tarea en PM, el ticket pasa a "Hecho" y (en Jira y Azure DevOps) se carga el tiempo que mediste con el cronómetro. Los tokens se guardan cifrados.</p>
+            <details class="tk" data-p="jira"><summary><b>🟦 Jira</b> <span class="tk-st muted small"></span></summary>
+              <form class="tk-form col">
+                <input name="site" placeholder="https://tuempresa.atlassian.net" autocomplete="off" />
+                <input name="email" placeholder="tu correo de Atlassian (vacío en Jira Server/Data Center)" autocomplete="off" />
+                <input name="token" type="password" placeholder="API token" autocomplete="off" />
+                <p class="muted small">Crea el token <button type="button" class="link" data-open="https://id.atlassian.com/manage-profile/security/api-tokens">aquí</button>. En Jira Server usa un token de acceso personal y deja el correo vacío.</p>
+                <div class="row gap"><button class="soft" type="submit">Conectar</button><button type="button" class="link tk-del hidden">Quitar</button></div>
+              </form></details>
+            <details class="tk" data-p="github"><summary><b>🐙 GitHub Issues</b> <span class="tk-st muted small"></span></summary>
+              <form class="tk-form col">
+                <p class="muted small">Usa el mismo token de GitHub de más abajo (permiso <code>repo</code>). Trae las issues abiertas asignadas a ti.</p>
+                <div class="row gap"><button class="soft" type="submit">Usar mis issues</button><button type="button" class="link tk-del hidden">Quitar</button></div>
+              </form></details>
+            <details class="tk" data-p="linear"><summary><b>🟪 Linear</b> <span class="tk-st muted small"></span></summary>
+              <form class="tk-form col">
+                <input name="token" type="password" placeholder="lin_api_…" autocomplete="off" />
+                <p class="muted small">Linear → Settings → Security &amp; access → <b>Personal API keys</b>.</p>
+                <div class="row gap"><button class="soft" type="submit">Conectar</button><button type="button" class="link tk-del hidden">Quitar</button></div>
+              </form></details>
+            <details class="tk" data-p="azure"><summary><b>🔷 Azure DevOps</b> <span class="tk-st muted small"></span></summary>
+              <form class="tk-form col">
+                <input name="org" placeholder="https://dev.azure.com/tuempresa" autocomplete="off" />
+                <input name="token" type="password" placeholder="Token de acceso personal (PAT)" autocomplete="off" />
+                <p class="muted small">User settings → <b>Personal access tokens</b> con permiso <i>Work Items (Read &amp; write)</i>.</p>
+                <div class="row gap"><button class="soft" type="submit">Conectar</button><button type="button" class="link tk-del hidden">Quitar</button></div>
+              </form></details>
+            <div class="opt row between"><div><b>Cerrar el ticket al completar la tarea</b></div><input type="checkbox" class="switch" id="tk-close" /></div>
+            <div class="opt row between"><div><b>Cargar el tiempo medido como horas</b><p class="muted small">Jira (registro de trabajo) y Azure DevOps (Completed Work).</p></div><input type="checkbox" class="switch" id="tk-time" /></div>
+            <div id="tk-msg" class="small"></div>
+          </div>
           <div class="opt box small">
             <div class="row between"><b>⌨️ Comando <code>pm</code> en la terminal</b><input type="checkbox" class="switch" id="cli-on" /></div>
             <p class="muted">Desde cualquier terminal: <code>pm status</code>, <code>pm add "revisar PR"</code>, <code>pm done 2</code>, <code>pm focus 50</code>, <code>pm queue …</code>. Abre una terminal nueva después de activarlo.</p>
@@ -149,6 +191,25 @@
             <p class="muted">Escribo en el <code>CLAUDE.md</code> del repo lo que sé de él (comandos, errores frecuentes, decisiones de tus notas, entregas), entre unas marcas; el resto del archivo no se toca.</p>
             <div class="row gap"><select id="pm-repo" aria-label="Repositorio"></select><button id="pm-mem" class="soft">Actualizar CLAUDE.md</button></div>
             <div id="pm-mem-msg" class="small"></div>
+          </div>
+          <div class="opt box small" id="oauth-box">
+            <div class="row between"><b>📅 Microsoft 365 / Google (calendario y correo)</b><span id="oa-status" class="pill"></span></div>
+            <p class="muted">Para el botón "Conectar con Microsoft / Google" de 📬 Agenda: reuniones de Teams/Outlook y correo sin pegar enlaces ICS. Se registra una app <b>una sola vez</b> (lo hace quien administra; ver el README) y aquí se pega su ID. Después cada persona solo pulsa "Conectar".</p>
+            <details class="tk"><summary><b>Microsoft (Entra ID)</b> <span id="oa-ms-st" class="muted small"></span></summary>
+              <form id="oa-ms" class="col">
+                <input name="clientId" placeholder="Id. de aplicación (cliente): xxxxxxxx-xxxx-…" autocomplete="off" />
+                <input name="tenant" placeholder="Inquilino (opcional): tuempresa.onmicrosoft.com o su ID" autocomplete="off" />
+                <p class="muted small">En <button type="button" class="link" data-open="https://entra.microsoft.com/">entra.microsoft.com</button> → Registros de aplicaciones → Nuevo registro · redirección <i>Cliente público</i> → <code>http://localhost</code> · permisos <code>User.Read</code>, <code>Mail.ReadBasic</code>, <code>Calendars.Read</code>. El inquilino solo hace falta si la app es de "un solo inquilino".</p>
+                <div class="row gap"><button class="soft" type="submit">Guardar</button><button type="button" class="link" id="oa-ms-del">Quitar</button></div>
+              </form></details>
+            <details class="tk"><summary><b>Google</b> <span id="oa-gg-st" class="muted small"></span></summary>
+              <form id="oa-gg" class="col">
+                <input name="clientId" placeholder="ID de cliente: ….apps.googleusercontent.com" autocomplete="off" />
+                <input name="clientSecret" type="password" placeholder="Secreto del cliente" autocomplete="off" />
+                <p class="muted small">Google Cloud → Credenciales → ID de cliente de OAuth → <i>App de escritorio</i>, con Gmail API y Calendar API habilitadas.</p>
+                <div class="row gap"><button class="soft" type="submit">Guardar</button><button type="button" class="link" id="oa-gg-del">Quitar</button></div>
+              </form></details>
+            <div id="oa-msg" class="small"></div>
           </div>
           <div class="opt box small">
             <div class="row between"><b>🐙 GitHub</b><span id="gh-status" class="pill"></span></div>
@@ -166,6 +227,48 @@
             <p class="muted">Una por línea. Busco repositorios hasta 2 niveles dentro.</p>
             <textarea id="git-roots" rows="3"></textarea>
             <div class="row gap"><button id="git-roots-save" class="soft">Guardar carpetas</button><span id="git-roots-msg" class="small muted"></span></div>
+          </div>
+        </div>
+
+        <!-- AVISOS FUERA DEL PC -->
+        <div class="sec" id="sec-remote" data-title="Avisos fuera del PC">
+          <h2>Avisos fuera del PC</h2>
+          <div class="opt box small">
+            <div class="row between"><b>📣 Canal del equipo</b><span id="team-status" class="pill"></span></div>
+            <p class="muted">Pega el webhook de un canal de <b>Slack</b>, <b>Teams</b> o <b>Discord</b>. En Teams: en el canal → ⋯ → <b>Flujos de trabajo</b> → "Publicar en un canal cuando se recibe una solicitud de webhook", y copia la URL. Se guarda cifrada.</p>
+            <form id="team-form" class="row"><input id="team-url" type="password" placeholder="https://hooks.slack.com/… o la URL del flujo de Teams" autocomplete="off" /><button class="soft" type="submit">Guardar</button></form>
+            <div id="team-opts">
+              <div class="opt row between"><div><b>Enviar al canal</b></div><input type="checkbox" class="switch" id="team-on" /></div>
+              <div class="opt row between"><div><b>Publicar mi daily cada día laborable</b><p class="muted small">A esta hora, si ya hiciste el daily. Vacío = solo a mano.</p></div><input type="time" id="team-daily" style="width:auto" /></div>
+              <div class="opt row between"><div><b>Publicar el informe semanal los viernes</b><p class="muted small">Después de tu hora de cierre.</p></div><input type="checkbox" class="switch" id="team-weekly" /></div>
+              <div class="opt"><b>Avisos que van al canal</b>
+                <div class="row gap wrap small"><label><input type="checkbox" class="team-cat" value="monitor" /> 🔴 Sitios caídos / 🟢 recuperados</label><label><input type="checkbox" class="team-cat" value="ci" /> ❌ CI fallido</label><label><input type="checkbox" class="team-cat" value="tickets" /> 🎫 Tickets cerrados</label></div></div>
+              <div class="row gap wrap"><button id="team-test" class="ghost" data-icon="zap">Probar</button><button id="team-daily-now" class="ghost">📣 Publicar daily ahora</button><button id="team-weekly-now" class="ghost">📣 Publicar informe ahora</button><button id="team-remove" class="link">Quitar webhook</button></div>
+            </div>
+            <div id="team-msg" class="small"></div>
+          </div>
+          <div class="opt box small">
+            <div class="row between"><b>📱 Tu celular</b><input type="checkbox" class="switch" id="phone-on" /></div>
+            <p class="muted">Te aviso al celular de lo importante (Claude terminó o te necesita, reuniones, recordatorios, límites). Por defecto solo si llevas 5 min sin tocar el PC.</p>
+            <div class="opt row between"><div><b>Por</b></div><div class="seg" id="phone-via"><button data-v="ntfy">ntfy</button><button data-v="telegram">Telegram</button></div></div>
+            <div id="ntfy-box">
+              <p class="muted small">1) Instala <b>ntfy</b> (<button type="button" class="link" data-open="https://play.google.com/store/apps/details?id=io.heckel.ntfy">Android</button> · <button type="button" class="link" data-open="https://apps.apple.com/app/ntfy/id1625396347">iPhone</button>). 2) Suscríbete a este tema (es secreto: no lo compartas):</p>
+              <div class="row gap"><code id="ntfy-topic" class="grow"></code><button id="ntfy-copy" class="ghost mini" data-icon="copy">Copiar</button><button id="ntfy-new" class="link">Cambiar</button></div>
+            </div>
+            <div id="tg-box" class="hidden">
+              <p class="muted small">1) En Telegram habla con <b>@BotFather</b> → <code>/newbot</code> y pega aquí el token. 2) Abre tu bot y envíale el código que aparecerá. Desde el bot también puedes anotar tareas y recordatorios, ver /tareas, /estado, marcar /hecha 2 o mandar peticiones a la /cola de Claude.</p>
+              <form id="tg-form" class="row"><input id="tg-token" type="password" placeholder="123456:ABC-…" autocomplete="off" /><button class="soft" type="submit">Usar</button></form>
+              <div id="tg-state" class="small"></div>
+            </div>
+            <div class="opt row between"><div><b>Cuándo</b></div><div class="seg" id="phone-when"><button data-v="away">Si no estoy en el PC</button><button data-v="always">Siempre</button></div></div>
+            <div class="opt"><b>Qué me mandas</b>
+              <div class="row gap wrap small">
+                <label><input type="checkbox" class="phone-cat" value="claude" /> 🤖 Claude</label><label><input type="checkbox" class="phone-cat" value="meeting" /> 📅 Reuniones</label>
+                <label><input type="checkbox" class="phone-cat" value="reminder" /> ⏰ Recordatorios</label><label><input type="checkbox" class="phone-cat" value="usage" /> 📊 Límites</label>
+                <label><input type="checkbox" class="phone-cat" value="monitor" /> 🔴 Sitios</label><label><input type="checkbox" class="phone-cat" value="ci" /> ❌ CI</label><label><input type="checkbox" class="phone-cat" value="tickets" /> 🎫 Tickets nuevos</label>
+              </div></div>
+            <div class="row gap"><button id="phone-test" class="ghost" data-icon="zap">Probar</button></div>
+            <div id="phone-msg" class="small"></div>
           </div>
         </div>
 
@@ -274,5 +377,6 @@
   <script src="../src/i18n-extra.js"></script>
   <script src="../src/i18n.js"></script>
   <script src="settings.js"></script>
+  <script src="settings-work.js"></script>
 </body>
 </html>

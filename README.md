@@ -109,6 +109,13 @@ Widget de escritorio con un pollito tamagotchi que vive encima de todas tus vent
 - **🧯 Modo seguro**: si dos arranques seguidos fallan, ofrece arrancar con lo mínimo o restaurar la última copia.
 - **🍎 Mac**: `npm run dist:mac` en un Mac (vigilante con AppleScript; el título de la ventana necesita el permiso de Accesibilidad). No probado todavía en macOS.
 
+### PM de equipo (1.6)
+- **🎫 Tickets del equipo** (Ajustes → Integraciones → Tickets del equipo): Jira Cloud (URL + correo + API token) o Jira Server/Data Center (URL + token personal, sin correo), GitHub Issues (usa el token de GitHub), Linear (API key personal) y Azure DevOps (URL de la organización + PAT con *Work Items: Read & write*). Los asignados salen en 📋 Día → *Mis tickets*; al completar la tarea se pasa a "Hecho" (el primer estado de la categoría *Done* del flujo) y se carga el tiempo del cronómetro (Jira: registro de trabajo; Azure DevOps: *Completed Work*). Se revisan cada 10 min y avisa de los nuevos.
+- **▶️ Cola de Claude que se ejecuta sola**: cada petición con proyecto tiene ▶. PM crea un `git worktree` en `%APPDATA%/pm-pollito/worktrees` sobre una rama `pm/claude-<id>`, lanza `claude -p --output-format json --permission-mode acceptEdits` (o `bypassPermissions` si lo eliges) con la petición por la entrada estándar y, al terminar, avisa con 👀 Ver (abre la copia en VS Code) · ✅ Aceptar (commit en la rama y quita la copia; tú haces `git merge`) · 🗑️ Descartar. Una a la vez, 30 min como máximo, y en modo automático nunca más de 3 esperando revisión. Busca `claude` en el PATH, `~/.local/bin`, `~/.claude/local` y `%APPDATA%/npm` (o elige la ruta en Ajustes).
+- **📣 Canal del equipo** (Ajustes → Avisos fuera del PC): webhook de Slack, de Discord o de Teams (flujo de trabajo "Publicar en un canal cuando se recibe una solicitud de webhook"; los conectores antiguos de Office 365 están retirados). Daily a una hora fija los días laborables (si ya lo hiciste), informe los viernes tras el cierre y avisos de 🔴 sitios caídos / ❌ CI roto / 🎫 tickets cerrados.
+- **📱 Celular**: ntfy (tema secreto generado al azar; se puede usar un servidor propio) o un bot de Telegram (token de @BotFather + código de 6 cifras para vincular tu chat; solo responde a ese chat). Por defecto solo avisa si llevas 5 min sin tocar el PC o la sesión está bloqueada.
+- Los tokens y la URL del webhook se guardan cifrados (`safeStorage`), nunca salen del proceso principal y no viajan en las copias ni en la sincronización.
+
 ### Calidad
 ```bash
 npm run typecheck   # chequeo de tipos del JavaScript (TypeScript, sin compilar)
@@ -147,14 +154,24 @@ Sin firma, Windows muestra "Windows protegió su PC / editor desconocido" al ins
    ```
    electron-builder firma el `.exe` automáticamente.
 3. Añade en `package.json` → `build.win` el campo `"publisherName": "<nombre exacto del certificado>"` para que las actualizaciones automáticas verifiquen la firma.
-   (Con Azure Trusted Signing se usa `build.win.azureSignOptions` en lugar de `CSC_LINK`.)
+4. **Azure Trusted Signing** (la opción más barata, ~10 USD/mes): crea la cuenta y el perfil de certificado en Azure, define `AZURE_TENANT_ID`, `AZURE_CLIENT_ID` y `AZURE_CLIENT_SECRET`, y añade en `build.win`:
+   `"azureSignOptions": { "publisherName": "…", "endpoint": "https://<región>.codesigning.azure.net", "codeSigningAccountName": "…", "certificateProfileName": "…" }`.
+
+Al compilar, `npm run dist` dice si el instalador salió firmado, y el `LEEME.txt` solo explica el aviso de SmartScreen cuando no lo está.
 
 ### Publicar actualizaciones automáticas
-La app instalada busca actualizaciones cada 6 h (y desde 🐣 Perfil → *Buscar actualizaciones*). Para activarlo:
-1. Crea un repositorio en GitHub (p. ej. `pm-pollito`) y añade en `package.json` → `build`:
-   `"publish": [{ "provider": "github", "owner": "TU_USUARIO", "repo": "pm-pollito" }]`
-2. Sube la versión en `package.json` (`"version": "1.0.1"`).
-3. Con un token de GitHub en la variable `GH_TOKEN`, ejecuta `npm run release`: sube el instalador como *release* y todas las copias instaladas se actualizan solas al cerrarse.
+La app instalada busca actualizaciones cada 6 h (y desde Ajustes → Acerca de → *Buscar actualizaciones*) en los *releases* de **github.com/juanzreyes/pm** (`build.publish` en `package.json`, como release normal: el actualizador ignora los borradores). Cuando descarga una versión nueva, el pollito ofrece **🔄 Actualizar ahora** (instalación silenciosa y vuelve a abrirse) o la instala al cerrar PM.
+
+Para publicar una versión:
+1. Sube `"version"` en `package.json` y añade su entrada `## x.y.z` en `CHANGELOG.md`.
+2. Crea un token en <https://github.com/settings/tokens> (permiso `repo`, o *Contents: read & write* si es de grano fino) y en PowerShell:
+   ```powershell
+   $env:GH_TOKEN = "ghp_…"
+   npm run release
+   ```
+   Antes de publicar, `prerelease` comprueba el token, que la versión no exista ya y que el CHANGELOG la tenga, y pasa los tres tipos de tests. Después sube el instalador y `latest.yml` al release `v<versión>`.
+
+El repositorio es público, así que cualquiera puede descargar los instaladores publicados.
 
 ## Uso
 
@@ -175,7 +192,11 @@ Aunque no haya conexión, PM muestra **estadísticas locales** (respuestas, toke
 
 ## Configurar inicio de sesión con Microsoft y Google (una sola vez)
 
-Los botones **Conectar con Microsoft** y **Conectar con Google** (pestaña 📬 Agenda) usan el inicio de sesión oficial (OAuth). Para eso la app necesita un *ID de aplicación* de cada proveedor. Lo registra **el desarrollador una vez**; después cualquier usuario solo pulsa el botón. Los IDs van en `oauth.config.json` (copia de `oauth.config.example.json`, ignorado por git).
+Los botones **Conectar con Microsoft** y **Conectar con Google** (pestaña 📬 Agenda) usan el inicio de sesión oficial (OAuth). Para eso la app necesita un *ID de aplicación* de cada proveedor. Se registra **una sola vez**; después cualquier usuario solo pulsa el botón, que aparece en cuanto hay un ID configurado. Dos formas de dárselo a la app:
+- **Ajustes → Integraciones → Microsoft 365 / Google**: se guarda en `%APPDATA%/pm-pollito/oauth.config.json`, sin recompilar (cada persona o un script de despliegue).
+- **Para todo el equipo**: crea `oauth.config.json` en la raíz del proyecto (copia de `oauth.config.example.json`, ignorado por git) antes de `npm run dist`; viaja dentro del instalador.
+
+Si la app de Microsoft es de **un solo inquilino** (lo normal en una empresa), añade `"tenant": "tuempresa.onmicrosoft.com"` (o el ID del inquilino) junto al `clientId`.
 
 ### Microsoft (Outlook, Hotmail, Microsoft 365, reuniones de Teams) · ~5 min
 1. Entra en <https://entra.microsoft.com> → **Aplicaciones → Registros de aplicaciones → Nuevo registro**.
@@ -221,8 +242,13 @@ renderer/game.*    minijuego
 scripts/make-icon.js genera el icono de la app
 src/extras.js      diario de Claude, prompts, portapapeles, bloques, objetivos, hábitos, notas, paseos, monitores, copias e informe mensual
 main.js            arranque, estado compartido (contexto M), avisos, ventanas principales
-src/main/          el proceso principal por partes: ipc, commands, windows, tray, agenda, watcher,
-                   wellbeing, pro (sync, exportar, perfiles, CLI, MCP) y safemode
+src/main/          el proceso principal por partes: boot (arranque), ipc, commands, windows, tray, agenda,
+                   watcher, wellbeing, usagewatch (consumo), petcare (rutina y vida del pollito),
+                   pro (sync, exportar, perfiles, CLI, MCP), work (tickets y cola que se ejecuta sola),
+                   remote (canal del equipo y celular) y safemode
+src/trackers.js    Jira, GitHub Issues, Linear y Azure DevOps · src/claudeRunner.js worktree + claude -p
+src/outbound.js    webhooks (Slack/Teams/Discord), ntfy y Telegram
+renderer/panel-agenda.js, panel-inbox.js, panel-work.js  partes del panel · renderer/settings-work.js ajustes 1.6
 src/mcp.js         servidor MCP (JSON-RPC) · mcp/bridge.js puente stdio para Claude Desktop
 src/claudeIntegrations.js  instala MCP y línea de estado (con copia de seguridad)
 src/sessions.js    sesiones de Claude en vivo · src/projmem.js memoria de proyecto (CLAUDE.md)

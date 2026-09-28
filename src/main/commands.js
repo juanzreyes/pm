@@ -153,6 +153,27 @@ module.exports = function install(M) {
       if (r) { M.prod.addReminderAt(Date.now() + 10 * 60000, r.text); M.say(`⏰ Te lo recuerdo en 10 minutos: "${r.text}"`, 'peck', 5000, { log: false }); }
     } },
     { id: 'open.url', hidden: true, run: (url) => { if (/^https:\/\//.test(url || '')) (M.joinMeeting(url) || M.openSafeUrl(url)); } },
+    // Cola de Claude que se ejecuta sola
+    { id: 'queue.run', icon: '▶️', label: 'Ejecutar la siguiente petición de la cola con Claude', kw: 'cola claude ejecutar lanzar correr automatico worktree', when: () => (M.store.data.claudeQueue || []).some((q) => q.project), run: () => M.work.startRun('').then((r) => { if (!r.ok) M.say('😿 ' + r.error, 'sad', 8000, { log: false }); }) },
+    { id: 'run.open', hidden: true, run: (id) => M.work.openRun(id) },
+    { id: 'run.accept', hidden: true, run: (id) => M.work.acceptRun(id) },
+    { id: 'run.discard', hidden: true, run: (id) => M.work.discardRun(id) },
+    // Tickets del equipo
+    { id: 'tickets.refresh', icon: '🎫', label: 'Ver mis tickets (Jira, GitHub, Linear, Azure DevOps)', kw: 'tickets jira issues linear azure devops asignados', run: () => { M.openPanel('day#tickets'); M.work.refreshTickets(true); } },
+    { id: 'tickets.add.all', icon: '📥', label: 'Traer todos mis tickets a mi día', kw: 'tickets jira issues importar dia tareas', when: () => M.work.ticketsState().issues.some((i) => !i.inDay), run: () => M.work.addAllTickets() },
+    { id: 'ticket.add', hidden: true, run: (key) => M.work.addTicket(key) },
+    { id: 'ticket.open', hidden: true, run: (key) => M.work.openTicket(key) },
+    // Canal del equipo
+    { id: 'daily.post', icon: '📣', label: 'Publicar mi daily en el canal del equipo', kw: 'daily publicar slack teams discord canal equipo', when: () => !!M.store.data.settings.teamWebhook, run: () => M.remote.postDaily(true) },
+    { id: 'weekly.post', icon: '📣', label: 'Publicar el informe semanal en el canal', kw: 'informe semanal publicar slack teams canal equipo', when: () => !!M.store.data.settings.teamWebhook, run: () => M.remote.postWeekly(true) },
+    { id: 'settings.remote', hidden: true, run: () => M.openSettings('remote') },
+    { id: 'update.install', hidden: true, run: () => {
+      const u = M.getUpdater();
+      if (!u) return;
+      M.quitHow = 'update'; // no cuenta como "me cerraste"
+      M.quitting = true;
+      setImmediate(() => u.quitAndInstall(true, true)); // instalación silenciosa y vuelve a abrirse
+    } },
     { id: 'open.monitor', hidden: true, run: (id) => { const m = (M.store.data.settings.monitors || []).find((x) => x.id === id); if (m) M.shell.openExternal(m.url); } },
   ];
 

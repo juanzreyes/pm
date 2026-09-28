@@ -99,6 +99,12 @@
         </form>
         <div id="day-notes"></div>
 
+        <details id="tickets" class="recurring hidden">
+          <summary><b>🎫 Mis tickets</b> <span id="tk-count" class="pill"></span></summary>
+          <div id="tk-list" class="tk-list"></div>
+          <div class="row gap"><button id="tk-all" class="soft mini">📥 Traer todos a mi día</button><button id="tk-refresh" class="ghost mini" title="Actualizar">🔄</button><span id="tk-when" class="small muted"></span></div>
+        </details>
+
         <details id="recurring" class="recurring">
           <summary><b>🔁 Tareas recurrentes</b> <span id="rec-count" class="pill"></span></summary>
           <ul id="rec-list" class="editlist"></ul>
@@ -164,8 +170,10 @@
         <div id="claude-queue" class="box small"></div>
         <form id="queue-form" class="row">
           <input id="queue-input" placeholder="Lo que le pedirás a Claude cuando termine…" maxlength="4000" autocomplete="off" />
+          <select id="queue-project" aria-label="Proyecto" title="Proyecto (para poder ejecutarla sola con ▶️)"><option value="">Proyecto…</option></select>
           <button class="primary" type="submit">＋</button>
         </form>
+        <div id="claude-runs" class="runs"></div>
 
         <h3>⏰ Recordatorios</h3>
         <ul id="reminders" class="editlist"></ul>
@@ -210,9 +218,8 @@
         <div id="meeting-now" class="box live hidden"></div>
 
         <!--
-          INICIO DE SESIÓN WEB CON MICROSOFT / GOOGLE (OAuth) — DESACTIVADO POR AHORA.
-          Necesita registrar los IDs de aplicación en oauth.config.json (ver README).
-          Para reactivarlo: quita la clase "hidden" de este div y pon WEB_ACCOUNTS_ENABLED = true en panel.js.
+          INICIO DE SESIÓN WEB CON MICROSOFT / GOOGLE (OAuth). Se muestra solo cuando hay un ID de aplicación
+          (Ajustes → Integraciones → Microsoft 365 / Google, o oauth.config.json). Ver README.
         -->
         <div id="accounts" class="box hidden">
           <div id="acc-list"></div>
@@ -575,8 +582,11 @@
   <script src="../src/i18n-extra.js"></script>
   <script src="../src/i18n.js"></script>
   <script src="panel.js"></script>
+  <script src="panel-agenda.js"></script>
+  <script src="panel-inbox.js"></script>
   <script src="panel-extras.js"></script>
   <script src="panel-life.js"></script>
+  <script src="panel-work.js"></script>
   <script src="stats.js"></script>
 </body>
 </html>

@@ -81,3 +81,13 @@ details.opt summary { cursor: pointer; font-weight: 700; }
 #prof-sel { font: inherit; font-size: 13px; padding: 6px 8px; border: 2px solid var(--line, #efe2bf); border-radius: 12px; background: var(--card, #fff); color: inherit; }
 #prof-name { flex: 1; min-width: 120px; }
 .emoji-in { width: 46px; text-align: center; }
+
+/* Tickets del equipo, cola automática y avisos fuera del PC (1.6) */
+.col { display: flex; flex-direction: column; gap: 6px; }
+.wrap { flex-wrap: wrap; }
+details.tk { border: 1.5px solid var(--line); border-radius: 12px; padding: 8px 10px; margin: 6px 0; background: var(--bg); }
+details.tk summary { cursor: pointer; }
+details.tk form { margin-top: 8px; }
+details.tk.on summary b::after { content: ' ✅'; }
+#ntfy-topic { padding: 4px 8px; user-select: all; word-break: break-all; }
+.pair-code { font: 800 22px Consolas, monospace; letter-spacing: 4px; }

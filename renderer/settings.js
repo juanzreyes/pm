@@ -53,7 +53,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { if ($('#search').value) { $('#search').value = ''; applySearch(); } else pm.closeSettings(); }
   if (e.key === 'f' && e.ctrlKey) { e.preventDefault(); $('#search').focus(); }
 });
-pm.onSettingsSection((id) => showSection(id));
+pm.onSettingsSection((id) => { showSection(id); if (id === 'diag') renderDiag(); });
 
 // ---------- pintar estado ----------
 function seg(el, value) {

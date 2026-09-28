@@ -204,6 +204,7 @@ module.exports = function install(M) {
         if (!t.xp) { t.xp = true; M.addXp(10); }
         const all = day.standup.today.every((x) => x.done);
         M.say(all ? '¡TODAS las tareas listas! 🎉🎉' : `${M.pl ? M.pl.praise() : '¡Bien!'} "${t.text}" ✅`, all ? 'celebrate' : 'dance', 6000);
+        M.work.onTaskDone(t); // si viene de un ticket: se cierra en su gestor y se cargan las horas
       }
       M.store.save();
       M.broadcast();
@@ -268,7 +269,8 @@ module.exports = function install(M) {
     });
 
     M.ipcMain.handle('settings:update', (_e, patch) => {
-      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect'];
+      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission'];
+      if ('claudeRunPermission' in patch && !['acceptEdits', 'bypassPermissions'].includes(patch.claudeRunPermission)) delete patch.claudeRunPermission;
       if ('personality' in patch && !['motivador', 'sarcastico', 'zen', 'sargento'].includes(patch.personality)) delete patch.personality;
       if ('claudeBudget' in patch) patch.claudeBudget = Math.max(0, Math.min(100000, Number(patch.claudeBudget) || 0));
       if ('aiModel' in patch && !M.aiMod.MODELS[patch.aiModel]) delete patch.aiModel;
@@ -305,7 +307,7 @@ module.exports = function install(M) {
     });
 
     M.ipcMain.on('open-external', (_e, url) => {
-      const ok = /^https:\/\/(docs\.claude\.com|claude\.ai|code\.claude\.com|www\.anthropic\.com|myaccount\.google\.com|calendar\.google\.com|outlook\.office\.com|outlook\.live\.com|login\.yahoo\.com|account\.apple\.com|github\.com|console\.anthropic\.com)\//;
+      const ok = /^https:\/\/(docs\.claude\.com|claude\.ai|code\.claude\.com|www\.anthropic\.com|myaccount\.google\.com|calendar\.google\.com|outlook\.office\.com|outlook\.live\.com|login\.yahoo\.com|account\.apple\.com|github\.com|console\.anthropic\.com|id\.atlassian\.com|linear\.app|dev\.azure\.com|ntfy\.sh|t\.me|play\.google\.com|apps\.apple\.com|entra\.microsoft\.com|portal\.azure\.com)\//;
       if (ok.test(url)) M.shell.openExternal(url);
     });
 
@@ -400,6 +402,9 @@ module.exports = function install(M) {
         M.say('No se pudo conectar 😿 ' + e.message, 'sad', 10000);
         return { ok: false, error: e.message };
       }
+    });
+    M.ipcMain.handle('oauth:save', (_e, patch) => {
+      try { const ready = M.saveOauthConfig(patch || {}); M.broadcast(); return { ok: true, ready }; } catch (e) { return { ok: false, error: e.message }; }
     });
     M.ipcMain.handle('account:remove', async (_e, provider) => {
       const all = { ...(M.store.data.settings.accounts || {}) };
@@ -627,6 +632,30 @@ module.exports = function install(M) {
     M.ipcMain.handle('queue:add', (_e, { text, project }) => M.plan.queueAdd(text, project));
     M.ipcMain.handle('queue:remove', (_e, id) => M.plan.queueRemove(id));
     M.ipcMain.handle('queue:next', (_e, project) => !!M.plan.queueNext(project));
+    // Cola de Claude que se ejecuta sola (worktree aparte + claude -p)
+    M.ipcMain.handle('runs:start', (_e, queueId) => M.work.startRun(String(queueId || '')));
+    M.ipcMain.handle('runs:accept', (_e, id) => M.work.acceptRun(String(id)));
+    M.ipcMain.handle('runs:discard', (_e, id) => M.work.discardRun(String(id)));
+    M.ipcMain.handle('runs:open', (_e, id) => { M.work.openRun(String(id)); return true; });
+    M.ipcMain.handle('runs:stop', (_e, id) => { M.work.stopRun(String(id)); return true; });
+    M.ipcMain.handle('runs:clear', () => { M.work.clearRuns(); return true; });
+    M.ipcMain.handle('claude:bin', async (e) => {
+      const r = await M.dialog.showOpenDialog(M.BrowserWindow.fromWebContents(e.sender), { title: '¿Dónde está claude (Claude Code)?', properties: ['openFile'], filters: process.platform === 'win32' ? [{ name: 'Claude Code', extensions: ['exe', 'cmd'] }] : [] });
+      if (r.canceled || !r.filePaths[0]) return M.snapshot();
+      M.store.data.settings.claudeBin = r.filePaths[0];
+      M.store.save();
+      M.broadcast();
+      return M.snapshot();
+    });
+    // Tickets de Jira / GitHub Issues / Linear / Azure DevOps
+    M.ipcMain.handle('tickets:save', (_e, { provider, patch }) => M.work.saveTracker(String(provider), patch || {}));
+    M.ipcMain.handle('tickets:refresh', () => M.work.refreshTickets(true));
+    M.ipcMain.handle('tickets:add', (_e, key) => (key === '*' ? M.work.addAllTickets() : M.work.addTicket(String(key))));
+    M.ipcMain.handle('tickets:open', (_e, key) => { M.work.openTicket(String(key)); return true; });
+    // Avisos fuera del PC: canal del equipo y celular
+    M.ipcMain.handle('remote:save', (_e, patch) => M.remote.save(patch || {}));
+    M.ipcMain.handle('remote:test', (_e, which) => M.remote.test(which === 'team' ? 'team' : 'phone'));
+    M.ipcMain.handle('remote:post', (_e, what) => (what === 'weekly' ? M.remote.postWeekly(true) : M.remote.postDaily(true)));
     M.ipcMain.handle('day:prioritize', (_e, withBlocks) => M.plan.prioritize(withBlocks !== false));
     M.ipcMain.handle('task:split', (_e, i) => M.plan.splitTask(Number(i)));
     M.ipcMain.handle('milestone:save', (_e, m) => M.plan.milestoneSave(m || {}));

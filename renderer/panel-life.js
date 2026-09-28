@@ -26,19 +26,24 @@
     const q = state.claudeQueue || [];
     $('#queue-next').classList.toggle('hidden', !q.length);
     $('#claude-queue').innerHTML = q.length
-      ? q.map((x, i) => `<div class="qi" data-id="${x.id}"><span class="qn">${i + 1}</span><span class="qt">${esc(x.text.length > 140 ? x.text.slice(0, 139) + '…' : x.text)}${x.project ? ` <span class="pill">${esc(x.project)}</span>` : ''}</span><button class="icon mini q-del" title="Quitar" aria-label="Quitar">✕</button></div>`).join('')
+      ? q.map((x, i) => `<div class="qi" data-id="${x.id}"><span class="qn">${i + 1}</span><span class="qt">${esc(x.text.length > 140 ? x.text.slice(0, 139) + '…' : x.text)}${x.project ? ` <span class="pill">${esc(x.project)}</span>` : ''}</span>${x.project ? '<button class="icon mini q-run" title="Que Claude la haga ya (en una copia aparte del repo)" aria-label="Ejecutar con Claude">▶</button>' : ''}<button class="icon mini q-del" title="Quitar" aria-label="Quitar">✕</button></div>`).join('')
       : '<span class="muted">Apunta aquí lo que quieres pedirle a Claude mientras trabaja en otra cosa. Cuando termine, te lo recuerdo. También: <b>para claude: …</b> en la captura rápida o <b>Ctrl+Alt+Q</b> en VS Code.</span>';
     tr($('#claude-queue'));
   }
   $('#claude-queue').addEventListener('click', (e) => {
     const d = e.target.closest('.q-del');
     if (d) pm.queueRemove(d.closest('.qi').dataset.id);
+    const r = e.target.closest('.q-run');
+    if (r) {
+      r.disabled = true;
+      pm.runStart(r.closest('.qi').dataset.id).then((res) => { if (!res.ok) { r.disabled = false; toast('😿 ' + res.error); } });
+    }
   });
   $('#queue-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const v = $('#queue-input').value.trim();
     if (!v) return;
-    pm.queueAdd(v, '');
+    pm.queueAdd(v, $('#queue-project').value);
     $('#queue-input').value = '';
   });
   $('#queue-next').addEventListener('click', () => pm.queueNext(''));
