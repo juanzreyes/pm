@@ -14,6 +14,7 @@ module.exports = function install(M) {
     // Permisos: portapapeles para todos; capturar el sonido del sistema, solo la ventana oculta de escucha.
     require('electron').session.defaultSession.setPermissionRequestHandler((wc, perm, cb) => cb(['clipboard-sanitized-write', 'clipboard-read'].includes(perm) || (['media', 'display-capture'].includes(perm) && M.isAudioPage(wc.getURL()))));
     M.setupIpc();
+    M.errreport.start(); // informe de errores opcional (solo con permiso)
     M.setupAudioCapture();
     M.createPet();
     M.createPanel();
@@ -253,7 +254,7 @@ module.exports = function install(M) {
       store.data.lastVersionSeen = v;
       store.save();
       if (seen && seen !== v && store.data.pet.name) {
-        M.say(`🎁 ¡Me actualicé a la ${v}! Tengo cosas nuevas: empiezo tus tickets con su rama, Claude te deja PRs con los tests pasados y la configuración del equipo se comparte en un clic.`, 'celebrate', 15000, {
+        M.say(`🎁 ¡Me actualicé a la ${v}! Tengo cosas nuevas: ves a Claude trabajar en vivo, varias peticiones a la vez, una segunda opinión antes del PR y Claude arregla solo el CI de sus PRs.`, 'celebrate', 15000, {
           cat: 'pet', actions: [{ label: '✨ Ver novedades', cmd: 'whatsnew' }],
         });
       }

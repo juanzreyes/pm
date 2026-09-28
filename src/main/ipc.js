@@ -269,7 +269,9 @@ module.exports = function install(M) {
     });
 
     M.ipcMain.handle('settings:update', (_e, patch) => {
-      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget'];
+      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget', 'claudeParallel', 'claudeReview', 'claudeAutoFixCi', 'claudeAutoFixReview', 'claudeMaxFixes'];
+      if ('claudeParallel' in patch) patch.claudeParallel = Math.max(1, Math.min(3, Math.round(Number(patch.claudeParallel)) || 2));
+      if ('claudeMaxFixes' in patch) patch.claudeMaxFixes = Math.max(0, Math.min(5, Math.round(Number(patch.claudeMaxFixes)) || 0));
       if ('claudeRunBudget' in patch) patch.claudeRunBudget = Math.max(0, Math.min(100, Number(patch.claudeRunBudget) || 0));
       if ('claudeRunPermission' in patch && !['acceptEdits', 'bypassPermissions'].includes(patch.claudeRunPermission)) delete patch.claudeRunPermission;
       if ('personality' in patch && !['motivador', 'sarcastico', 'zen', 'sargento'].includes(patch.personality)) delete patch.personality;
@@ -654,8 +656,12 @@ module.exports = function install(M) {
     M.ipcMain.handle('tickets:add', (_e, key) => (key === '*' ? M.work.addAllTickets() : M.work.addTicket(String(key))));
     M.ipcMain.handle('tickets:open', (_e, key) => { M.work.openTicket(String(key)); return true; });
     M.ipcMain.handle('runs:pr', (_e, id) => M.work.prRun(String(id)));
+    M.ipcMain.handle('runs:fix', (_e, arg) => M.work.fixRun(String(arg)));
     M.ipcMain.handle('tickets:start', (_e, { key, repo }) => M.work.startTicket(String(key), repo ? String(repo) : ''));
     M.ipcMain.handle('tickets:claude', (_e, { key, repo }) => M.work.ticketToClaude(String(key), repo ? String(repo) : ''));
+    // Informe de errores opcional al autor
+    M.ipcMain.handle('errors:consent', (_e, on) => { M.errreport.setConsent(!!on); return M.snapshot(); });
+    M.ipcMain.handle('errors:send', () => M.errreport.sendNow(true));
     // Configuración del equipo (pm-equipo.json)
     M.ipcMain.handle('team:export', (_e, opts) => M.team.exportPack(opts || {}));
     M.ipcMain.handle('team:import', () => M.team.importPack());

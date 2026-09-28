@@ -153,6 +153,11 @@
             <div class="opt row between"><div><b>Claude Code</b><p class="muted small" id="run-bin"></p></div><button id="run-bin-pick" class="ghost mini">Elegir…</button></div>
             <div class="opt row between"><div><b>Ejecutar la cola automáticamente</b><p class="muted small">Cuando Claude termina una, empieza la siguiente (solo peticiones con proyecto; máximo 3 esperando tu revisión).</p></div><input type="checkbox" class="switch" id="run-auto" /></div>
             <div class="opt row between"><div><b>Correr los tests antes de avisarme</b><p class="muted small">npm test, pytest, cargo test o go test en la copia (usa tus node_modules sin reinstalar). El aviso te dice si pasan.</p></div><input type="checkbox" class="switch" id="run-tests" /></div>
+            <div class="opt row between"><div><b>Cuántas a la vez</b><p class="muted small">Cada una trabaja en su propia copia, así que no se pisan.</p></div><div class="seg" id="run-par"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button></div></div>
+            <div class="opt row between"><div><b>Segunda opinión antes de avisarme</b><p class="muted small">Otra pasada de Claude, de solo lectura, revisa el cambio (bugs, secretos, cosas a medias) y lo añade al PR. Máx. $1 por revisión.</p></div><input type="checkbox" class="switch" id="run-review" /></div>
+            <div class="opt row between"><div><b>Si falla el CI del PR, que Claude lo arregle solo</b><p class="muted small">Vigilo los PR que abrió Claude: le paso el log del error y sube el arreglo a la misma rama.</p></div><input type="checkbox" class="switch" id="run-fixci" /></div>
+            <div class="opt row between"><div><b>Si piden cambios en la revisión, aplicarlos solo</b><p class="muted small">Si está apagado, te aviso con un botón para que decidas.</p></div><input type="checkbox" class="switch" id="run-fixrev" /></div>
+            <div class="opt row between"><div><b>Intentos de arreglo por PR</b></div><input type="number" id="run-maxfix" min="0" max="5" step="1" style="width:70px" /></div>
             <div class="opt row between"><div><b>Tope de gasto por petición</b><p class="muted small">Claude se detiene al llegar (<code>--max-budget-usd</code>). 0 = sin tope.</p></div><div class="row gap"><span>$</span><input type="number" id="run-budget" min="0" max="100" step="0.5" style="width:80px" /></div></div>
             <div class="opt row between"><div><b>Permisos de Claude</b><p class="muted small">"Editar archivos" no deja ejecutar comandos. "Todo" también ejecuta comandos (tests, instalar…) dentro de la copia aparte.</p></div>
               <div class="seg" id="run-perm"><button data-v="acceptEdits">Editar archivos</button><button data-v="bypassPermissions">Todo</button></div></div>
@@ -357,6 +362,10 @@
             <button id="dg-open" class="ghost" data-icon="folder">Abrir registro</button>
             <button id="dg-refresh" class="ghost" data-icon="refresh">Actualizar</button>
           </div>
+          <div id="err-box" class="hidden"><div class="opt box small">
+            <div class="row between"><div><b>🐞 Enviar informes de errores al autor</b><p class="muted small">Cuando algo falla, se envía solo el error, la versión y el sistema, sin tus tareas, notas, chat, correos, rutas ni claves. Sirve para arreglarlo en la próxima versión.</p></div><input type="checkbox" class="switch" id="err-on" /></div>
+            <div class="row gap"><button id="err-send" class="ghost mini">Enviar los errores de ahora</button><span id="err-msg" class="small"></span></div>
+          </div></div>
           <p class="muted small">El registro (<code>pm-errors.log</code>) se queda en tu PC. El informe no incluye tus tareas, notas ni claves, y oculta tu carpeta de usuario.</p>
         </div>
 
@@ -368,6 +377,8 @@
             <div class="muted small" id="version"></div>
             <p>Tu pollito Project Manager 🐣📋</p>
             <div class="love">Hecho con <span class="heart">❤️</span> por <b>Juanzreyes</b></div>
+            <button id="donate" class="donate" title="Abre la página de donación de PayPal">💛 Invítame un café (PayPal)</button>
+            <p class="muted small">Si PM te ahorra tiempo, puedes apoyarlo con lo que quieras. ¡Gracias! 🐣</p>
             <div class="row gap center">
               <button id="check-updates" class="soft" data-icon="refresh">Buscar actualizaciones</button>
               <button id="tour" class="ghost" data-icon="compass">Ver el tour</button>

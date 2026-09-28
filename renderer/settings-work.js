@@ -14,7 +14,16 @@
     $('#run-bin').textContent = cr.bin ? cr.bin : 'No lo encontré en este PC. Instálalo (npm i -g @anthropic-ai/claude-code) o elige dónde está.';
     $('#run-auto').checked = !!cr.auto;
     $('#run-tests').checked = cr.tests !== false;
+    segOn($('#run-par'), String(cr.parallel || 2));
+    $('#run-review').checked = cr.review !== false;
+    $('#run-fixci').checked = cr.autoFixCi !== false;
+    $('#run-fixrev').checked = !!cr.autoFixReview;
+    if (document.activeElement !== $('#run-maxfix')) $('#run-maxfix').value = cr.maxFixes ?? 2;
     if (document.activeElement !== $('#run-budget')) $('#run-budget').value = cr.budget || 0;
+    // ---------- informe de errores ----------
+    const erp = st.errReport || {};
+    $('#err-box').classList.toggle('hidden', !erp.available);
+    $('#err-on').checked = erp.consent === true;
     // ---------- configuración del equipo ----------
     const tp = (st.team && st.team.pack) || null;
     $('#tp-status').textContent = tp ? `✅ ${tp.name || 'importada'}` : 'solo tuya';
@@ -95,7 +104,19 @@
   $('#run-bin-pick').addEventListener('click', async () => { st = await pm.chooseClaudeBin(); render(); });
   $('#run-auto').addEventListener('change', (e) => pm.updateSettings({ claudeAutoRun: e.target.checked }));
   $('#run-tests').addEventListener('change', (e) => pm.updateSettings({ claudeRunTests: e.target.checked }));
+  $('#run-par').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) pm.updateSettings({ claudeParallel: Number(b.dataset.v) }); });
+  $('#run-review').addEventListener('change', (e) => pm.updateSettings({ claudeReview: e.target.checked }));
+  $('#run-fixci').addEventListener('change', (e) => pm.updateSettings({ claudeAutoFixCi: e.target.checked }));
+  $('#run-fixrev').addEventListener('change', (e) => pm.updateSettings({ claudeAutoFixReview: e.target.checked }));
+  $('#run-maxfix').addEventListener('change', (e) => pm.updateSettings({ claudeMaxFixes: Number(e.target.value) || 0 }));
   $('#run-budget').addEventListener('change', (e) => pm.updateSettings({ claudeRunBudget: Number(e.target.value) || 0 }));
+
+  // ---------- informe de errores ----------
+  $('#err-on').addEventListener('change', (e) => pm.errorsConsent(e.target.checked));
+  $('#err-send').addEventListener('click', async () => {
+    const r = await pm.errorsSend();
+    msg($('#err-msg'), r.ok, r.ok ? (r.sent ? `Enviado${r.sent === 1 ? '' : 's'} ${r.sent}. ¡Gracias!` : 'No hay errores nuevos que enviar ✨') : r.error);
+  });
 
   // ---------- configuración del equipo ----------
   $('#tp-export').addEventListener('click', async () => {

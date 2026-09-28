@@ -576,3 +576,11 @@ html.dark .bl-kb select { background: #1c1916; }
 .tk-acts { display: flex; gap: 3px; align-items: center; flex: none; }
 .tk-pick { flex-wrap: wrap; padding: 6px 0 8px 22px; }
 .tk-pick select { max-width: 140px; }
+/* 1.8: Claude en vivo y arreglos del PR */
+.run-progress { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.run-progress code { font-size: 11px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.run.running .run-progress { animation: runpulse 1.6s ease-in-out infinite; }
+@keyframes runpulse { 50% { opacity: .55; } }
+html.reduced .run.running .run-progress { animation: none; }
+.run.fix { border-left: 4px solid var(--orange); }
+.run.pushed { opacity: .8; }

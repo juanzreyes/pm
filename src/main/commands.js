@@ -2,6 +2,9 @@
 // Parte del proceso principal (antes en main.js). `M` es el contexto compartido de la app:
 // da acceso a todo lo demás (ventanas, datos, funciones de otros módulos).
 /* eslint-disable no-use-before-define */
+// Página de donación de PayPal a la cuenta del autor.
+const DONATE_URL = 'https://www.paypal.com/donate/?business=' + encodeURIComponent('tfcjuanz@gmail.com') + '&currency_code=USD&item_name=' + encodeURIComponent('PM Pollito');
+
 module.exports = function install(M) {
   const COMMANDS = [
     { id: 'panel.chat', icon: '💬', label: 'Abrir el chat', kw: 'chat hablar preguntar', run: () => M.openPanel('chat') },
@@ -158,6 +161,7 @@ module.exports = function install(M) {
     { id: 'run.open', hidden: true, run: (id) => M.work.openRun(id) },
     { id: 'run.accept', hidden: true, run: (id) => M.work.acceptRun(id) },
     { id: 'run.pr', hidden: true, run: (id) => M.work.prRun(id) },
+    { id: 'run.fix', hidden: true, run: (arg) => { const r = M.work.fixRun(arg); if (!r.ok) M.say('😿 ' + r.error, 'sad', 7000, { log: false }); } },
     { id: 'run.start', hidden: true, run: (id) => M.work.startRun(id).then((r) => { if (!r.ok) M.say('😿 ' + r.error, 'sad', 8000, { log: false }); }) },
     { id: 'run.discard', hidden: true, run: (id) => M.work.discardRun(id) },
     // Tickets del equipo
@@ -169,6 +173,9 @@ module.exports = function install(M) {
     { id: 'daily.post', icon: '📣', label: 'Publicar mi daily en el canal del equipo', kw: 'daily publicar slack teams discord canal equipo', when: () => !!M.store.data.settings.teamWebhook, run: () => M.remote.postDaily(true) },
     { id: 'weekly.post', icon: '📣', label: 'Publicar el informe semanal en el canal', kw: 'informe semanal publicar slack teams canal equipo', when: () => !!M.store.data.settings.teamWebhook, run: () => M.remote.postWeekly(true) },
     { id: 'settings.remote', hidden: true, run: () => M.openSettings('remote') },
+    // Donación al autor (PayPal, página oficial de donación: el pago lo hace la persona en PayPal).
+    { id: 'errors.consent', hidden: true, run: (v) => { M.errreport.setConsent(v === 'yes'); M.say(v === 'yes' ? '💛 ¡Gracias! Así Juanzreyes puede arreglar lo que falle. Puedes cambiarlo en Ajustes → Diagnóstico.' : 'Vale, no envío nada 👍 (Ajustes → Diagnóstico si cambias de idea).', 'peck', 7000, { log: false }); } },
+    { id: 'donate', icon: '💛', label: 'Apoyar PM Pollito con una donación (PayPal)', kw: 'donar donacion paypal apoyar cafe autor', run: () => M.shell.openExternal(DONATE_URL) },
     { id: 'team.import', icon: '👥', label: 'Importar la configuración del equipo (pm-equipo.json)', kw: 'equipo importar configuracion compartir jira webhook', run: () => M.team.importPack() },
     { id: 'team.export', icon: '📤', label: 'Exportar la configuración para el equipo', kw: 'equipo exportar configuracion compartir', run: () => M.openSettings('integrations') },
     { id: 'update.install', hidden: true, run: () => {

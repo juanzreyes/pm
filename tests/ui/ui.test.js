@@ -43,9 +43,15 @@ test.before(async () => {
   fs.writeFileSync(path.join(api, 'package.json'), JSON.stringify({ scripts: { test: 'node -e "console.log(\'1 failing: suma\'); process.exit(1)"' } }));
   ga('add', '-A'); ga('commit', '-q', '-m', 'inicio');
   const fakeClaude = path.join(reposDir, 'claude.js');
+  // Imita "claude -p --output-format stream-json": un paso visible, una pausa (para ver el progreso) y el resultado.
   fs.writeFileSync(fakeClaude, `let p = ''; process.stdin.on('data', (d) => (p += d)); process.stdin.on('end', () => {
-    require('fs').writeFileSync('HECHO.md', p);
-    console.log(JSON.stringify({ type: 'result', is_error: false, result: 'Creé HECHO.md', total_cost_usd: 0.05, num_turns: 2, session_id: 'ses-ui' }));
+    const out = (o) => console.log(JSON.stringify(o));
+    if (/VEREDICTO/.test(p)) { out({ type: 'result', is_error: false, result: 'VEREDICTO: OK\\nTodo bien.', total_cost_usd: 0.01 }); return; }
+    out({ type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Edit', input: { file_path: 'src/HECHO.md' } }] } });
+    setTimeout(() => {
+      require('fs').writeFileSync('HECHO.md', p);
+      out({ type: 'result', is_error: false, result: 'Creé HECHO.md', total_cost_usd: 0.05, num_turns: 2, session_id: 'ses-ui' });
+    }, 2500);
   });`);
   const now = Date.now();
   fs.writeFileSync(path.join(dir, 'pm-data.json'), JSON.stringify({
@@ -150,7 +156,10 @@ test('cola de Claude: ▶️ la ejecuta en una copia aparte y se acepta en una r
   await panel.press('#queue-input', 'Enter');
   await panel.waitForSelector('#claude-queue .q-run', { timeout: 5000 });
   await panel.click('#claude-queue .q-run');
+  // Progreso en vivo mientras trabaja.
+  await panel.waitForFunction(() => /Editando/.test((document.querySelector('#claude-runs .run.running .run-progress') || {}).textContent || ''), null, { timeout: 15000 });
   await panel.waitForSelector('#claude-runs .run.review', { timeout: 30000 });
+  assert.match(await panel.textContent('#claude-runs .run.review'), /Segunda opinión: todo bien/);
   const repo = path.join(reposDir, 'demo');
   assert.equal(fs.existsSync(path.join(repo, 'HECHO.md')), false, 'tu carpeta no se toca');
   const txt = await panel.textContent('#claude-runs .run.review');
@@ -236,6 +245,27 @@ test('panel: agenda y centro de avisos (en sus propios archivos) funcionan', asy
   const n = await panel.evaluate(() => document.querySelectorAll('#ib-list [data-id], #ib-list .ib').length);
   assert.ok(n > 0, 'el centro de avisos lista algo');
   await panel.click('#ib-close');
+});
+
+test('1.8: donación en "Acerca de", informe de errores oculto sin destino y ajustes de la cola', async () => {
+  const panel = await waitPage('panel');
+  // No se pulsa (abriría PayPal en el navegador): se comprueba que el botón y el comando existen.
+  const cmds = await panel.evaluate(() => pm.paletteList());
+  assert.ok(cmds.some((c) => c.id === 'donate'), 'comando de donación en la paleta');
+  await panel.evaluate(() => pm.openAbout());
+  const about = await waitPage('about');
+  assert.match(await about.textContent('#donate'), /PayPal/);
+  await about.evaluate(() => pm.closeAbout());
+  await panel.evaluate(() => pm.openSettings('diag'));
+  const st = await waitPage('settings');
+  await st.waitForFunction(() => !document.querySelector('#sec-diag').classList.contains('hidden'), null, { timeout: 8000 });
+  const r = await st.evaluate(async () => {
+    await pm.updateSettings({ claudeParallel: 9, claudeMaxFixes: -3 });
+    const s = await pm.getState();
+    return { errBoxHidden: document.querySelector('#err-box').classList.contains('hidden'), donate: !!document.querySelector('#donate'), par: s.claudeRunner.parallel, max: s.claudeRunner.maxFixes, review: s.claudeRunner.review, fixci: s.claudeRunner.autoFixCi };
+  });
+  assert.deepEqual(r, { errBoxHidden: true, donate: true, par: 3, max: 0, review: true, fixci: true });
+  await st.evaluate(() => pm.updateSettings({ claudeParallel: 2, claudeMaxFixes: 2 }));
 });
 
 test('ajustes: diagnóstico sin errores de la app', async () => {

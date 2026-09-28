@@ -87,19 +87,56 @@ async function stageAll(dir) {
   }
 }
 
+/** Qué está haciendo Claude, a partir de una herramienta que usa (para mostrarlo en vivo). */
+function describeTool(name, input = {}) {
+  const file = input.file_path || input.notebook_path || input.path || '';
+  const short = (p) => String(p).split(/[\\/]/).slice(-2).join('/');
+  if (/^(Edit|MultiEdit|Write|NotebookEdit)$/.test(name)) return { icon: '✏️', what: 'Editando', target: short(file) };
+  if (name === 'Read') return { icon: '👀', what: 'Leyendo', target: short(file) };
+  if (name === 'Bash') return { icon: '⌨️', what: 'Ejecutando', target: String(input.command || '').split('\n')[0].slice(0, 60) };
+  if (/^(Grep|Glob|LS)$/.test(name)) return { icon: '🔎', what: 'Buscando', target: String(input.pattern || file || '').slice(0, 60) };
+  if (name === 'TodoWrite') return { icon: '📝', what: 'Planificando', target: '' };
+  if (/^Web(Fetch|Search)$/.test(name)) return { icon: '🌐', what: 'Consultando', target: String(input.url || input.query || '').slice(0, 60) };
+  if (/^(Task|Agent)$/.test(name)) return { icon: '🤖', what: 'Subagente', target: String(input.description || '').slice(0, 60) };
+  return { icon: '🔧', what: name, target: '' };
+}
+
 /**
  * Lanza Claude en el worktree. La petición va por la entrada estándar (sin problemas de comillas).
+ * Lee la salida en vivo (stream-json) y llama a onProgress({ icon, what, target, steps }) en cada herramienta.
  * Devuelve { promise, kill }. La promesa resuelve { ok, result, cost, turns, sessionId, error }.
  */
-function launch({ bin, cwd, prompt, permission = 'acceptEdits', timeoutMs = 30 * 60e3, budgetUsd = 0 }) {
-  const args = ['-p', '--output-format', 'json', '--permission-mode', permission];
+function launch({ bin, cwd, prompt, permission = 'acceptEdits', timeoutMs = 30 * 60e3, budgetUsd = 0, onProgress = null }) {
+  const args = ['-p', '--output-format', 'stream-json', '--verbose', '--permission-mode', permission];
   if (budgetUsd > 0) args.push('--max-budget-usd', String(budgetUsd)); // Claude se detiene al llegar al tope
   const c = command(bin, args);
   const child = spawn(c.file, c.args, { cwd, shell: c.shell, windowsHide: true, env: { ...process.env, ...c.env } });
-  let out = '';
+  let buf = '';
   let err = '';
+  let last = ''; // última línea que no es JSON (por si falla antes de empezar)
+  let final = null;
+  let steps = 0;
   let killedBy = '';
-  child.stdout.on('data', (d) => { if (out.length < 5e6) out += d; });
+  const onLine = (line) => {
+    if (!line.trim()) return;
+    let j;
+    try { j = JSON.parse(line); } catch { last = line.slice(0, 400); return; }
+    if (!j || typeof j !== 'object') return;
+    if (j.type === 'result' || (j.type === undefined && 'result' in j)) { final = j; return; }
+    if (j.type === 'assistant' && j.message && Array.isArray(j.message.content)) {
+      for (const part of j.message.content) {
+        if (part.type !== 'tool_use') continue;
+        steps++;
+        if (onProgress) { try { onProgress({ ...describeTool(part.name, part.input), steps }); } catch { /* la vista no debe romper la ejecución */ } }
+      }
+    }
+  };
+  child.stdout.on('data', (d) => {
+    buf += d;
+    let i;
+    while ((i = buf.indexOf('\n')) >= 0) { onLine(buf.slice(0, i)); buf = buf.slice(i + 1); }
+    if (buf.length > 5e6) buf = buf.slice(-1e6);
+  });
   child.stderr.on('data', (d) => { if (err.length < 1e5) err += d; });
   child.stdin.on('error', () => { /* terminó antes de leer */ });
   child.stdin.end(prompt);
@@ -108,16 +145,74 @@ function launch({ bin, cwd, prompt, permission = 'acceptEdits', timeoutMs = 30 *
     child.on('error', (e) => { clearTimeout(timer); resolve({ ok: false, error: 'No pude lanzar Claude Code: ' + e.message }); });
     child.on('close', (code) => {
       clearTimeout(timer);
-      if (killedBy) return resolve({ ok: false, error: killedBy === 'timeout' ? `Tardó más de ${Math.round(timeoutMs / 60e3)} min y lo paré` : 'Lo paraste' });
-      let j = null;
-      try { j = JSON.parse(out.trim().split('\n').filter(Boolean).pop()); } catch { /* no es JSON */ }
-      if (j && typeof j === 'object') {
-        return resolve({ ok: !j.is_error && code === 0, result: String(j.result || '').trim(), cost: Number(j.total_cost_usd) || 0, turns: j.num_turns || 0, sessionId: j.session_id || '', error: j.is_error ? String(j.result || j.subtype || 'error') : (code ? `Salió con código ${code}` : '') });
+      if (buf) onLine(buf);
+      if (killedBy) return resolve({ ok: false, error: killedBy === 'timeout' ? `Tardó más de ${Math.round(timeoutMs / 60e3)} min y lo paré` : 'Lo paraste', steps });
+      const j = final;
+      if (j) {
+        return resolve({ ok: !j.is_error && code === 0, result: String(j.result || '').trim(), cost: Number(j.total_cost_usd) || 0, turns: j.num_turns || 0, sessionId: j.session_id || '', steps, error: j.is_error ? String(j.result || j.subtype || 'error') : (code ? `Salió con código ${code}` : '') });
       }
-      resolve({ ok: false, error: (err.trim() || out.trim() || `Salió con código ${code}`).split('\n').slice(-3).join(' ').slice(0, 400) });
+      resolve({ ok: false, steps, error: (err.trim() || last || `Salió con código ${code}`).split('\n').slice(-3).join(' ').slice(0, 400) });
     });
   });
   return { promise, kill: () => { killedBy = 'user'; child.kill(); } };
+}
+
+// ---------------- segunda opinión antes del PR ----------------
+/** El diff preparado (lo que se commitearía), recortado para caber en una petición. */
+async function stagedDiff(dir, max = 60000) {
+  await stageAll(dir);
+  const d = await git(dir, ['diff', '--cached', '--no-color', '--stat', '--patch']);
+  return d.length > max ? d.slice(0, max) + '\n… (diff recortado)' : d;
+}
+const REVIEW_PROMPT = `Eres un revisor de código exigente pero práctico. Abajo está el diff de un cambio que otra sesión de Claude acaba de hacer en este repositorio para esta petición:
+
+<peticion>
+{{PETICION}}
+</peticion>
+
+Revísalo buscando SOLO problemas reales: bugs, casos que rompen, secretos o claves en el código, código de depuración olvidado, cosas a medias respecto a la petición o cambios que no tienen que ver. No propongas estilo ni refactors opcionales. Puedes leer archivos del repo si hace falta contexto, pero no cambies nada.
+
+Responde en español. La PRIMERA línea debe ser exactamente "VEREDICTO: OK" (si se puede publicar tal cual) o "VEREDICTO: REVISAR" (si hay algo que corregir). Después, una lista corta de problemas con archivo y línea. Si todo está bien, una sola frase.
+
+<diff>
+{{DIFF}}
+</diff>`;
+/** Revisión de solo lectura (dontAsk: cualquier edición se deniega). */
+async function review({ bin, cwd, request, budgetUsd = 1, timeoutMs = 10 * 60e3 }) {
+  const diff = await stagedDiff(cwd);
+  if (!diff.trim()) return null;
+  const prompt = REVIEW_PROMPT.replace('{{PETICION}}', String(request || '').slice(0, 3000)).replace('{{DIFF}}', diff);
+  const r = await launch({ bin, cwd, prompt, permission: 'dontAsk', budgetUsd, timeoutMs }).promise;
+  if (!r.ok && !r.result) return { ok: false, verdict: 'error', text: r.error || 'La revisión falló', cost: r.cost || 0 };
+  const text = String(r.result || '').trim();
+  const verdict = /^\s*VEREDICTO:\s*OK/i.test(text) ? 'ok' : /VEREDICTO:\s*REVISAR/i.test(text) ? 'revisar' : 'revisar';
+  return { ok: true, verdict, text: text.replace(/^\s*VEREDICTO:[^\n]*\n?/i, '').trim().slice(0, 4000), cost: r.cost || 0 };
+}
+
+// ---------------- arreglos sobre la rama de un PR ----------------
+/** Worktree sobre una rama que ya existe (la del PR). Si solo está en origin, la trae. */
+async function prepareOn(repo, branch, id, baseDir) {
+  const dir = path.join(baseDir, `${slug(path.basename(repo))}-${id}`);
+  fs.mkdirSync(baseDir, { recursive: true });
+  const local = await git(repo, ['rev-parse', '--verify', '--quiet', `refs/heads/${branch}`]).then(() => true, () => false);
+  if (!local) await git(repo, ['fetch', 'origin', `${branch}:${branch}`]);
+  else await git(repo, ['fetch', 'origin', branch]).then(() => git(repo, ['branch', '-f', branch, `origin/${branch}`])).catch(() => { /* sin red: seguimos con la local */ });
+  await git(repo, ['worktree', 'add', dir, branch]);
+  linkDeps(repo, dir);
+  return { dir, branch };
+}
+/** Commit + push a la rama del PR y quita la copia. */
+async function commitAndPush(run, message) {
+  await stageAll(run.dir);
+  try {
+    await git(run.dir, ['commit', '-m', message]);
+  } catch (e) {
+    if (!/user\.(name|email)|identity|Please tell me who you are/i.test(e.message)) throw e;
+    await git(run.dir, ['-c', 'user.name=PM Pollito', '-c', 'user.email=pm-pollito@localhost', 'commit', '-m', message]);
+  }
+  await git(run.dir, ['push', 'origin', `HEAD:${run.branch}`]);
+  unlinkDeps(run.dir);
+  await git(run.repo, ['worktree', 'remove', '--force', run.dir]);
 }
 
 /** Cambios que dejó Claude (incluye archivos nuevos). */
@@ -211,4 +306,4 @@ async function openPR({ owner, repo, token, head, base, title, body }, http = fe
   return j.html_url;
 }
 
-module.exports = { findClaude, prepare, launch, changes, accept, discard, git, slug, linkDeps, unlinkDeps, detectTests, runTests, githubRepoOf, pushBranch, openPR };
+module.exports = { describeTool, stagedDiff, review, prepareOn, commitAndPush, findClaude, prepare, launch, changes, accept, discard, git, slug, linkDeps, unlinkDeps, detectTests, runTests, githubRepoOf, pushBranch, openPR };

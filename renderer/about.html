@@ -25,6 +25,9 @@
     .love b { color: var(--orange); }
     .copy { font-size: 11px; color: var(--muted); margin-top: 8px; }
     .row { margin-top: 10px; }
+    .donate { margin-top: 10px; background: #ffc439; color: #253b80; border: 2px solid var(--ink); border-radius: 14px; padding: 9px 16px; font-weight: 800; box-shadow: 0 3px 0 var(--ink); cursor: pointer; }
+    .donate:hover { filter: brightness(1.05); }
+    .donate:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
     #upd-msg { font-size: 11.5px; min-height: 16px; color: var(--muted); }
   </style>
 </head>
@@ -36,6 +39,7 @@
     <div class="ver" id="ver">versión …</div>
     <div class="tag">Tu pollito Project Manager 🐣📋</div>
     <div class="love">Hecho con <span class="heart">❤️</span> por <b>Juanzreyes</b></div>
+    <button id="donate" class="donate" title="Abre la página de donación de PayPal">💛 Invítame un café (PayPal)</button>
     <div class="row gap">
       <button id="upd" class="soft" data-icon="refresh">Buscar actualizaciones</button>
     </div>

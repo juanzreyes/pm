@@ -29,3 +29,34 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run test:ui
+
+  # macOS: la app nunca se probó en un Mac. Este trabajo lo prueba en cada push; es informativo
+  # (continue-on-error) hasta que pase en verde de forma estable: entonces quita esa línea.
+  mac:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Identidad de git (los tests crean repos de prueba)
+        run: |
+          git config --global user.name "PM Pollito CI"
+          git config --global user.email "ci@pm-pollito.invalid"
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:ui
+      - name: Compilar para Mac (sin firmar)
+        run: npx electron-builder --mac --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PM-Pollito-mac
+          path: |
+            dist/*.dmg
+            dist/*.zip

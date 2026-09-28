@@ -3,6 +3,7 @@ dist/
 dist-*/
 *.log
 oauth.config.json
+reporting.config.json
 
 # Binarios para compartir (pesados: súbelos a GitHub Releases, Drive, etc.)
 public/*.exe

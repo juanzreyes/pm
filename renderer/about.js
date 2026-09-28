@@ -2,6 +2,8 @@
 document.getElementById('close').addEventListener('click', () => pm.closeAbout());
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') pm.closeAbout(); });
 
+document.getElementById('donate').addEventListener('click', () => pm.command('donate'));
+
 document.getElementById('upd').addEventListener('click', async () => {
   const msg = document.getElementById('upd-msg');
   msg.textContent = '⏳';

@@ -151,8 +151,8 @@ module.exports = function install(M) {
     if (!M.aboutWin || M.aboutWin.isDestroyed()) {
       const d = M.screen.getDisplayNearestPoint(M.screen.getCursorScreenPoint()).workArea;
       M.aboutWin = new M.BrowserWindow(baseWinOpts({
-        width: 380, height: 470, alwaysOnTop: true, title: 'Acerca de PM Pollito',
-        x: Math.round(d.x + (d.width - 380) / 2), y: Math.round(d.y + (d.height - 470) / 2),
+        width: 380, height: 530, alwaysOnTop: true, title: 'Acerca de PM Pollito',
+        x: Math.round(d.x + (d.width - 380) / 2), y: Math.round(d.y + (d.height - 530) / 2),
       }));
       M.aboutWin.setAlwaysOnTop(true, 'screen-saver', 2);
       M.aboutWin.loadFile(M.path.join(M.APP_DIR, 'renderer', 'about.html'));

@@ -342,6 +342,7 @@ $('#check-updates').addEventListener('click', async () => {
 });
 $('#tour').addEventListener('click', () => { pm.command('tour'); pm.closeSettings(); });
 $('#quit').addEventListener('click', () => pm.quit());
+$('#donate').addEventListener('click', () => pm.command('donate'));
 
 // Enlaces externos
 document.addEventListener('click', (e) => {

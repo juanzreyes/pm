@@ -1,5 +1,14 @@
 # Novedades de PM Pollito
 
+## 1.8.0 — Claude cierra el ciclo
+- **🔧 Claude arregla su propio PR**: PM vigila los PR que abrió Claude. Si falla el CI, le pasa el log del error y sube el arreglo a la misma rama (automático, con un máximo de intentos). Si en la revisión piden cambios, te ofrece "Aplicar la revisión" (o lo hace solo, si lo activas). Te avisa cuando el CI pasa y cuando mezclan o cierran el PR.
+- **👀 Claude en vivo**: mientras trabaja ves qué hace ("✏️ Editando src/cart.js · 14 pasos").
+- **⚡ Varias a la vez**: hasta 3 peticiones de la cola en paralelo, cada una en su copia del repo.
+- **🔎 Segunda opinión**: antes de avisarte, otra pasada de Claude (solo lectura, máx. $1) revisa el cambio buscando bugs, secretos o cosas a medias; lo ves en el panel y va dentro del PR.
+- **🐞 Informe de errores opcional**: si algo falla, PM te pregunta una vez si puede enviar el error al autor. Solo el error, la versión y el sistema: sin tareas, notas, chat, correos, rutas ni claves.
+- **💛 Donación**: botón "Invítame un café" (PayPal) en Acerca de.
+- **🍎 Mac en CI**: los tests también corren en macOS y cada release incluye un `.dmg` (sin firmar).
+
 ## 1.7.0 — De ticket a PR
 - **🚀 Claude te deja un PR listo**: cuando termina una petición de la cola, un botón hace commit, sube la rama y abre el pull request en GitHub contra la rama en la que estabas, con lo que se pidió, lo que dijo Claude y el resultado de los tests.
 - **🧪 Tests antes de avisarte**: PM corre `npm test`, `pytest`, `cargo test` o `go test` en la copia (usando tus `node_modules` sin reinstalar) y el aviso te dice si pasan o fallan, con la salida.

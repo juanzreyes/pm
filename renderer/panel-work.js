@@ -69,12 +69,22 @@
   const ST = {
     starting: ['⏳', 'preparando'], running: ['🤖', 'trabajando'], testing: ['🧪', 'probando los tests'], review: ['👀', 'revisa los cambios'], failed: ['😿', 'falló'],
     empty: ['💬', 'sin cambios'], accepted: ['✅', 'en su rama'], discarded: ['🗑️', 'descartado'], pr: ['🚀', 'PR abierto'],
+    reviewing: ['🔎', 'segunda opinión'], pushed: ['🔧', 'arreglo subido'],
   };
+  const PR_STATE = { merged: ['🎉', 'mezclado'], closed: ['🚪', 'cerrado'] };
+  /** Estado del CI del PR en una línea. */
+  function ciLine(r) {
+    if (r.status !== 'pr' || !r.ci || r.prState !== 'open') return '';
+    const c = r.ci;
+    const txt = c.failed ? `❌ CI: ${c.failed} falla${c.failed === 1 ? '' : 'n'}` : c.pending ? `⏳ CI: ${c.pending} en curso` : c.total ? '✅ CI pasa' : '';
+    const pend = r.pendingFix ? ' · <span>🔧 arreglo en cola</span>' : r.fixes ? ` · 🔧 ${r.fixes}` : '';
+    return txt || pend ? `<div class="small ${c.failed ? 'err' : c.pending ? 'muted' : 'okmsg'}"><span>${txt}</span>${pend}</div>` : '';
+  }
   function renderRuns() {
     const runs = state.claudeRuns || [];
     const box = $('#claude-runs');
     box.innerHTML = runs.length ? `<div class="row between small"><b>Lo que hizo Claude</b>${runs.some((r) => ['accepted', 'discarded', 'empty'].includes(r.status)) ? '<button type="button" class="link runs-clear">Limpiar</button>' : ''}</div>` + runs.map((r) => {
-      const [ic, lab] = ST[r.status] || ['•', r.status];
+      const [ic, lab] = (r.status === 'pr' && PR_STATE[r.prState]) || ST[r.status] || ['•', r.status];
       const stat = r.stat && r.stat.n ? ` · ${r.stat.n} archivo${r.stat.n === 1 ? '' : 's'} <span class="okmsg">+${r.stat.ins}</span> <span class="err">−${r.stat.del}</span>` : '';
       const cost = r.cost ? ` · $${r.cost.toFixed(2)}` : '';
       const prBtn = r.prReady ? '<button type="button" class="primary mini run-pr" title="Commit, subir la rama y abrir el pull request en GitHub">🚀 Crear PR</button>' : '';
@@ -82,14 +92,20 @@
         : r.status === 'review' ? `<button type="button" class="soft mini run-open">👀 Ver</button>${prBtn}<button type="button" class="${prBtn ? 'ghost' : 'primary'} mini run-accept" title="Guardar los cambios en la rama ${esc(r.branch || '')} (sin subir)">✅ ${prBtn ? 'Solo rama' : 'Aceptar'}</button><button type="button" class="ghost mini run-discard" aria-label="Descartar">🗑️</button>`
           : r.status === 'failed' ? `${r.stat && r.stat.n ? '<button type="button" class="soft mini run-open">👀 Ver</button><button type="button" class="ghost mini run-accept">Guardar igual</button>' : ''}<button type="button" class="ghost mini run-discard">🗑️ Descartar</button>`
             : r.status === 'accepted' ? prBtn
-              : r.status === 'pr' && r.pr ? `<button type="button" class="soft mini run-openpr" data-url="${esc(r.pr)}">🔗 Ver PR</button>` : '';
+              : r.status === 'pr' && r.pr ? `<button type="button" class="soft mini run-openpr" data-url="${esc(r.pr)}">🔗 Ver PR</button>${r.canFixCi && !r.pendingFix ? '<button type="button" class="primary mini run-fix" data-kind="ci">🔧 Que Claude lo arregle</button>' : ''}${r.canFixReview && !r.pendingFix ? '<button type="button" class="soft mini run-fix" data-kind="review">🔧 Aplicar la revisión</button>' : ''}`
+                : r.status === 'pushed' && r.pr ? `<button type="button" class="soft mini run-openpr" data-url="${esc(r.pr)}">🔗 Ver PR</button>` : '';
+      const progress = r.progress && ['running', 'starting'].includes(r.status) ? `<div class="small run-progress">${r.progress.icon} <span>${esc(r.progress.what)}</span>${r.progress.target ? ` <code>${esc(r.progress.target)}</code>` : ''} <span class="muted">· ${r.progress.steps} <span>pasos</span></span></div>` : '';
+      const review = r.review && r.review.ok ? `<div class="small ${r.review.verdict === 'ok' ? 'okmsg' : 'err'}">🔎 <span>${r.review.verdict === 'ok' ? 'Segunda opinión: todo bien' : 'La segunda opinión encontró cosas'}</span></div>${r.review.verdict !== 'ok' && r.review.text ? `<details class="small"><summary class="muted">Qué encontró</summary><div class="run-result">${esc(r.review.text)}</div></details>` : ''}` : '';
       const tests = r.tests ? `<div class="small ${r.tests.ok ? 'okmsg' : 'err'}">${r.tests.ok ? '✅' : '⚠️'} ${esc(r.tests.label)} <span>${r.tests.ok ? 'pasa' : 'falla'}</span></div>${!r.tests.ok && r.tests.tail ? `<details class="small"><summary class="muted">Salida de los tests</summary><pre class="run-result">${esc(r.tests.tail)}</pre></details>` : ''}` : '';
       const resume = r.sessionId && ['review', 'failed', 'empty'].includes(r.status) ? `<button type="button" class="link run-resume" title="Seguir la conversación en una terminal, dentro de la copia del repo">claude --resume</button>` : '';
-      return `<div class="run ${r.status}" data-id="${esc(r.id)}" data-ses="${esc(r.sessionId || '')}">
-        <div class="row between"><span>${ic} <b>${esc(r.project)}</b> <span class="muted small"><span>${lab}</span>${r.status === 'running' ? ' · ' + ago(r.startedAt) : r.endedAt ? ' · ' + ago(r.endedAt) : ''}${stat}${cost}</span></span></div>
+      return `<div class="run ${r.status} ${r.kind === 'fix' ? 'fix' : ''}" data-id="${esc(r.id)}" data-ses="${esc(r.sessionId || '')}">
+        <div class="row between"><span>${ic} <b>${esc(r.project)}</b> <span class="muted small"><span>${lab}</span>${['running', 'reviewing', 'testing'].includes(r.status) ? ' · ' + ago(r.startedAt) : r.endedAt ? ' · ' + ago(r.endedAt) : ''}${stat}${cost}</span></span></div>
         <div class="small run-text">${r.issueKey ? `<span class="pill">${esc(r.issueKey)}</span> ` : ''}${esc(r.text.length > 120 ? r.text.slice(0, 119) + '…' : r.text)}</div>
         ${r.error ? `<div class="small err">${esc(r.error)}</div>` : ''}
+        ${progress}
         ${tests}
+        ${review}
+        ${ciLine(r)}
         ${r.result && r.status !== 'running' ? `<details class="small"><summary class="muted">Respuesta de Claude</summary><div class="run-result">${esc(r.result)}</div></details>` : ''}
         ${btns || resume ? `<div class="row gap wrap">${btns}${resume}</div>` : ''}
       </div>`;
@@ -108,7 +124,8 @@
     if (b.classList.contains('run-accept')) { b.disabled = true; const r = await pm.runAccept(id); if (!r.ok) { b.disabled = false; toast('😿 ' + r.error); } }
     if (b.classList.contains('run-pr')) { b.disabled = true; b.textContent = '⏳ Subiendo…'; const r = await pm.runPr(id); if (!r.ok) { b.disabled = false; b.textContent = '🚀 Crear PR'; toast('😿 ' + r.error); } }
     if (b.classList.contains('run-openpr')) pm.command('open.url', b.dataset.url);
-    if (b.classList.contains('run-discard') && confirm('¿Descartar lo que hizo Claude? Se borra la copia y su rama.')) pm.runDiscard(id);
+    if (b.classList.contains('run-fix')) { b.disabled = true; const r = await pm.runFix(id, b.dataset.kind); if (!r.ok) { b.disabled = false; toast('😿 ' + r.error); } }
+    if (b.classList.contains('run-discard') && confirm(run.classList.contains('fix') ? '¿Descartar este arreglo? Se borra la copia (el PR no se toca).' : '¿Descartar lo que hizo Claude? Se borra la copia y su rama.')) pm.runDiscard(id);
     if (b.classList.contains('run-resume')) { pm.copy(`claude --resume ${run.dataset.ses}`); toast('📋 Copiado. Pégalo en una terminal abierta en la copia del repo (👀 Ver).'); }
   });
 

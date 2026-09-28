@@ -39,6 +39,12 @@ jobs:
           git config --global user.name "PM Pollito CI"
           git config --global user.email "ci@pm-pollito.invalid"
       - run: npm run test:all
+      - name: Destino del informe de errores (opcional, secreto ERROR_WEBHOOK)
+        shell: bash
+        env:
+          ERROR_WEBHOOK: ${{ secrets.ERROR_WEBHOOK }}
+        run: |
+          if [ -n "$ERROR_WEBHOOK" ]; then node -e "require('fs').writeFileSync('reporting.config.json', JSON.stringify({ errorWebhook: process.env.ERROR_WEBHOOK }))"; fi
       - name: Compilar y publicar
         run: npx electron-builder --win --publish always
         env:
@@ -51,3 +57,26 @@ jobs:
         with:
           name: PM-Pollito-${{ github.ref_name }}
           path: public/
+
+  # Versión para Mac: se adjunta al mismo release para descargarla a mano. Sin firma de Apple,
+  # macOS pide abrirla con clic derecho → Abrir, y no se actualiza sola (por eso no se sube latest-mac.yml).
+  mac:
+    needs: release
+    runs-on: macos-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Compilar para Mac (sin firmar)
+        run: npx electron-builder --mac --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Adjuntar al release
+        run: gh release upload "$GITHUB_REF_NAME" dist/*.dmg dist/*.zip --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

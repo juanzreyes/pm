@@ -10,6 +10,9 @@ const recent = []; // últimos errores en memoria (para Ajustes → Diagnóstico
 const startedAt = Date.now();
 let lastKey = '';
 let lastAt = 0;
+const listeners = []; // quién quiere enterarse de cada error nuevo (informe de errores opcional)
+/** Avisa de cada error nuevo (no de los eventos 'info'). */
+function onError(fn) { listeners.push(fn); }
 
 function init(userDataDir) {
   file = path.join(userDataDir, 'pm-errors.log');
@@ -28,6 +31,7 @@ function log(where, err) {
   const entry = { at: Date.now(), where, msg: msg.slice(0, 2000) };
   recent.push(entry);
   if (recent.length > 40) recent.shift();
+  if (where !== 'info') for (const fn of listeners) { try { fn(entry); } catch { /* un oyente roto no rompe el registro */ } }
   if (where === 'main') console.error('[PM]', msg);
   if (!file) return;
   try {
@@ -94,4 +98,4 @@ function report(app, extra = {}) {
   return L.join('\n').split(os.homedir()).join('~');
 }
 
-module.exports = { init, log, watch, metrics, report };
+module.exports = { init, log, watch, metrics, report, onError };

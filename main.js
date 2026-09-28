@@ -1143,6 +1143,8 @@ mods.remote = require('./src/main/remote')(M);
 M.work = mods.work;
 mods.team = require('./src/main/team')(M);
 M.team = mods.team;
+mods.errreport = require('./src/main/errreport')(M);
+M.errreport = mods.errreport;
 mods.boot = require('./src/main/boot')(M);
 M.remote = mods.remote;
 
