@@ -773,7 +773,14 @@ function openProject(dir) {
 
 function runCommand(id, arg) {
   const c = M.COMMANDS.find((x) => x.id === id);
-  if (!c || (c.when && !c.when())) return false;
+  if (!c) {
+    // Una ventana pide algo que este proceso no conoce: pasa si el código se actualizó con PM abierto
+    // (las ventanas cargan lo nuevo al abrirse, pero el proceso principal no hasta reiniciar).
+    diag.log('main', `Comando desconocido: ${id}`);
+    say('🔄 Esa acción es nueva y necesito reiniciarme para usarla.', 'peck', 12000, { log: false, remote: false, actions: [{ label: '🔄 Reiniciar ahora', cmd: 'restart' }] });
+    return false;
+  }
+  if (c.when && !c.when()) return false;
   try {
     const r = c.run(arg);
     if (r && typeof r.catch === 'function') r.catch((e) => diag.log('main', `Comando ${id}: ${e.stack || e.message}`));

@@ -252,9 +252,18 @@ test('1.8: donación en "Acerca de", informe de errores oculto sin destino y aju
   // No se pulsa (abriría PayPal en el navegador): se comprueba que el botón y el comando existen.
   const cmds = await panel.evaluate(() => pm.paletteList());
   assert.ok(cmds.some((c) => c.id === 'donate'), 'comando de donación en la paleta');
+  // Clic real en el botón: se intercepta la apertura del navegador para no abrir PayPal.
+  await app.evaluate(({ shell }) => { global.__opened = []; shell.openExternal = async (u) => { global.__opened.push(u); }; });
   await panel.evaluate(() => pm.openAbout());
   const about = await waitPage('about');
   assert.match(await about.textContent('#donate'), /PayPal/);
+  await about.click('#donate');
+  await sleep(400);
+  assert.deepEqual(await app.evaluate(() => global.__opened), ['https://www.paypal.com/donate/?business=tfcjuanz%40gmail.com&currency_code=USD&item_name=PM%20Pollito']);
+  // Un comando que el proceso no conoce ya no se ignora en silencio.
+  await panel.evaluate(() => pm.command('no-existe-todavia'));
+  await sleep(300);
+  assert.ok((await panel.evaluate(() => pm.diagGet())).errors.some((e) => /Comando desconocido: no-existe-todavia/.test(e.msg)));
   await about.evaluate(() => pm.closeAbout());
   await panel.evaluate(() => pm.openSettings('diag'));
   const st = await waitPage('settings');
@@ -274,7 +283,7 @@ test('ajustes: diagnóstico sin errores de la app', async () => {
   const st = await waitPage('settings');
   await st.waitForFunction(() => document.querySelector('#dg-mem').textContent.includes('MB'), null, { timeout: 8000 });
   const d = await st.evaluate(() => pm.diagGet());
-  const own = d.errors.filter((e) => !/Autofill|DevTools|Electron Security Warning/i.test(e.msg));
+  const own = d.errors.filter((e) => !/Autofill|DevTools|Electron Security Warning|Comando desconocido: no-existe-todavia/i.test(e.msg)); // el último lo provoca un test a propósito
   assert.deepEqual(own.map((e) => e.msg.slice(0, 160)), []);
 });
 
