@@ -197,6 +197,27 @@ module.exports = function install(M) {
         return M.plan.milestonesView().map((m) => ({ title: m.title, project: m.project || null, due: m.due, daysLeft: m.days, status: m.status, hoursSpent: m.spent, hoursEstimated: m.hours || null }));
       case 'pm_weekly_report':
         return M.prod.weeklyReport();
+      case 'pm_tickets': {
+        const tk = M.work.ticketsState();
+        if (tk.status === 'off') return 'El usuario no tiene conectado ningún gestor de tickets (Ajustes → Integraciones → Tickets del equipo).';
+        return { tickets: tk.issues.map((i) => ({ key: i.key, title: i.title, status: i.status, provider: i.provider, project: i.project, url: i.url, inTodayTasks: i.inDay })), errors: tk.errors.map((e) => `${e.label}: ${e.error}`) };
+      }
+      case 'pm_ticket_start':
+      case 'pm_ticket_to_claude': {
+        const want = String(a.key || '').trim().toLowerCase();
+        const issue = M.work.ticketsState().issues.find((i) => i.key.toLowerCase() === want);
+        if (!issue) throw new Error(`No encontré el ticket "${a.key}" entre los asignados. Usa pm_tickets para ver las claves.`);
+        const r = name === 'pm_ticket_start' ? await M.work.startTicket(issue.key2, a.project || '') : await M.work.ticketToClaude(issue.key2, a.project || '');
+        if (!r.ok) throw new Error(r.needRepo ? `${r.error} Indica "project" con el nombre de la carpeta del repositorio.` : r.error);
+        return name === 'pm_ticket_start' ? `Trabajando en ${issue.key}: rama ${r.branch} en ${r.repo}${r.state ? `, ticket → ${r.state}` : ''}.` : `${issue.key} está en la cola de Claude.`;
+      }
+      case 'pm_queue_run': {
+        const r = await M.work.startRun('');
+        if (!r.ok) throw new Error(r.error);
+        return 'Petición lanzada. Consulta pm_runs para ver cómo va.';
+      }
+      case 'pm_runs':
+        return M.work.runsState().claudeRuns.map((r) => ({ project: r.project, request: r.text.slice(0, 200), status: r.status, files: r.stat ? r.stat.n : 0, tests: r.tests ? (r.tests.ok ? 'pasan' : 'fallan') : null, costUsd: r.cost || 0, pr: r.pr || null, ticket: r.issueKey || null }));
       case 'pm_project_memory': {
         const repo = repoByName(a.project);
         if (!repo) throw new Error(`No encontré el repositorio "${a.project}" en tus carpetas de git.`);

@@ -231,7 +231,7 @@ module.exports = function install(M) {
     if (!M.SAFE) M.plan.start();
     M.pl = M.petlifeMod.create(common);
     if (!M.SAFE) M.pl.start();
-    if (!M.SAFE) { M.work.start(); M.remote.start(); }
+    if (!M.SAFE) { M.work.start(); M.remote.start(); setTimeout(() => M.team.applyBundled(), 8000); }
   }
 
   function startTimers() {
@@ -253,7 +253,7 @@ module.exports = function install(M) {
       store.data.lastVersionSeen = v;
       store.save();
       if (seen && seen !== v && store.data.pet.name) {
-        M.say(`🎁 ¡Me actualicé a la ${v}! Tengo cosas nuevas: tus tickets del equipo, la cola de Claude que se ejecuta sola y avisos al celular y al canal del equipo.`, 'celebrate', 15000, {
+        M.say(`🎁 ¡Me actualicé a la ${v}! Tengo cosas nuevas: empiezo tus tickets con su rama, Claude te deja PRs con los tests pasados y la configuración del equipo se comparte en un clic.`, 'celebrate', 15000, {
           cat: 'pet', actions: [{ label: '✨ Ver novedades', cmd: 'whatsnew' }],
         });
       }

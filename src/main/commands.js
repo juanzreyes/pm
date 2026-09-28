@@ -157,6 +157,8 @@ module.exports = function install(M) {
     { id: 'queue.run', icon: '▶️', label: 'Ejecutar la siguiente petición de la cola con Claude', kw: 'cola claude ejecutar lanzar correr automatico worktree', when: () => (M.store.data.claudeQueue || []).some((q) => q.project), run: () => M.work.startRun('').then((r) => { if (!r.ok) M.say('😿 ' + r.error, 'sad', 8000, { log: false }); }) },
     { id: 'run.open', hidden: true, run: (id) => M.work.openRun(id) },
     { id: 'run.accept', hidden: true, run: (id) => M.work.acceptRun(id) },
+    { id: 'run.pr', hidden: true, run: (id) => M.work.prRun(id) },
+    { id: 'run.start', hidden: true, run: (id) => M.work.startRun(id).then((r) => { if (!r.ok) M.say('😿 ' + r.error, 'sad', 8000, { log: false }); }) },
     { id: 'run.discard', hidden: true, run: (id) => M.work.discardRun(id) },
     // Tickets del equipo
     { id: 'tickets.refresh', icon: '🎫', label: 'Ver mis tickets (Jira, GitHub, Linear, Azure DevOps)', kw: 'tickets jira issues linear azure devops asignados', run: () => { M.openPanel('day#tickets'); M.work.refreshTickets(true); } },
@@ -167,6 +169,8 @@ module.exports = function install(M) {
     { id: 'daily.post', icon: '📣', label: 'Publicar mi daily en el canal del equipo', kw: 'daily publicar slack teams discord canal equipo', when: () => !!M.store.data.settings.teamWebhook, run: () => M.remote.postDaily(true) },
     { id: 'weekly.post', icon: '📣', label: 'Publicar el informe semanal en el canal', kw: 'informe semanal publicar slack teams canal equipo', when: () => !!M.store.data.settings.teamWebhook, run: () => M.remote.postWeekly(true) },
     { id: 'settings.remote', hidden: true, run: () => M.openSettings('remote') },
+    { id: 'team.import', icon: '👥', label: 'Importar la configuración del equipo (pm-equipo.json)', kw: 'equipo importar configuracion compartir jira webhook', run: () => M.team.importPack() },
+    { id: 'team.export', icon: '📤', label: 'Exportar la configuración para el equipo', kw: 'equipo exportar configuracion compartir', run: () => M.openSettings('integrations') },
     { id: 'update.install', hidden: true, run: () => {
       const u = M.getUpdater();
       if (!u) return;

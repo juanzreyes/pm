@@ -13,6 +13,11 @@
     $('#run-status').textContent = cr.busy ? '🤖 trabajando…' : cr.bin ? (cr.auto ? '▶️ automática' : 'lista') : 'sin Claude Code';
     $('#run-bin').textContent = cr.bin ? cr.bin : 'No lo encontré en este PC. Instálalo (npm i -g @anthropic-ai/claude-code) o elige dónde está.';
     $('#run-auto').checked = !!cr.auto;
+    $('#run-tests').checked = cr.tests !== false;
+    if (document.activeElement !== $('#run-budget')) $('#run-budget').value = cr.budget || 0;
+    // ---------- configuración del equipo ----------
+    const tp = (st.team && st.team.pack) || null;
+    $('#tp-status').textContent = tp ? `✅ ${tp.name || 'importada'}` : 'solo tuya';
     segOn($('#run-perm'), cr.permission || 'acceptEdits');
 
     // ---------- tickets ----------
@@ -68,7 +73,7 @@
     $('#oa-status').textContent = ready.microsoft || ready.google ? `✅ ${[ready.microsoft && 'Microsoft', ready.google && 'Google'].filter(Boolean).join(' + ')}` : 'sin configurar';
     $('#oa-ms-st').textContent = oa.microsoft.clientId ? `✅ ${oa.microsoft.clientId.slice(0, 8)}…${oa.microsoft.tenant ? ' · ' + oa.microsoft.tenant : ''}` : '';
     $('#oa-gg-st').textContent = oa.google.clientId ? `✅ ${oa.google.clientId.slice(0, 12)}…${oa.google.hasSecret ? '' : ' (falta el secreto)'}` : '';
-    if (isEn()) I18N.translateDom($('#sec-remote'), 'en');
+    if (st.lang && st.lang !== 'es') I18N.translateDom(document.body, st.lang);
   }
 
   // ---------- Microsoft 365 / Google ----------
@@ -89,6 +94,24 @@
   // ---------- cola automática ----------
   $('#run-bin-pick').addEventListener('click', async () => { st = await pm.chooseClaudeBin(); render(); });
   $('#run-auto').addEventListener('change', (e) => pm.updateSettings({ claudeAutoRun: e.target.checked }));
+  $('#run-tests').addEventListener('change', (e) => pm.updateSettings({ claudeRunTests: e.target.checked }));
+  $('#run-budget').addEventListener('change', (e) => pm.updateSettings({ claudeRunBudget: Number(e.target.value) || 0 }));
+
+  // ---------- configuración del equipo ----------
+  $('#tp-export').addEventListener('click', async () => {
+    const withHook = $('#tp-webhook').checked;
+    if (withHook && !confirm('El webhook permite publicar en el canal: compártelo solo con tu equipo. ¿Incluirlo?')) return;
+    const r = await pm.teamExport({ name: $('#tp-name').value.trim(), includeWebhook: withHook });
+    if (r.canceled) return;
+    msg($('#tp-msg'), r.ok, r.ok ? `Guardado en ${r.file}. Pásaselo a tu equipo: en PM → Ajustes → Integraciones → Importar.` : r.error);
+  });
+  $('#tp-import').addEventListener('click', async () => {
+    const r = await pm.teamImport();
+    if (r.canceled) return;
+    if (!r.ok) return msg($('#tp-msg'), false, r.error);
+    $('#tp-msg').className = 'small okmsg';
+    $('#tp-msg').innerHTML = `¡Listo${r.name ? `: ${esc(r.name)}` : ''}!${r.todo.length ? ' Te falta tu parte:<ul>' + r.todo.map((t) => `<li>${esc(t)}</li>`).join('') + '</ul>' : ''}`;
+  });
   $('#run-perm').addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (!b) return;

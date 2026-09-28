@@ -35,6 +35,13 @@ test.before(async () => {
   g('init', '-q', '-b', 'main'); g('config', 'user.name', 'Test'); g('config', 'user.email', 'test@example.com');
   fs.writeFileSync(path.join(repo, 'README.md'), '# demo\n');
   g('add', '-A'); g('commit', '-q', '-m', 'inicio');
+  // Un segundo repo cuyos tests fallan (para ver el aviso de tests).
+  const api = path.join(reposDir, 'api');
+  fs.mkdirSync(api);
+  const ga = (...a) => execFileSync('git', a, { cwd: api, stdio: 'pipe' });
+  ga('init', '-q', '-b', 'main'); ga('config', 'user.name', 'Test'); ga('config', 'user.email', 'test@example.com');
+  fs.writeFileSync(path.join(api, 'package.json'), JSON.stringify({ scripts: { test: 'node -e "console.log(\'1 failing: suma\'); process.exit(1)"' } }));
+  ga('add', '-A'); ga('commit', '-q', '-m', 'inicio');
   const fakeClaude = path.join(reposDir, 'claude.js');
   fs.writeFileSync(fakeClaude, `let p = ''; process.stdin.on('data', (d) => (p += d)); process.stdin.on('end', () => {
     require('fs').writeFileSync('HECHO.md', p);
@@ -157,6 +164,23 @@ test('cola de Claude: ▶️ la ejecuta en una copia aparte y se acepta en una r
   assert.match(execFileSync('git', ['show', '--stat', '--format=%s', b], { cwd: repo }).toString(), /claude: crea HECHO\.md[\s\S]*HECHO\.md/);
 });
 
+test('cola de Claude: corre los tests del repo antes de avisar y muestra si fallan', async () => {
+  const panel = await waitPage('panel');
+  await panel.evaluate(() => pm.queueAdd('arregla la suma', 'api'));
+  await panel.waitForSelector('#claude-queue .q-run', { timeout: 5000 });
+  await panel.click('#claude-queue .q-run');
+  await panel.waitForFunction(() => [...document.querySelectorAll('#claude-runs .run.review')].some((r) => /npm test falla/.test(r.textContent)), null, { timeout: 60000 });
+  const r = await panel.evaluate(() => {
+    const run = [...document.querySelectorAll('#claude-runs .run.review')].find((x) => /npm test falla/.test(x.textContent));
+    return { tail: run.querySelector('pre').textContent, pr: !!run.querySelector('.run-pr'), accept: !!run.querySelector('.run-accept') };
+  });
+  assert.match(r.tail, /1 failing: suma/);
+  assert.deepEqual({ pr: r.pr, accept: r.accept }, { pr: false, accept: true }, 'sin token de GitHub ni origin no ofrece PR');
+  await panel.evaluate(() => { window.confirm = () => true; });
+  await panel.click('#claude-runs .run.review .run-discard');
+  await panel.waitForFunction(() => !document.querySelector('#claude-runs .run.review'), null, { timeout: 10000 });
+});
+
 test('ajustes: tickets, cola automática y avisos fuera del PC se pintan', async () => {
   const panel = await waitPage('panel');
   // Sin gestores conectados, la caja de tickets no estorba.
@@ -172,6 +196,14 @@ test('ajustes: tickets, cola automática y avisos fuera del PC se pintan', async
     return { bad: bad.ok, secretOut: 'teamWebhook' in s.settings || 'telegramToken' in s.settings, trackers: document.querySelectorAll('details.tk[data-p]').length, runBin: document.querySelector('#run-bin').textContent };
   });
   assert.deepEqual({ ...r, runBin: !!r.runBin }, { bad: false, secretOut: false, trackers: 4, runBin: true });
+  // 1.7: tests y tope de la cola, y la caja del equipo.
+  const cola = await st.evaluate(async () => {
+    await pm.updateSettings({ claudeRunBudget: 999, claudeRunTests: false });
+    const s = await pm.getState();
+    return { budget: s.claudeRunner.budget, tests: s.claudeRunner.tests, teamBox: !!document.querySelector('#tp-export') };
+  });
+  assert.deepEqual(cola, { budget: 100, tests: false, teamBox: true }, 'el tope se limita a $100');
+  await st.evaluate(() => pm.updateSettings({ claudeRunBudget: 0, claudeRunTests: true }));
   const jira = await st.evaluate(() => pm.ticketsSave('jira', { site: 'no-es-url', token: 'x' }));
   assert.equal(jira.ok, false);
   assert.match(jira.error, /https/);

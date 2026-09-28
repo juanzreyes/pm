@@ -41,10 +41,17 @@ function weekly(data, extra = {}) {
   const doneList = [];
   const projects = {};
   const distApps = {};
+  const tickets = {}; // clave del ticket → { title, secs, done }
   for (const { date, v } of days) {
     const t = (v.standup && v.standup.today) || [];
     total += t.length;
     for (const x of t) if (x.done) { done++; doneList.push(`${date.toLocaleDateString('es', { weekday: 'short' })}: ${x.text}`); }
+    for (const x of t) {
+      if (!x.issue) continue;
+      const cur = tickets[x.issue.key] || (tickets[x.issue.key] = { title: x.text.replace(/^\[[^\]]+\]\s*/, ''), secs: 0, done: false });
+      cur.secs += (x.spent || 0) + (x.startedAt ? (Date.now() - x.startedAt) / 1000 : 0);
+      cur.done = cur.done || !!x.done;
+    }
     if (v.focus) {
       work += v.focus.work || 0;
       dist += v.focus.distraction || 0;
@@ -68,6 +75,11 @@ function weekly(data, extra = {}) {
   if (top.length) {
     L.push('', '## ⏱️ Tiempo por proyecto');
     top.forEach(([p, s]) => L.push(`- ${p}: ${hours(s)}`));
+  }
+  const tk = Object.entries(tickets).sort((a, b) => b[1].secs - a[1].secs);
+  if (tk.length) {
+    L.push('', '## 🎫 Tiempo por ticket');
+    tk.slice(0, 12).forEach(([k, v]) => L.push(`- ${v.done ? '✅' : '⏳'} ${k} ${v.title}: ${v.secs >= 60 ? hours(v.secs) : 'sin medir'}`));
   }
   if (doneList.length) {
     L.push('', '## ✅ Logros');

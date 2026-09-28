@@ -1,5 +1,17 @@
 # Novedades de PM Pollito
 
+## 1.7.0 — De ticket a PR
+- **🚀 Claude te deja un PR listo**: cuando termina una petición de la cola, un botón hace commit, sube la rama y abre el pull request en GitHub contra la rama en la que estabas, con lo que se pidió, lo que dijo Claude y el resultado de los tests.
+- **🧪 Tests antes de avisarte**: PM corre `npm test`, `pytest`, `cargo test` o `go test` en la copia (usando tus `node_modules` sin reinstalar) y el aviso te dice si pasan o fallan, con la salida.
+- **💵 Tope de gasto por petición** (Ajustes → Integraciones): Claude se detiene al llegar a los dólares que elijas.
+- **▶ Empezar un ticket**: crea la rama con su nombre (`pm-12-informe-de-ventas`), lo pone en tus tareas con el cronómetro en marcha y lo pasa a "En curso" en Jira, Linear o Azure DevOps.
+- **🤖 Ticket a Claude**: manda el ticket a la cola con su título, enlace y descripción; el PR lo menciona. La primera vez eliges el repo de cada proyecto y PM lo recuerda.
+- **👥 Configuración del equipo en un clic**: exporta un `pm-equipo.json` con lo común (URL de Jira/Azure, IDs de Microsoft/Google, canal y horarios, sin tokens personales) y el equipo lo importa; si lo dejas junto al proyecto al compilar, el instalador lo aplica solo.
+- **🎫 Tiempo por ticket** en el informe semanal.
+- **🧩 Claude y la terminal ven tus tickets**: herramientas MCP `pm_tickets`, `pm_ticket_start`, `pm_ticket_to_claude`, `pm_queue_run` y `pm_runs`; comandos `pm tickets`, `pm start PM-12`, `pm claude PM-12`, `pm run` y `pm runs`.
+- **🌐 Lo nuevo de 1.6 y 1.7 en inglés, portugués y francés.**
+- **⚙️ Versiones automáticas**: GitHub Actions corre los tests en cada push y, al subir una etiqueta `vX.Y.Z`, compila y publica el release (sin tokens en tu PC).
+
 ## 1.6.0 — PM de equipo
 - **🎫 Tus tickets del equipo**: conecta Jira, GitHub Issues, Linear o Azure DevOps (Ajustes → Integraciones). Tus tickets asignados aparecen en 📋 Día para añadirlos a tus tareas; te aviso cuando te asignan uno nuevo. Al completar la tarea, el ticket pasa a "Hecho" en su gestor y (Jira y Azure DevOps) se carga el tiempo que mediste con el cronómetro.
 - **▶️ La cola de Claude se ejecuta sola**: pulsa ▶ en una petición de la cola y Claude Code la hace en una copia aparte del repo (tu carpeta y tu rama no se tocan). Al terminar te aviso para **ver los cambios, aceptarlos** (quedan en una rama `pm/claude-…`) **o descartarlos**. Modo automático opcional: cuando termina una, empieza la siguiente.

@@ -451,6 +451,8 @@
     }
     if (lang !== 'en') return text;
     if (EXACT[trimmed] !== undefined) return s.replace(trimmed, EXACT[trimmed]);
+    const en = EXTRA && EXTRA.en && EXTRA.en[trimmed]; // frases de 1.6+ (tabla en i18n-extra.js)
+    if (en !== undefined) return s.replace(trimmed, en);
     let out = s;
     for (const [re, rep] of RULES) out = out.replace(re, rep);
     return out;

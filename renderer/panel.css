@@ -572,3 +572,7 @@ html.dark .bl-kb select { background: #1c1916; }
 .run-text { word-break: break-word; }
 .run-result { white-space: pre-wrap; max-height: 160px; overflow: auto; margin-top: 4px; }
 .row.wrap { flex-wrap: wrap; }
+/* 1.7: ticket → trabajo */
+.tk-acts { display: flex; gap: 3px; align-items: center; flex: none; }
+.tk-pick { flex-wrap: wrap; padding: 6px 0 8px 22px; }
+.tk-pick select { max-width: 140px; }

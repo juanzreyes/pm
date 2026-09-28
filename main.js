@@ -1141,6 +1141,8 @@ Object.defineProperty(M, 'audioState', { get: () => mods.audio.audioState });
 mods.work = require('./src/main/work')(M);
 mods.remote = require('./src/main/remote')(M);
 M.work = mods.work;
+mods.team = require('./src/main/team')(M);
+M.team = mods.team;
 mods.boot = require('./src/main/boot')(M);
 M.remote = mods.remote;
 

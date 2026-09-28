@@ -1,0 +1,31 @@
+# Tests en cada push a main/development y en cada pull request:
+# chequeo de tipos, lógica y la interfaz real (Electron + Playwright) en Windows.
+name: Tests
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Identidad de git (los tests crean repos de prueba)
+        run: |
+          git config --global user.name "PM Pollito CI"
+          git config --global user.email "ci@pm-pollito.invalid"
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:ui

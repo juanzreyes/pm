@@ -306,6 +306,7 @@ module.exports = function install(M) {
       tickets: M.work.ticketsState(),
       ...M.work.runsState(),
       remote: M.remote.remoteState(),
+      team: M.team.teamState(),
       audioListen: M.audioState || null,
       integrations: M.integrationsState(),
       profiles: { ...M.profiles.list(), activeId: M.profiles.active().id },

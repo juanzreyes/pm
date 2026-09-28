@@ -198,6 +198,11 @@ contextBridge.exposeInMainWorld('pm', {
   // Cola de Claude que se ejecuta sola
   runStart: (queueId) => ipcRenderer.invoke('runs:start', queueId),
   runAccept: (id) => ipcRenderer.invoke('runs:accept', id),
+  runPr: (id) => ipcRenderer.invoke('runs:pr', id),
+  ticketStart: (key, repo) => ipcRenderer.invoke('tickets:start', { key, repo }),
+  ticketClaude: (key, repo) => ipcRenderer.invoke('tickets:claude', { key, repo }),
+  teamExport: (opts) => ipcRenderer.invoke('team:export', opts),
+  teamImport: () => ipcRenderer.invoke('team:import'),
   runDiscard: (id) => ipcRenderer.invoke('runs:discard', id),
   runOpen: (id) => ipcRenderer.invoke('runs:open', id),
   runStop: (id) => ipcRenderer.invoke('runs:stop', id),

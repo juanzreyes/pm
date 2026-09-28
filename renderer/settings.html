@@ -123,6 +123,13 @@
         <!-- INTEGRACIONES -->
         <div class="sec" id="sec-integrations" data-title="Integraciones">
           <h2>Integraciones</h2>
+          <div class="opt box small" id="team-box">
+            <div class="row between"><b>👥 Configuración del equipo</b><span id="tp-status" class="pill"></span></div>
+            <p class="muted">Comparte en un archivo (<code>pm-equipo.json</code>) lo común del equipo: URL de Jira / Azure DevOps, IDs de Microsoft y Google, canal del equipo y horarios. <b>Nunca lleva tokens personales</b>: cada persona pega el suyo. Si lo dejas junto al proyecto al compilar, el instalador lo aplica solo.</p>
+            <div class="row gap wrap"><input id="tp-name" placeholder="Nombre del equipo (opcional)" style="flex:1;min-width:140px" /><label class="small"><input type="checkbox" id="tp-webhook" /> incluir el webhook del canal</label></div>
+            <div class="row gap"><button id="tp-export" class="soft" data-icon="upload">Exportar para el equipo</button><button id="tp-import" class="ghost" data-icon="download">Importar…</button></div>
+            <div id="tp-msg" class="small"></div>
+          </div>
           <div class="opt box small">
             <div class="row between"><b>🤖 Claude Code</b><span id="cc-status" class="pill"></span></div>
             <p class="muted">Te aviso cuando Claude termine una tarea o necesite tu permiso, y muestro una burbuja mientras trabaja. Añade unos hooks a tu <code>~/.claude/settings.json</code> (con copia de seguridad).</p>
@@ -145,6 +152,8 @@
             <p class="muted">Pulsa ▶️ en una petición de la cola (📋 Día) y Claude Code la hace en una <b>copia aparte del repo</b> (git worktree): tu carpeta y tu rama no se tocan. Al terminar te aviso para ver los cambios, aceptarlos (quedan en una rama <code>pm/claude-…</code>) o descartarlos.</p>
             <div class="opt row between"><div><b>Claude Code</b><p class="muted small" id="run-bin"></p></div><button id="run-bin-pick" class="ghost mini">Elegir…</button></div>
             <div class="opt row between"><div><b>Ejecutar la cola automáticamente</b><p class="muted small">Cuando Claude termina una, empieza la siguiente (solo peticiones con proyecto; máximo 3 esperando tu revisión).</p></div><input type="checkbox" class="switch" id="run-auto" /></div>
+            <div class="opt row between"><div><b>Correr los tests antes de avisarme</b><p class="muted small">npm test, pytest, cargo test o go test en la copia (usa tus node_modules sin reinstalar). El aviso te dice si pasan.</p></div><input type="checkbox" class="switch" id="run-tests" /></div>
+            <div class="opt row between"><div><b>Tope de gasto por petición</b><p class="muted small">Claude se detiene al llegar (<code>--max-budget-usd</code>). 0 = sin tope.</p></div><div class="row gap"><span>$</span><input type="number" id="run-budget" min="0" max="100" step="0.5" style="width:80px" /></div></div>
             <div class="opt row between"><div><b>Permisos de Claude</b><p class="muted small">"Editar archivos" no deja ejecutar comandos. "Todo" también ejecuta comandos (tests, instalar…) dentro de la copia aparte.</p></div>
               <div class="seg" id="run-perm"><button data-v="acceptEdits">Editar archivos</button><button data-v="bypassPermissions">Todo</button></div></div>
           </div>

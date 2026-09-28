@@ -1,6 +1,6 @@
 {
   "name": "pm-pollito",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "PM, tu pollito project manager: widget flotante que vigila tus límites de Claude y te acompaña en tu día.",
   "main": "main.js",
   "scripts": {
@@ -46,6 +46,7 @@
       "renderer/**/*",
       "oauth.config.example.json",
       "oauth.config.json",
+      "pm-equipo.json",
       "package.json",
       "build/icon.png",
       "mcp/**/*",

@@ -116,6 +116,70 @@ module.exports = function install(M) {
     })();
   }
 
+  // ---------- ticket → trabajo ----------
+  /** El ticket, esté en la lista de asignados o solo en una tarea de hoy. */
+  function issueByKey(key) {
+    return findIssue(key) || todayTasks().map((t) => t.issue).find((x) => x && issueKey(x) === key) || null;
+  }
+  /**
+   * Repo donde se trabaja un ticket: el de GitHub es obvio; para Jira/Linear/Azure se recuerda por
+   * proyecto la primera vez que lo eliges.
+   */
+  function ticketRepo(issue, repoName) {
+    const map = set().ticketRepos || (set().ticketRepos = {});
+    const mapKey = `${issue.provider}:${issue.project || ''}`;
+    let name = repoName || map[mapKey] || (issue.provider === 'github' && issue.ref ? String(issue.ref.repo).split('/').pop() : '');
+    const repo = name ? M.repoByName(name) : null;
+    if (!repo) return null;
+    name = M.path.basename(repo);
+    if (repoName && map[mapKey] !== name) { map[mapKey] = name; M.store.save(); }
+    return { repo, name };
+  }
+
+  /** Empezar un ticket: rama con su nombre, a tus tareas con el cronómetro en marcha y "en curso" en su gestor. */
+  async function startTicket(key, repoName) {
+    const issue = issueByKey(key);
+    if (!issue) return { ok: false, error: 'No encontré ese ticket' };
+    const r = ticketRepo(issue, repoName);
+    if (!r) return { ok: false, needRepo: true, error: `¿En qué repo trabajas ${issue.key}?` };
+    const branch = trackers.branchName(issue);
+    try {
+      const cur = await runner.git(r.repo, ['rev-parse', '--abbrev-ref', 'HEAD']);
+      if (cur !== branch) {
+        const exists = await runner.git(r.repo, ['rev-parse', '--verify', '--quiet', `refs/heads/${branch}`]).then(() => true, () => false);
+        await runner.git(r.repo, exists ? ['checkout', branch] : ['checkout', '-b', branch]);
+      }
+    } catch (e) {
+      return { ok: false, error: `No pude cambiar a la rama ${branch}: ${e.message}` };
+    }
+    addTicket(issue);
+    const i = todayTasks().findIndex((t) => trackers.sameIssue(t.issue, issue));
+    if (i >= 0 && !todayTasks()[i].startedAt) M.taskTimer(i, 'start');
+    let state = null;
+    try { state = await trackers.startProgress(issue, trackerCfg()); } catch (e) { M.diag.log('main', `Ticket ${issue.key} en curso: ${e.message}`); }
+    M.say(`🎫 ¡A por ${issue.key}! Rama ${branch} en ${r.name}, cronómetro en marcha${state ? ` y el ticket pasó a "${state}"` : ''}.`, 'hop', 9000, { cat: 'tickets', log: true });
+    M.broadcast();
+    return { ok: true, branch, state, repo: r.name };
+  }
+
+  /** Mandar un ticket a Claude: petición en la cola con título, enlace y descripción. */
+  async function ticketToClaude(key, repoName) {
+    const issue = issueByKey(key);
+    if (!issue) return { ok: false, error: 'No encontré ese ticket' };
+    const r = ticketRepo(issue, repoName);
+    if (!r) return { ok: false, needRepo: true, error: `¿En qué repo va ${issue.key}?` };
+    let desc = '';
+    try { desc = await trackers.details(issue, trackerCfg()); } catch (e) { M.diag.log('main', `Descripción de ${issue.key}: ${e.message}`); }
+    const text = [`Ticket ${issue.key}: ${issue.title}`, issue.url || '', '', desc || '(El ticket no tiene descripción.)', '',
+      'Resuélvelo en este repositorio. Si algo no está claro, haz lo más razonable y explícalo al final.'].join('\n');
+    M.plan.queueAdd(text, r.name, { issue: trackers.link(issue) });
+    const q = (S().claudeQueue || []).slice(-1)[0];
+    M.say(`🤖 ${issue.key} está en la cola de Claude (${r.name}).`, 'peck', 9000, {
+      cat: 'claude', log: false, actions: q ? [{ label: '▶ Que lo haga ya', cmd: 'run.start', arg: q.id }] : [], target: { cmd: 'panel', arg: 'day#claude-queue' },
+    });
+    return { ok: true, queueId: q && q.id };
+  }
+
   /** Guarda la conexión de un gestor y la prueba. */
   async function saveTracker(provider, patch = {}) {
     if (!trackers.PROVIDERS[provider]) return { ok: false, error: 'Gestor desconocido' };
@@ -160,7 +224,7 @@ module.exports = function install(M) {
   const runs = () => (S().claudeRuns = S().claudeRuns || []);
   const live = {}; // id → { kill }
   const runById = (id) => runs().find((r) => r.id === id);
-  const busy = () => runs().some((r) => r.status === 'running' || r.status === 'starting');
+  const busy = () => runs().some((r) => ['starting', 'running', 'testing'].includes(r.status));
   const claudeBin = () => runner.findClaude(set().claudeBin);
   const shortText = (s, n = 60) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
 
@@ -185,7 +249,8 @@ module.exports = function install(M) {
     const repo = q.project ? M.repoByName(q.project) : null;
     if (!repo) return { ok: false, error: q.project ? `No encontré el repo "${q.project}" en tus carpetas de git` : 'Elige el proyecto de la petición para poder ejecutarla' };
     const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-    const run = { id, queueId: q.id, text: q.text, project: q.project, repo, status: 'starting', startedAt: Date.now() };
+    /** @type {Record<string, any>} */
+    const run = { id, queueId: q.id, text: q.text, project: q.project, repo, status: 'starting', startedAt: Date.now(), ...(q.issue ? { issue: q.issue } : {}) };
     runs().push(run);
     M.plan.queueRemove(q.id);
     saveRuns();
@@ -202,7 +267,8 @@ module.exports = function install(M) {
     M.sendPet('pet:claude', { working: true, project: q.project });
     M.say(`🤖 Empiezo con "${shortText(q.text)}" en ${q.project}. Trabajo en una copia aparte: tu carpeta no se toca.`, 'peck', 7000, { log: false });
     const permission = set().claudeRunPermission === 'bypassPermissions' ? 'bypassPermissions' : 'acceptEdits';
-    const job = runner.launch({ bin, cwd: run.dir, prompt: q.text, permission });
+    const budgetUsd = Math.max(0, Math.min(100, Number(set().claudeRunBudget) || 0)); // tope en dólares por petición (0 = sin tope)
+    const job = runner.launch({ bin, cwd: run.dir, prompt: q.text, permission, budgetUsd });
     live[id] = job;
     job.promise.then((r) => finishRun(run, r));
     return { ok: true, id };
@@ -215,7 +281,14 @@ module.exports = function install(M) {
     let stat = { files: [], ins: 0, del: 0 };
     try { stat = await runner.changes(run.dir); } catch (e) { M.diag.log('main', 'Cambios del worktree: ' + e.message); }
     run.stat = { files: stat.files.slice(0, 50), n: stat.files.length, ins: stat.ins, del: stat.del };
-    const mins = Math.max(1, Math.round((run.endedAt - run.startedAt) / 60e3));
+    // Tests antes de avisarte: así no revisas trabajo roto.
+    if (stat.files.length && set().claudeRunTests !== false) {
+      run.status = 'testing';
+      saveRuns();
+      try { run.tests = await runner.runTests(run.dir); } catch (e) { run.tests = { ok: false, label: 'tests', tail: e.message }; }
+    }
+    const mins = Math.max(1, Math.round((Date.now() - run.startedAt) / 60e3));
+    const testsTxt = run.tests ? (run.tests.ok ? ` · ✅ ${run.tests.label} pasa` : ` · ⚠️ ${run.tests.label} FALLA`) : '';
     if (!r.ok) {
       run.status = 'failed';
       run.error = r.error || 'Falló';
@@ -228,9 +301,9 @@ module.exports = function install(M) {
       M.say(`🤖 Terminé "${shortText(run.text)}" en ${run.project} sin cambiar archivos (${mins} min). Dijo: ${shortText(run.result || '—', 160)}`, 'celebrate', 15000, { cat: 'claude', target: { cmd: 'panel', arg: 'day#claude-runs' } });
     } else {
       run.status = 'review';
-      M.say(`🤖 Terminé "${shortText(run.text)}" en ${run.project}: ${stat.files.length} archivo${stat.files.length === 1 ? '' : 's'} (+${stat.ins} −${stat.del}) en ${mins} min. Revisa y decide.`, 'celebrate', 20000, {
+      M.say(`🤖 Terminé "${shortText(run.text)}" en ${run.project}: ${stat.files.length} archivo${stat.files.length === 1 ? '' : 's'} (+${stat.ins} −${stat.del}) en ${mins} min${testsTxt}. Revisa y decide.`, run.tests && !run.tests.ok ? 'alert' : 'celebrate', 20000, {
         cat: 'claude', urgent: true, target: { cmd: 'panel', arg: 'day#claude-runs' },
-        actions: [{ label: '👀 Ver cambios', cmd: 'run.open', arg: run.id }, { label: '✅ Aceptar', cmd: 'run.accept', arg: run.id }, { label: '🗑️ Descartar', cmd: 'run.discard', arg: run.id }],
+        actions: [{ label: '👀 Ver cambios', cmd: 'run.open', arg: run.id }, ...(prReady(run) ? [{ label: '🚀 Crear PR', cmd: 'run.pr', arg: run.id }] : [{ label: '✅ Aceptar', cmd: 'run.accept', arg: run.id }]), { label: '🗑️ Descartar', cmd: 'run.discard', arg: run.id }],
       });
     }
     saveRuns();
@@ -254,6 +327,57 @@ module.exports = function install(M) {
       return { ok: false, error: e.message };
     }
   }
+  // ---------- pull request ----------
+  /** ¿Se puede abrir un PR? (token de GitHub y el repo tiene su origin en GitHub) */
+  function prReady(run) {
+    return !!set().githubToken && !!run.repo && !!remoteOf(run.repo);
+  }
+  const remotes = {};
+  function remoteOf(repo) {
+    if (!(repo in remotes)) {
+      try { remotes[repo] = runner.githubRepoOf(require('child_process').execFileSync('git', ['remote', 'get-url', 'origin'], { cwd: repo, windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] }).toString()); } catch { remotes[repo] = null; }
+    }
+    return remotes[repo];
+  }
+  /** Aceptar + subir la rama + abrir el PR en GitHub (contra la rama en la que estabas). */
+  async function prRun(id) {
+    const run = runById(id);
+    if (!run || !['review', 'failed', 'accepted'].includes(run.status)) return { ok: false, error: 'Nada que publicar' };
+    const gh = remoteOf(run.repo);
+    if (!gh) return { ok: false, error: 'El repo no tiene su "origin" en GitHub' };
+    if (!set().githubToken) return { ok: false, error: 'Falta tu token de GitHub (Ajustes → Integraciones → GitHub)' };
+    try {
+      if (run.status !== 'accepted') { await runner.accept(run, prTitle(run)); run.status = 'accepted'; saveRuns(); }
+      M.say(`🚀 Subiendo ${run.branch} y abriendo el PR…`, 'peck', 6000, { log: false });
+      await runner.pushBranch(run.repo, run.branch);
+      const url = await runner.openPR({
+        ...gh, token: M.decrypt(set().githubToken), head: run.branch, base: run.base || 'main', title: prTitle(run), body: prBody(run),
+      });
+      run.status = 'pr';
+      run.pr = url;
+      saveRuns();
+      M.say(`🚀 PR abierto en ${run.project}: ${prTitle(run)}`, 'celebrate', 15000, { cat: 'claude', log: true, actions: [{ label: '🔗 Ver PR', cmd: 'open.url', arg: url }], target: { cmd: 'open.url', arg: url } });
+      return { ok: true, url };
+    } catch (e) {
+      saveRuns();
+      M.say(`😿 No pude abrir el PR: ${e.message}`, 'sad', 12000, { cat: 'claude' });
+      return { ok: false, error: e.message };
+    }
+  }
+  function prTitle(run) {
+    const first = run.text.split('\n').find((l) => l.trim()) || 'Cambios de Claude';
+    return (run.issue && !first.includes(run.issue.key) ? `[${run.issue.key}] ` : '') + first.replace(/^#+\s*/, '').slice(0, 90);
+  }
+  function prBody(run) {
+    const L = [];
+    if (run.issue) L.push(`Ticket: ${run.issue.url ? `[${run.issue.key}](${run.issue.url})` : run.issue.key}`, '');
+    L.push('### Qué se pidió', '', '> ' + run.text.slice(0, 1500).split('\n').join('\n> '), '');
+    if (run.result) L.push('### Lo que dice Claude', '', run.result.slice(0, 3000), '');
+    if (run.tests) L.push('### Tests', '', `${run.tests.ok ? '✅' : '⚠️'} \`${run.tests.label}\` ${run.tests.ok ? 'pasa' : 'falla'}`, ...(run.tests.ok ? [] : ['', '```', run.tests.tail.slice(-1500), '```']), '');
+    L.push(`---`, `_Hecho por Claude Code desde la cola de PM Pollito 🐣${run.cost ? ` · $${run.cost.toFixed(2)}` : ''}_`);
+    return L.join('\n');
+  }
+
   async function discardRun(id) {
     const run = runById(id);
     if (!run) return { ok: false };
@@ -273,7 +397,7 @@ module.exports = function install(M) {
     if (live[id]) live[id].kill();
   }
   function clearRuns() {
-    S().claudeRuns = runs().filter((r) => ['running', 'starting', 'review', 'failed'].includes(r.status));
+    S().claudeRuns = runs().filter((r) => ['running', 'starting', 'testing', 'review', 'failed'].includes(r.status));
     saveRuns();
   }
 
@@ -294,6 +418,7 @@ module.exports = function install(M) {
   function recover() {
     let n = 0;
     for (const r of runs()) {
+      if (r.status === 'testing') { r.status = 'review'; n++; continue; } // Claude ya había terminado: solo faltaban los tests
       if (r.status === 'running' || r.status === 'starting') { r.status = 'failed'; r.error = 'PM se cerró mientras Claude trabajaba'; r.endedAt = Date.now(); n++; }
     }
     if (n) M.store.save();
@@ -301,8 +426,8 @@ module.exports = function install(M) {
 
   function runsState() {
     return {
-      claudeRuns: runs().slice(-10).reverse().map((r) => ({ id: r.id, text: r.text, project: r.project, status: r.status, startedAt: r.startedAt, endedAt: r.endedAt, stat: r.stat, cost: r.cost, error: r.error, result: r.result ? r.result.slice(0, 400) : '', sessionId: r.sessionId, branch: r.branch })),
-      claudeRunner: { bin: claudeBin(), auto: !!set().claudeAutoRun, permission: set().claudeRunPermission === 'bypassPermissions' ? 'bypassPermissions' : 'acceptEdits', busy: busy() },
+      claudeRuns: runs().slice(-10).reverse().map((r) => ({ id: r.id, text: r.text, project: r.project, status: r.status, startedAt: r.startedAt, endedAt: r.endedAt, stat: r.stat, cost: r.cost, error: r.error, result: r.result ? r.result.slice(0, 400) : '', sessionId: r.sessionId, branch: r.branch, tests: r.tests ? { ok: r.tests.ok, label: r.tests.label, tail: r.tests.ok ? '' : r.tests.tail } : null, pr: r.pr || '', issueKey: r.issue ? r.issue.key : '', prReady: prReady(r) })),
+      claudeRunner: { bin: claudeBin(), auto: !!set().claudeAutoRun, tests: set().claudeRunTests !== false, budget: Number(set().claudeRunBudget) || 0, permission: set().claudeRunPermission === 'bypassPermissions' ? 'bypassPermissions' : 'acceptEdits', busy: busy() },
     };
   }
 
@@ -316,6 +441,7 @@ module.exports = function install(M) {
 
   return {
     refreshTickets, addTicket, addAllTickets, openTicket, onTaskDone, saveTracker, ticketsState,
-    startRun, acceptRun, discardRun, openRun, stopRun, clearRuns, runsState, start,
+    startRun, acceptRun, prRun, discardRun, openRun, stopRun, clearRuns, runsState, start,
+    startTicket, ticketToClaude, ticketRepo,
   };
 };

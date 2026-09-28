@@ -116,6 +116,16 @@ Widget de escritorio con un pollito tamagotchi que vive encima de todas tus vent
 - **📱 Celular**: ntfy (tema secreto generado al azar; se puede usar un servidor propio) o un bot de Telegram (token de @BotFather + código de 6 cifras para vincular tu chat; solo responde a ese chat). Por defecto solo avisa si llevas 5 min sin tocar el PC o la sesión está bloqueada.
 - Los tokens y la URL del webhook se guardan cifrados (`safeStorage`), nunca salen del proceso principal y no viajan en las copias ni en la sincronización.
 
+### De ticket a PR (1.7)
+- **Ticket → trabajo** (📋 Día → Mis tickets): ▶ crea o cambia a la rama `<clave>-<título>` en el repo del ticket (en tu carpeta de trabajo), lo añade a tus tareas con el cronómetro en marcha y lo pasa a "en curso" (Jira: primera transición de la categoría *In Progress*; Linear: estado *started*; Azure DevOps: Active / In Progress / Doing / Committed; GitHub no tiene estados). 🤖 lo manda a la cola de Claude con título, enlace y descripción. El repo de GitHub Issues es obvio; para Jira/Linear/Azure eliges el repo la primera vez y se recuerda por proyecto (`settings.ticketRepos`).
+- **Cola de Claude**: antes de avisar corre los tests del proyecto en la copia (`npm test` si `package.json` tiene script de test, `pytest`, `cargo test` o `go test`; 10 min máx., con `CI=true`). `node_modules` del repo se enlaza (junction) dentro de la copia para no reinstalar, nunca entra en los commits y se desenlaza antes de borrar la copia. Tope opcional `--max-budget-usd`. **🚀 Crear PR** (si hay token de GitHub y `origin` es de GitHub): commit, `git push -u origin pm/claude-…` con tus credenciales de git y PR contra la rama en la que estabas al lanzarla.
+- **Configuración del equipo** (Ajustes → Integraciones → 👥): `pm-equipo.json` con URL de Jira/Azure, IDs de OAuth, canal (el webhook solo si lo marcas), horarios; nunca tokens. Al importar no se pisan tus tokens ni tus horarios personalizados. Para repartirlo con el instalador, déjalo en la raíz del proyecto antes de `npm run dist`: se aplica solo en el primer arranque.
+- **MCP / terminal**: `pm_tickets`, `pm_ticket_start`, `pm_ticket_to_claude`, `pm_queue_run`, `pm_runs` · `pm tickets`, `pm start <CLAVE> [repo]`, `pm claude <CLAVE> [repo]`, `pm run`, `pm runs`.
+
+### Integración continua (GitHub Actions)
+- `.github/workflows/tests.yml`: en cada push a `main`/`development` y en cada PR corre tipos, lógica e interfaz en Windows.
+- `.github/workflows/release.yml`: al subir una etiqueta igual a la versión (`git tag v1.7.0 && git push origin v1.7.0`) comprueba el CHANGELOG, pasa todos los tests, compila y publica el release con el token de Actions; deja además la carpeta `public/` como artefacto. Si defines los secretos `CSC_LINK` y `CSC_KEY_PASSWORD`, el instalador sale firmado.
+
 ### Calidad
 ```bash
 npm run typecheck   # chequeo de tipos del JavaScript (TypeScript, sin compilar)
@@ -245,9 +255,9 @@ main.js            arranque, estado compartido (contexto M), avisos, ventanas pr
 src/main/          el proceso principal por partes: boot (arranque), ipc, commands, windows, tray, agenda,
                    watcher, wellbeing, usagewatch (consumo), petcare (rutina y vida del pollito),
                    pro (sync, exportar, perfiles, CLI, MCP), work (tickets y cola que se ejecuta sola),
-                   remote (canal del equipo y celular) y safemode
+                   remote (canal del equipo y celular), team (importar/exportar la configuración del equipo) y safemode
 src/trackers.js    Jira, GitHub Issues, Linear y Azure DevOps · src/claudeRunner.js worktree + claude -p
-src/outbound.js    webhooks (Slack/Teams/Discord), ntfy y Telegram
+src/outbound.js    webhooks (Slack/Teams/Discord), ntfy y Telegram · src/teampack.js paquete de equipo (pm-equipo.json)
 renderer/panel-agenda.js, panel-inbox.js, panel-work.js  partes del panel · renderer/settings-work.js ajustes 1.6
 src/mcp.js         servidor MCP (JSON-RPC) · mcp/bridge.js puente stdio para Claude Desktop
 src/claudeIntegrations.js  instala MCP y línea de estado (con copia de seguridad)

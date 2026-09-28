@@ -139,6 +139,60 @@ const azure = {
   },
 };
 
+// ---------------- descripción y "en curso" de cada gestor ----------------
+/** Texto plano de un documento de Jira Cloud (Atlassian Document Format). */
+function adfText(node) {
+  if (!node) return '';
+  if (typeof node === 'string') return node;
+  if (node.type === 'text') return node.text || '';
+  if (node.type === 'hardBreak') return '\n';
+  const inner = (node.content || []).map(adfText).join('');
+  if (node.type === 'listItem') return '- ' + inner.trim() + '\n';
+  return /^(paragraph|heading|codeBlock|blockquote|bulletList|orderedList|rule|table|tableRow)$/.test(node.type) ? inner.replace(/\n*$/, '') + '\n' : inner;
+}
+const htmlText = (h) => String(h || '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|li|h\d)>/gi, '\n').replace(/<li[^>]*>/gi, '- ').replace(/<[^>]+>/g, '')
+  .replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+
+gh.details = async (c, issue, http) => {
+  const i = await call(http, `https://api.github.com/repos/${issue.ref.repo}/issues/${issue.ref.number}`, { headers: gh.headers(c) });
+  return i.body || '';
+};
+jira.details = async (c, issue, http) => {
+  const i = await call(http, `${jira.api(c)}/issue/${issue.ref.key}?fields=description`, { headers: jira.headers(c) });
+  return adfText(i.fields && i.fields.description);
+};
+jira.start = async (c, issue, http) => {
+  const url = `${jira.api(c)}/issue/${issue.ref.key}/transitions`;
+  const r = await call(http, url, { headers: jira.headers(c) });
+  const t = ((r && r.transitions) || []).find((x) => x.to && x.to.statusCategory && x.to.statusCategory.key === 'indeterminate');
+  if (!t) return null; // ya está en curso o el flujo no lo permite desde aquí
+  await call(http, url, { method: 'POST', headers: { ...jira.headers(c), 'Content-Type': 'application/json' }, body: JSON.stringify({ transition: { id: t.id } }) });
+  return t.to.name || t.name;
+};
+linear.details = async (c, issue, http) => {
+  const d = await linear.gql(c, http, 'query($id: String!) { issue(id: $id) { description } }', { id: issue.ref.id });
+  return (d.issue && d.issue.description) || '';
+};
+linear.start = async (c, issue, http) => {
+  const d = await linear.gql(c, http, 'query($id: String!) { issue(id: $id) { state { type } team { states { nodes { id name type position } } } } }', { id: issue.ref.id });
+  if (d.issue.state && d.issue.state.type === 'started') return null;
+  const st = d.issue.team.states.nodes.filter((s) => s.type === 'started').sort((a, b) => a.position - b.position)[0];
+  if (!st) return null;
+  await linear.gql(c, http, 'mutation($id: String!, $s: String!) { issueUpdate(id: $id, input: { stateId: $s }) { success } }', { id: issue.ref.id, s: st.id });
+  return st.name;
+};
+azure.details = async (c, issue, http) => {
+  const i = await call(http, `${trimUrl(c.org)}/_apis/wit/workitems/${issue.ref.id}?fields=System.Description&api-version=7.1`, { headers: azure.headers(c) });
+  return htmlText(i.fields && i.fields['System.Description']).trim();
+};
+azure.start = async (c, issue, http) => {
+  // Agile: Active · Scrum: Committed · Basic: Doing · algunos procesos propios: In Progress.
+  for (const state of ['Active', 'In Progress', 'Doing', 'Committed']) {
+    try { await azure.patch(c, http, issue.ref.id, [{ op: 'add', path: '/fields/System.State', value: state }]); return state; } catch (e) { if (e.status && e.status !== 400) throw e; }
+  }
+  return null;
+};
+
 const IMPL = { github: gh, jira, linear, azure };
 
 /** ¿Tiene lo mínimo para conectarse? */
@@ -174,10 +228,34 @@ async function logWork(issue, seconds, cfg, http = fetch) {
   return impl.logWork(cfg[issue.provider], issue, seconds, http);
 }
 
+/** Descripción del ticket en texto plano (para pasársela a Claude). */
+async function details(issue, cfg, http = fetch) {
+  const impl = IMPL[issue.provider];
+  if (!impl || !impl.details || !ready(issue.provider, cfg[issue.provider])) return '';
+  return String(await impl.details(cfg[issue.provider], issue, http) || '').trim().slice(0, 8000);
+}
+
+/** Pasa el ticket a "en curso". Devuelve el estado nuevo o null si no hacía falta / no se puede (GitHub no tiene estados). */
+async function startProgress(issue, cfg, http = fetch) {
+  const impl = IMPL[issue.provider];
+  if (!impl || !impl.start || !ready(issue.provider, cfg[issue.provider])) return null;
+  return impl.start(cfg[issue.provider], issue, http);
+}
+
+/** Nombre de rama para trabajar un ticket: "pm-12-informe-de-ventas", "issue-7-login-safari". */
+function branchName(issue) {
+  const clean = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const key = issue.provider === 'github' ? `issue-${issue.ref && issue.ref.number}` : clean(issue.key);
+  const words = clean(issue.title).split('-').filter(Boolean);
+  let out = key;
+  for (const w of words) { if ((out + '-' + w).length > 48) break; out += '-' + w; }
+  return out;
+}
+
 /** Texto de la tarea en PM para un ticket. */
 const taskText = (i) => `[${i.key}] ${i.title}`.slice(0, 200);
 /** La parte del ticket que se guarda dentro de la tarea (lo justo para cerrarlo luego). */
-const link = (i) => ({ provider: i.provider, id: i.id, key: i.key, url: i.url, ref: i.ref });
+const link = (i) => ({ provider: i.provider, id: i.id, key: i.key, title: i.title, project: i.project, url: i.url, ref: i.ref });
 const sameIssue = (a, b) => !!(a && b && a.provider === b.provider && a.id === b.id);
 
-module.exports = { PROVIDERS, ready, fetchAll, complete, logWork, taskText, link, sameIssue };
+module.exports = { PROVIDERS, ready, fetchAll, complete, logWork, details, startProgress, branchName, taskText, link, sameIssue, adfText };

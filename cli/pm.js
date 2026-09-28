@@ -16,6 +16,11 @@ const HELP = `🐣 PM Pollito desde la terminal
   pm remind <texto>      recordatorio ("en 20 min revisar el deploy")
   pm note <texto>        añadir a las notas de hoy
   pm queue <texto>       a la cola para Claude
+  pm run                 que Claude haga ya la siguiente de la cola (copia aparte del repo)
+  pm runs                qué hizo Claude: revisar, tests, PR
+  pm tickets             tus tickets asignados (Jira, GitHub, Linear, Azure DevOps)
+  pm start <CLAVE> [repo]  empezar un ticket: rama, cronómetro y "en curso"
+  pm claude <CLAVE> [repo] mandar un ticket a la cola de Claude
   pm focus [minutos]     modo foco (50 min por defecto)
   pm pomo                empezar / parar pomodoro
   pm week                informe de la semana
@@ -96,6 +101,29 @@ async function tool(name, args = {}) {
     case 'remind': case 'r': console.log(await tool('pm_add_reminder', { text: arg })); break;
     case 'note': case 'n': console.log('🗒️ ' + await tool('pm_add_note', { text: arg })); break;
     case 'queue': case 'q': console.log('🤖 ' + await tool('pm_queue_add', { text: arg })); break;
+    case 'tickets': case 'tk': {
+      const r = await tool('pm_tickets');
+      if (!r.startsWith('{')) { console.log('🎫 ' + r); break; }
+      const j = JSON.parse(r);
+      if (!j.tickets.length) console.log('🎫 No tienes tickets abiertos asignados. 🎉');
+      for (const t of j.tickets) console.log(`${t.inTodayTasks ? '📌' : '  '} ${t.key.padEnd(10)} ${t.title}${t.status ? '  · ' + t.status : ''}`);
+      for (const e of j.errors) console.log('⚠️  ' + e);
+      break;
+    }
+    case 'start': case 'claude': {
+      const [key, project] = rest;
+      if (!key) return console.log(`Uso: pm ${cmd} <CLAVE> [repo]`);
+      console.log('🎫 ' + await tool(cmd === 'start' ? 'pm_ticket_start' : 'pm_ticket_to_claude', { key, project: project || '' }));
+      break;
+    }
+    case 'run': console.log('▶️ ' + await tool('pm_queue_run')); break;
+    case 'runs': {
+      const list = JSON.parse(await tool('pm_runs'));
+      if (!list.length) console.log('🤖 Claude aún no ha ejecutado nada de la cola.');
+      const ST = { starting: '⏳', running: '🤖', testing: '🧪', review: '👀', failed: '😿', empty: '💬', accepted: '✅', discarded: '🗑️', pr: '🚀' };
+      for (const r of list) console.log(`${ST[r.status] || '•'} ${r.project} · ${r.status}${r.files ? ` · ${r.files} archivos` : ''}${r.tests ? ` · tests ${r.tests}` : ''}${r.pr ? ` · ${r.pr}` : ''}\n   ${r.request.split('\n')[0].slice(0, 90)}`);
+      break;
+    }
     case 'focus': case 'f': console.log('🎯 ' + await tool('pm_start_focus', { minutes: Number(arg) || 50 })); break;
     case 'week': case 'w': console.log(await tool('pm_weekly_report')); break;
     case 'pomo': case 'p': case 'open': case 'o': {

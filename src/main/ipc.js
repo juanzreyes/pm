@@ -269,7 +269,8 @@ module.exports = function install(M) {
     });
 
     M.ipcMain.handle('settings:update', (_e, patch) => {
-      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission'];
+      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget'];
+      if ('claudeRunBudget' in patch) patch.claudeRunBudget = Math.max(0, Math.min(100, Number(patch.claudeRunBudget) || 0));
       if ('claudeRunPermission' in patch && !['acceptEdits', 'bypassPermissions'].includes(patch.claudeRunPermission)) delete patch.claudeRunPermission;
       if ('personality' in patch && !['motivador', 'sarcastico', 'zen', 'sargento'].includes(patch.personality)) delete patch.personality;
       if ('claudeBudget' in patch) patch.claudeBudget = Math.max(0, Math.min(100000, Number(patch.claudeBudget) || 0));
@@ -652,6 +653,12 @@ module.exports = function install(M) {
     M.ipcMain.handle('tickets:refresh', () => M.work.refreshTickets(true));
     M.ipcMain.handle('tickets:add', (_e, key) => (key === '*' ? M.work.addAllTickets() : M.work.addTicket(String(key))));
     M.ipcMain.handle('tickets:open', (_e, key) => { M.work.openTicket(String(key)); return true; });
+    M.ipcMain.handle('runs:pr', (_e, id) => M.work.prRun(String(id)));
+    M.ipcMain.handle('tickets:start', (_e, { key, repo }) => M.work.startTicket(String(key), repo ? String(repo) : ''));
+    M.ipcMain.handle('tickets:claude', (_e, { key, repo }) => M.work.ticketToClaude(String(key), repo ? String(repo) : ''));
+    // Configuración del equipo (pm-equipo.json)
+    M.ipcMain.handle('team:export', (_e, opts) => M.team.exportPack(opts || {}));
+    M.ipcMain.handle('team:import', () => M.team.importPack());
     // Avisos fuera del PC: canal del equipo y celular
     M.ipcMain.handle('remote:save', (_e, patch) => M.remote.save(patch || {}));
     M.ipcMain.handle('remote:test', (_e, which) => M.remote.test(which === 'team' ? 'team' : 'phone'));

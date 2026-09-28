@@ -24,10 +24,11 @@ function create(ctx) {
 
   // ================= COLA DE PETICIONES PARA CLAUDE =================
   const queue = () => (S().claudeQueue = S().claudeQueue || []);
-  function queueAdd(text, project) {
-    text = String(text || '').trim().slice(0, 4000);
+  /** extra: { issue } si la petición viene de un ticket (el PR lo menciona). */
+  function queueAdd(text, project, extra = {}) {
+    text = String(text || '').trim().slice(0, 12000);
     if (!text) return false;
-    queue().push({ id: newId(), text, project: project || '', at: Date.now() });
+    queue().push({ id: newId(), text, project: project || '', at: Date.now(), ...(extra.issue ? { issue: extra.issue } : {}) });
     ctx.store.save();
     ctx.broadcast();
     return true;
