@@ -206,6 +206,7 @@ contextBridge.exposeInMainWorld('pm', {
   teamImport: () => ipcRenderer.invoke('team:import'),
   errorsConsent: (on) => ipcRenderer.invoke('errors:consent', on),
   errorsSend: () => ipcRenderer.invoke('errors:send'),
+  soulAct: (action, arg) => ipcRenderer.invoke('soul:act', { action, arg }),
   runDiscard: (id) => ipcRenderer.invoke('runs:discard', id),
   runOpen: (id) => ipcRenderer.invoke('runs:open', id),
   runStop: (id) => ipcRenderer.invoke('runs:stop', id),

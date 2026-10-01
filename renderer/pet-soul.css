@@ -1,0 +1,78 @@
+/* El alma del pollito (2.0): rasgos, vacaciones y trucos. */
+
+/* ---------- 🧬 rasgos ---------- */
+.trait { display: none; }
+.trait-owl #tr-owl { display: inline; }
+#tr-owl .bag { fill: none; stroke: #7a5c8f; stroke-width: 2.2; stroke-linecap: round; opacity: .75; }
+#tr-nightcap .cap { fill: #5b6bd6; stroke: #2c2a4a; stroke-width: 1.5; }
+#tr-nightcap .cuff { fill: #fffdf6; stroke: #2c2a4a; stroke-width: 1.2; }
+#tr-nightcap .pom { fill: #fffdf6; stroke: #2c2a4a; stroke-width: 1.2; }
+.has-head #tr-nightcap, .season-xmas #tr-nightcap, .season-halloween #tr-nightcap { display: none; }
+
+/* Madrugador: cresta dorada que brilla */
+.trait-early #tuft path { fill: #ffb703; filter: drop-shadow(0 0 3px #ffd166); animation: earlyGlow 3s ease-in-out infinite; }
+@keyframes earlyGlow { 50% { filter: drop-shadow(0 0 6px #ffe08a); } }
+
+/* Hacker: cresta verde terminal y </> sobre la cabeza */
+.trait-hacker #tuft path { fill: #39d353; }
+.trait-hacker #tr-hacker { display: inline; }
+#tr-hacker text { font: 800 8px Consolas, monospace; fill: #2ea043; }
+.has-head #tr-hacker { display: none; }
+
+/* Mente enfocada: aureola */
+.trait-zen #tr-zen { display: inline; fill: none; stroke: #ffd166; stroke-width: 2.4; opacity: .9; animation: zenFloat 4s ease-in-out infinite; }
+@keyframes zenFloat { 50% { transform: translateY(-2px); } }
+.has-head #tr-zen { display: none; }
+
+/* Tomatero: pin de tomate */
+.trait-tomato #tr-tomato { display: inline; }
+#tr-tomato .fruit { fill: #e63946; stroke: #2c2a4a; stroke-width: 1; }
+#tr-tomato .leaf { fill: #2a9d8f; }
+
+/* Rematador: banda de campeón */
+.trait-finisher #tr-finisher { display: inline; }
+#tr-finisher .sash { fill: #e63946; stroke: #2c2a4a; stroke-width: 1.2; opacity: .92; }
+#tr-finisher .check { stroke: #fffdf6; stroke-width: 2; stroke-linecap: round; }
+.has-neck #tr-finisher { display: none; }
+
+/* ---------- 🏖️ vacaciones ---------- */
+#away { display: none; }
+.on-vacation #chick, .on-vacation #buddy, .on-vacation #thinking { display: none !important; }
+.on-vacation #away {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%);
+  background: #fffdf6; border: 2.5px solid #3b2f2f; border-radius: 16px; padding: 8px 12px; box-shadow: 0 3px 0 #3b2f2f;
+  font: 800 12px "Segoe UI", system-ui, sans-serif; color: #3b2f2f; cursor: pointer; white-space: nowrap;
+  animation: awaySway 4s ease-in-out infinite;
+}
+#away-emoji { font-size: 34px; line-height: 1; }
+@keyframes awaySway { 50% { transform: translateX(-50%) rotate(-3deg); } }
+.reduced #away { animation: none; }
+
+/* ---------- 🎪 trucos ---------- */
+.a-trick-spin svg { animation: spin .7s ease-in-out 2; }
+.a-trick-flip svg { animation: trickFlip 1.4s ease-in-out; transform-origin: 50% 60%; }
+@keyframes trickFlip {
+  0% { transform: none; }
+  30% { transform: translateY(-36px) rotate(160deg); }
+  60% { transform: translateY(-20px) rotate(330deg); }
+  80% { transform: translateY(0) rotate(360deg) scaleY(.9); }
+  100% { transform: none; }
+}
+.a-trick-moonwalk svg { animation: moonwalk 2.3s ease-in-out; }
+.a-trick-moonwalk #footL { animation: tapL .3s steps(2) 7; }
+.a-trick-moonwalk #footR { animation: tapR .3s steps(2) 7; }
+@keyframes moonwalk { 0%, 100% { transform: none; } 45% { transform: translateX(-26px); } 55% { transform: translateX(-26px) scaleX(-1); } 95% { transform: translateX(0) scaleX(-1); } }
+@keyframes tapL { 50% { transform: translateX(-3px); } }
+@keyframes tapR { 50% { transform: translateX(3px); } }
+.a-trick-salute #wingR { animation: salute 1.7s ease-in-out; transform-origin: 98px 70px; }
+.a-trick-salute #eyesOpen { display: none; }
+.a-trick-salute #eyesHappy { display: inline; }
+@keyframes salute { 15%, 85% { transform: rotate(-115deg) translate(-6px, -10px); } }
+.a-trick-juggle #wingL { animation: juggleL .32s ease-in-out 8 alternate; transform-origin: 22px 70px; }
+.a-trick-juggle #wingR { animation: juggleR .32s ease-in-out 8 alternate; transform-origin: 98px 70px; }
+@keyframes juggleL { to { transform: rotate(35deg); } }
+@keyframes juggleR { to { transform: rotate(-35deg); } }
+.reduced [class*="a-trick-"] svg, .reduced [class*="a-trick-"] #wingL, .reduced [class*="a-trick-"] #wingR { animation-duration: .01s; }
+/* Con el gorro de búho no cabe el </> de hacker (la cresta verde sí se ve en el gorro… o no: el gorro manda) */
+.trait-owl:not(.has-head) #tr-hacker { display: none; }

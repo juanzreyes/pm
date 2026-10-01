@@ -186,7 +186,7 @@ module.exports = function install(M) {
         completeTask: (i) => {
           const t = M.today().standup && M.today().standup.today[i];
           if (!t) return false;
-          if (!t.done) { t.done = true; if (!t.xp) { t.xp = true; M.addXp(10); } M.work.onTaskDone(t); }
+          if (!t.done) { t.done = true; if (!t.xp) { t.xp = true; M.addXp(10); } M.work.onTaskDone(t); if (M.soul) M.soul.onTaskDone(t, M.today().standup.today.every((x) => x.done)); }
           store.save();
           M.broadcast();
           M.animate('dance');
@@ -232,6 +232,8 @@ module.exports = function install(M) {
     if (!M.SAFE) M.plan.start();
     M.pl = M.petlifeMod.create(common);
     if (!M.SAFE) M.pl.start();
+    M.soul = require('../petsoul').create({ ...common, levelInfo: M.levelInfo, aiTone: () => M.pl.aiTone(), log: (e) => M.diag.log('main', 'Alma del pollito: ' + e.message) });
+    if (!M.SAFE) M.soul.start();
     if (!M.SAFE) { M.work.start(); M.remote.start(); setTimeout(() => M.team.applyBundled(), 8000); }
   }
 

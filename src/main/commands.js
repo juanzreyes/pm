@@ -175,6 +175,9 @@ module.exports = function install(M) {
     { id: 'settings.remote', hidden: true, run: () => M.openSettings('remote') },
     // Donación al autor (PayPal, página oficial de donación: el pago lo hace la persona en PayPal).
     { id: 'errors.consent', hidden: true, run: (v) => { M.errreport.setConsent(v === 'yes'); M.say(v === 'yes' ? '💛 ¡Gracias! Así Juanzreyes puede arreglar lo que falle. Puedes cambiarlo en Ajustes → Diagnóstico.' : 'Vale, no envío nada 👍 (Ajustes → Diagnóstico si cambias de idea).', 'peck', 7000, { log: false }); } },
+    { id: 'soul.callback', hidden: true, run: () => { const r = M.soul.act('callBack'); if (!r.ok) M.say('😿 ' + r.error, 'sad', 6000, { log: false }); } },
+    { id: 'soul.letter', icon: '💌', label: 'Leer la carta del pollito', kw: 'carta semana viernes pollito', run: () => M.openPanel('pet#soul-letters') },
+    { id: 'soul.garden', icon: '🌱', label: 'Ver la huerta del pollito', kw: 'huerta plantas cosechar maiz', run: () => M.openPanel('pet#soul-garden') },
     { id: 'donate', icon: '💛', label: 'Apoyar PM Pollito con una donación (PayPal)', kw: 'donar donacion paypal apoyar cafe autor', run: () => M.shell.openExternal(DONATE_URL) },
     { id: 'team.import', icon: '👥', label: 'Importar la configuración del equipo (pm-equipo.json)', kw: 'equipo importar configuracion compartir jira webhook', run: () => M.team.importPack() },
     { id: 'team.export', icon: '📤', label: 'Exportar la configuración para el equipo', kw: 'equipo exportar configuracion compartir', run: () => M.openSettings('integrations') },

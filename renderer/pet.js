@@ -86,6 +86,8 @@ const DUR = {
   bath: 2300,
   read: 2900, coffee: 3300, typing: 3600, gum: 2700, sing: 3100, scratch: 1900, preen: 2300, fluff: 1300,
   wave: 1800, sneeze: 1500, hiccup: 1900, sit: 3500, spin: 1100, lookaround: 2500, butterfly: 4300,
+  // Trucos aprendidos (2.0)
+  'trick-spin': 1500, 'trick-flip': 1500, 'trick-moonwalk': 2400, 'trick-salute': 1800, 'trick-juggle': 2700,
 };
 let actionTimer = null;
 let currentAction = null;
@@ -149,6 +151,9 @@ function confetti() {
 }
 
 function effects(name) {
+  // Malabares: tres granos de maíz por el aire.
+  if (name === 'trick-juggle') { for (let i = 0; i < 6; i++) setTimeout(() => particle('🌽', 70 + (i % 3) * 18, 40, { size: 16, d: 0.9 }), i * 380); return; }
+  if (name === 'trick-salute') { particle('🫡', 128, 50, { size: 18, d: 1.4 }); return; }
   switch (name) {
     case 'love': hearts(6); break;
     case 'hug': hearts(3); break;
@@ -570,6 +575,16 @@ function updateLook() {
   body.classList.toggle('stage-young', stage === 'young');
   body.classList.toggle('stage-rooster', stage === 'rooster');
   for (const c of [...body.classList]) if (/^(acc-|skin-|has-)/.test(c)) body.classList.remove(c);
+  // Rasgos que salen de cómo trabajas y vacaciones (2.0)
+  for (const c of [...body.classList]) if (c.startsWith('trait-')) body.classList.remove(c);
+  for (const t of ((state.soul && state.soul.traits) || [])) body.classList.add('trait-' + t.id);
+  const vac = state.soul && state.soul.vacation;
+  body.classList.toggle('on-vacation', !!vac);
+  if (vac) {
+    $('#away-emoji').textContent = vac.emoji;
+    const back = new Date(vac.until).toLocaleDateString(state.lang === 'en' ? 'en' : 'es', { weekday: 'long' });
+    $('#away-sign').textContent = state.lang === 'en' ? `On vacation · back ${back}` : `De vacaciones · vuelvo el ${back}`;
+  }
   const sp = SPECIES.includes(p.species) ? p.species : 'chick';
   for (const x of SPECIES) body.classList.toggle('species-' + x, sp === x);
   const eq = state.equipped || {};
@@ -620,6 +635,7 @@ function updateMeter() {
   }
 }
 
+$('#away').addEventListener('click', () => pm.openPanel('pet#soul-postcards'));
 meter.addEventListener('click', () => pm.openPanel(state && state.unread ? 'inbox' : 'usage'));
 
 // ---------- Eventos desde el proceso principal ----------

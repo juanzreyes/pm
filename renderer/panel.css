@@ -584,3 +584,27 @@ html.dark .bl-kb select { background: #1c1916; }
 html.reduced .run.running .run-progress { animation: none; }
 .run.fix { border-left: 4px solid var(--orange); }
 .run.pushed { opacity: .8; }
+/* 2.0: el alma del pollito */
+.soul-traits { display: flex; flex-wrap: wrap; gap: 5px; }
+.trait-chip { font-size: 12px; padding: 3px 8px; border-radius: 99px; border: 1.5px dashed var(--line); color: var(--muted); }
+.trait-chip.on { border-style: solid; border-color: var(--ink); background: var(--yellow); color: #3b2f2f; font-weight: 800; }
+.garden { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.pot { background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; text-align: center; }
+.pot.ripe { border-color: var(--orange); box-shadow: 0 0 0 2px rgba(255, 159, 28, .25); }
+.pot.wilted { opacity: .7; }
+.pot-plant { font-size: 28px; line-height: 1.1; }
+.pot-bar { width: 100%; height: 5px; border-radius: 9px; background: var(--line); overflow: hidden; }
+.pot-bar i { display: block; height: 100%; background: #2a9d8f; }
+.pot select { width: 100%; font-size: 11px; }
+.pot-buy { cursor: pointer; font-size: 22px; justify-content: center; border-style: dashed; }
+.trick { padding: 4px 0; border-bottom: 1px dashed var(--line); }
+.trick:last-of-type { border-bottom: 0; }
+.lineage { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
+.soul-date { padding: 3px 0; }
+.letter { white-space: pre-wrap; }
+.postcard { border-left: 4px solid var(--orange); }
+#soul-date-form input[type=date] { width: auto; }
+#soul-date-form { flex-wrap: wrap; }
+#soul-date-form #soul-date-label { flex: 1 1 100%; }
+#soul-date-form #soul-date-date, #soul-date-form #soul-date-kind { flex: 1 1 0; width: auto; min-width: 0; }
+#soul-date-form button { flex: none; }

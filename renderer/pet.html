@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="pet-idle.css" />
   <link rel="stylesheet" href="pet-needs.css" />
   <link rel="stylesheet" href="pet-species.css" />
+  <link rel="stylesheet" href="pet-soul.css" />
 </head>
 <body>
   <div id="bubble" class="hidden hit"><span id="bubble-text"></span><div id="bubble-actions"></div></div>
@@ -189,6 +190,15 @@
 
             <!-- Barbilla de gallo -->
             <path id="wattle" d="M56 84 q-1 12 4 12 q5 0 4 -12z" />
+            <!-- Rasgos que salen de cómo trabajas (2.0) -->
+            <g id="tr-owl" class="trait">
+              <path class="bag" d="M39 75.5 q6 4 12 0 M69 75.5 q6 4 12 0" />
+              <g id="tr-nightcap"><path class="cap" d="M36 40 q20 -30 46 -10 q10 8 18 22 q-8 2 -12 -6 q-6 -10 -12 -10 q-20 -8 -40 4z" /><path class="cuff" d="M34 40 q26 -10 50 -6 l-1 6 q-24 -4 -48 6z" /><circle class="pom" cx="99" cy="53" r="4.5" /></g>
+            </g>
+            <g id="tr-hacker" class="trait"><text x="60" y="27" text-anchor="middle">&lt;/&gt;</text></g>
+            <ellipse id="tr-zen" class="trait" cx="60" cy="12" rx="17" ry="4" />
+            <g id="tr-tomato" class="trait"><circle class="fruit" cx="38" cy="100" r="4.2" /><path class="leaf" d="M36 96 l2 1.5 l2 -1.5 l-2 -1z" /></g>
+            <g id="tr-finisher" class="trait"><path class="sash" d="M27 92 L89 112 L86 119 L24 99z" /><path class="check" d="M38 98 l4 1.5 M51 102 l4 1.5 M64 106 l4 1.5 M77 110 l4 1.5" /></g>
 
             <!-- Accesorios de la tienda -->
             <g id="acc-glasses-sun" class="acc">
@@ -268,6 +278,8 @@
         <ellipse class="b-cheek" cx="15" cy="31" rx="2.8" ry="1.8" /><ellipse class="b-cheek" cx="35" cy="31" rx="2.8" ry="1.8" />
       </svg>
     </div>
+    <!-- De vacaciones (en vez del pollito) -->
+    <div id="away" class="hit" aria-live="polite"><div id="away-emoji">🏖️</div><div id="away-sign">De vacaciones</div></div>
     <div id="meter" class="hit"><span id="meter-dot"></span><span id="meter-text">…</span><span id="unread" class="hidden"></span></div>
   </div>
 

@@ -308,6 +308,7 @@ module.exports = function install(M) {
       remote: M.remote.remoteState(),
       team: M.team.teamState(),
       errReport: M.errreport.errState(),
+      ...(M.soul ? M.soul.snapshot() : {}),
       audioListen: M.audioState || null,
       integrations: M.integrationsState(),
       profiles: { ...M.profiles.list(), activeId: M.profiles.active().id },

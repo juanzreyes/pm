@@ -205,6 +205,7 @@ module.exports = function install(M) {
         const all = day.standup.today.every((x) => x.done);
         M.say(all ? '¡TODAS las tareas listas! 🎉🎉' : `${M.pl ? M.pl.praise() : '¡Bien!'} "${t.text}" ✅`, all ? 'celebrate' : 'dance', 6000);
         M.work.onTaskDone(t); // si viene de un ticket: se cierra en su gestor y se cargan las horas
+        if (M.soul) M.soul.onTaskDone(t, all); // riega la huerta y, si es la última, un truco
       }
       M.store.save();
       M.broadcast();
@@ -659,6 +660,8 @@ module.exports = function install(M) {
     M.ipcMain.handle('runs:fix', (_e, arg) => M.work.fixRun(String(arg)));
     M.ipcMain.handle('tickets:start', (_e, { key, repo }) => M.work.startTicket(String(key), repo ? String(repo) : ''));
     M.ipcMain.handle('tickets:claude', (_e, { key, repo }) => M.work.ticketToClaude(String(key), repo ? String(repo) : ''));
+    // El alma del pollito: huerta, trucos, linaje, fechas, cartas…
+    M.ipcMain.handle('soul:act', async (_e, { action, arg }) => { try { return await M.soul.act(String(action), arg); } catch (e) { return { ok: false, error: e.message }; } });
     // Informe de errores opcional al autor
     M.ipcMain.handle('errors:consent', (_e, on) => { M.errreport.setConsent(!!on); return M.snapshot(); });
     M.ipcMain.handle('errors:send', () => M.errreport.sendNow(true));

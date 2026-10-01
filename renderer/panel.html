@@ -383,6 +383,31 @@
         <div class="row between"><h3>📜 Diario del pollito</h3><button id="diary-write" class="ghost mini">✍️ Escribir hoy</button></div>
         <div id="diary" class="diary"></div>
 
+        <!-- El alma del pollito (2.0) -->
+        <div id="soul-vacation" class="box small hidden"></div>
+        <div class="row between"><h3>🧬 Rasgos</h3><span class="muted small">salen de cómo trabajas</span></div>
+        <div id="soul-traits" class="soul-traits"></div>
+        <div class="row between"><h3>🌱 Huerta</h3><span id="soul-harvests" class="pill"></span></div>
+        <div id="soul-garden" class="garden"></div>
+        <div class="row between"><h3>🎪 Trucos</h3><span id="soul-practice" class="muted small"></span></div>
+        <div id="soul-tricks" class="box small"></div>
+        <div class="row between"><h3>🌳 Familia</h3><span id="soul-gen" class="pill"></span></div>
+        <div id="soul-family" class="box small"></div>
+        <div class="row between"><h3>📅 Fechas que recuerdo</h3></div>
+        <div id="soul-dates" class="box small"></div>
+        <form id="soul-date-form" class="row gap wrap">
+          <input id="soul-date-label" maxlength="80" placeholder="Cumpleaños de Ana, entrega del informe…" autocomplete="off" />
+          <input id="soul-date-date" type="date" aria-label="Fecha" />
+          <select id="soul-date-kind" aria-label="Tipo"><option value="birthday">🎂 Cumpleaños</option><option value="deadline">🏁 Entrega</option><option value="other">📅 Otra</option></select>
+          <button class="primary" type="submit">＋</button>
+        </form>
+        <div class="row between"><h3>💭 Sueños</h3><button id="soul-dream-now" class="ghost mini" title="Que te cuente el de anoche">💤</button></div>
+        <div id="soul-dreams" class="diary"></div>
+        <div class="row between"><h3>💌 Cartas del viernes</h3><button id="soul-letter-now" class="ghost mini">✍️ Escribir ahora</button></div>
+        <div id="soul-letters" class="diary"></div>
+        <div class="row between"><h3>📮 Postales</h3></div>
+        <div id="soul-postcards" class="diary"></div>
+
         <h3>🐾 Especie</h3>
         <div id="species" class="species"></div>
 
@@ -587,6 +612,7 @@
   <script src="panel-extras.js"></script>
   <script src="panel-life.js"></script>
   <script src="panel-work.js"></script>
+  <script src="panel-soul.js"></script>
   <script src="stats.js"></script>
 </body>
 </html>

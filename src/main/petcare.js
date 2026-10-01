@@ -50,6 +50,7 @@ module.exports = function install(M) {
     const clamp = M.clamp;
     const p = M.store.data.pet;
     const now = Date.now();
+    if (p.vacation) { p.lastTick = now; M.store.data.life.lastSeen = now; M.store.save(); return; } // de vacaciones: nada baja
     const last = p.lastTick || now;
     const mins = Math.min((now - last) / 60000, 60 * 24);
     p.fullness = clamp(p.fullness - mins / 15);
@@ -167,7 +168,7 @@ module.exports = function install(M) {
   function chatter() {
     const now = Date.now();
     const h = new Date().getHours();
-    if (h < 7 || h >= 23 || !M.store.data.pet.name || M.isMuted() || M.meetingNow) return;
+    if (h < 7 || h >= 23 || !M.store.data.pet.name || M.isMuted() || M.meetingNow || M.store.data.pet.vacation) return;
     const p = M.store.data.pet;
     if (p.fullness < 25 && now - lastHungryAt > 60 * 60000) {
       lastHungryAt = now;
@@ -193,6 +194,7 @@ module.exports = function install(M) {
   function feed() {
     const clamp = M.clamp;
     const p = M.store.data.pet;
+    if (p.vacation) { M.say(`🏖️ Estoy de vacaciones en ${p.vacation.place}. ¡Vuelvo pronto!`, 'peck', 6000, { log: false }); return; }
     if (p.fullness >= 98) {
       M.say('¡Estoy llenito! No me cabe ni un grano 🫃', 'wobble');
       return;

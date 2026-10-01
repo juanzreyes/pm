@@ -127,6 +127,7 @@ module.exports = function install(M) {
       if (by === 'telegram') M.say(`📱 Marcaste desde el celular: "${t.text}" ✅`, 'dance', 7000, { remote: false });
       else M.say(`🤖 Claude marcó como hecha: "${t.text}" ✅`, 'dance', 7000, { cat: 'claude' });
       M.work.onTaskDone(t);
+      if (M.soul) M.soul.onTaskDone(t, list.every((x) => x.done));
     }
     return `Hecha: ${t.text}`;
   }

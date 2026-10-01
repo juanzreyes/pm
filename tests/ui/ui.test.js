@@ -59,6 +59,8 @@ test.before(async () => {
     settings: { autoStartAsked: true, lang: 'es', focusWatch: false, chatter: false, sounds: false, voice: false, gitWatch: false, micWatch: false, gitRoots: [reposDir], claudeBin: fakeClaude },
     flags: { tourDone: true },
     life: { running: false, lastQuitHow: 'update', lastQuitAt: now },
+    // Historial con muchos commits (para el rasgo "Hacker").
+    days: Object.fromEntries([1, 2, 3].map((i) => { const d = new Date(now - i * 864e5); return [`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`, { commits: 12 }]; })),
   }));
   app = await electron.launch({
     args: ['.'],
@@ -275,6 +277,27 @@ test('1.8: donación en "Acerca de", informe de errores oculto sin destino y aju
   });
   assert.deepEqual(r, { errBoxHidden: true, donate: true, par: 3, max: 0, review: true, fixci: true });
   await st.evaluate(() => pm.updateSettings({ claudeParallel: 2, claudeMaxFixes: 2 }));
+});
+
+test('2.0 alma: huerta, trucos, fechas, rasgo visible y truco en el pollito', async () => {
+  const panel = await waitPage('panel');
+  const pet = await waitPage('pet');
+  await panel.evaluate(() => pm.command('panel', 'pet'));
+  await panel.waitForFunction(() => document.querySelectorAll('#soul-garden .pot').length >= 3, null, { timeout: 8000 });
+  const r = await panel.evaluate(() => ({ pots: document.querySelectorAll('#soul-garden .pot:not(.pot-buy)').length, tricks: document.querySelectorAll('#soul-tricks .trick').length, traits: document.querySelectorAll('#soul-traits .trait-chip').length }));
+  assert.deepEqual(r, { pots: 3, tricks: 5, traits: 6 });
+  // Una fecha importante desde el formulario.
+  await panel.fill('#soul-date-label', 'Cumple de Ana');
+  await panel.fill('#soul-date-date', '2026-12-24');
+  await panel.click('#soul-date-form button[type=submit]');
+  await panel.waitForFunction(() => /Cumple de Ana/.test(document.querySelector('#soul-dates').textContent), null, { timeout: 5000 });
+  // Practicar un truco: el pollito lo intenta.
+  await panel.click('#soul-tricks .trick[data-id="spin"] button');
+  await pet.waitForFunction(() => document.body.classList.contains('a-trick-spin'), null, { timeout: 5000 });
+  // Rasgo: con muchos commits de verdad le sale la cresta de hacker.
+  await panel.evaluate(() => pm.soulAct('traits'));
+  await pet.waitForFunction(() => document.body.classList.contains('trait-hacker'), null, { timeout: 5000 });
+  assert.equal(await pet.evaluate(() => getComputedStyle(document.querySelector('#tr-hacker')).display !== 'none'), true);
 });
 
 test('ajustes: diagnóstico sin errores de la app', async () => {

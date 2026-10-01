@@ -100,13 +100,17 @@ function merge(local, remote) {
     out.weeks[wk] = cur;
   }
   out.petDiary = { ...(remote.petDiary || {}), ...(out.petDiary || {}) };
+  out.petDreams = { ...(remote.petDreams || {}), ...(out.petDreams || {}) };
+  out.petLetters = { ...(remote.petLetters || {}), ...(out.petLetters || {}) };
+  out.petDates = unionById(out.petDates, remote.petDates, dead);
+  out.lineage = unionById(out.lineage, remote.lineage, dead);
   out.taskAges = { ...(remote.taskAges || {}), ...(out.taskAges || {}) };
   out.pet = mergePet(out.pet, remote.pet);
   return out;
 }
 
 // Qué viaja entre PCs (sin ajustes, claves ni cosas de este equipo).
-const SYNCED = ['days', 'reminders', 'prompts', 'habits', 'recurring', 'templates', 'claudeQueue', 'milestones', 'weeks', 'petDiary', 'taskAges', 'pet', 'tombstones'];
+const SYNCED = ['days', 'reminders', 'prompts', 'habits', 'recurring', 'templates', 'claudeQueue', 'milestones', 'weeks', 'petDiary', 'taskAges', 'pet', 'tombstones', 'petDreams', 'petLetters', 'petDates', 'lineage'];
 function pick(data) {
   const o = {};
   for (const k of SYNCED) if (data[k] !== undefined) o[k] = data[k];
