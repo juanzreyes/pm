@@ -38,6 +38,7 @@ module.exports = function install(M) {
 
   function onFocusSample(s) {
     if (M.pl) M.pl.onSample(s);
+    if (M.presence) M.presence.onSample(s); // el pollito se sienta en tu ventana activa
     let pres = M.focus.presentingFrom(s);
     if (pres && pres !== 'Compartiendo pantalla en Teams' && (M.store.data.settings.noHideApps || []).includes(String(s.p || '').toLowerCase())) pres = null;
     M.lastPresentApp = String(s.p || '').toLowerCase();

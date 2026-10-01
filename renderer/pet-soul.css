@@ -76,3 +76,61 @@
 .reduced [class*="a-trick-"] svg, .reduced [class*="a-trick-"] #wingL, .reduced [class*="a-trick-"] #wingR { animation-duration: .01s; }
 /* Con el gorro de búho no cabe el </> de hacker (la cresta verde sí se ve en el gorro… o no: el gorro manda) */
 .trait-owl:not(.has-head) #tr-hacker { display: none; }
+
+/* =================== 2.0 · presencia =================== */
+/* ---------- 🪟 sentado en una ventana: sin medidor debajo y patas colgando ---------- */
+.perched #meter { opacity: 0; pointer-events: none; }
+.perched #feet { transform: translateY(4px) rotate(0deg); animation: dangle 2.4s ease-in-out infinite; transform-origin: 60px 108px; }
+@keyframes dangle { 50% { transform: translateY(5px) rotate(4deg); } }
+.perched #shadow { opacity: 0; }
+
+/* ---------- 🔋 batería baja, 📶 sin wifi, 🔥 CPU al 100% ---------- */
+.wx { display: none; }
+.low-battery:not(.perched) #eyesOpen .pupil { transform: scaleY(.55); transform-origin: center; transform-box: fill-box; }
+.low-battery #brows { transform: translateY(3px); }
+.offline #pc-antenna { display: inline; animation: antenna 1.2s ease-in-out infinite; transform-origin: 66px 30px; }
+#pc-antenna .rod { stroke: #6b6b6b; stroke-width: 2.2; stroke-linecap: round; }
+#pc-antenna .tip { fill: #e63946; }
+#pc-antenna .wave { fill: none; stroke: #e63946; stroke-width: 1.6; stroke-linecap: round; animation: blinkWave 1s steps(2) infinite; }
+@keyframes antenna { 50% { transform: rotate(-12deg); } }
+@keyframes blinkWave { 50% { opacity: 0; } }
+.cpu-hot #sweat, .weather-hot #sweat { display: inline; animation: drip 1.4s ease-in infinite; }
+.cpu-hot #wx-fan, .weather-hot #wx-fan { display: inline; animation: fan .25s ease-in-out infinite alternate; transform-origin: 96px 104px; }
+#wx-fan .handle { stroke: #8d6e63; stroke-width: 2.4; stroke-linecap: round; }
+#wx-fan .leaf { fill: #8ecae6; stroke: #2c2a4a; stroke-width: 1.2; }
+@keyframes fan { to { transform: rotate(-22deg); } }
+@keyframes drip { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(10px); opacity: 0; } }
+.cpu-hot #flush { opacity: .35; fill: #ff6b6b; }
+
+/* ---------- ☁️ clima ---------- */
+.weather-rain #wx-umbrella { display: inline; }
+#wx-umbrella .canopy { fill: #e63946; stroke: #2c2a4a; stroke-width: 1.5; }
+#wx-umbrella .stick { fill: none; stroke: #2c2a4a; stroke-width: 2; stroke-linecap: round; }
+.weather-cold #wx-scarf, .weather-snow #wx-scarf { display: inline; }
+#wx-scarf .wrap, #wx-scarf .tail { fill: #457b9d; stroke: #2c2a4a; stroke-width: 1.3; }
+.has-neck #wx-scarf { display: none; }
+.has-head #wx-umbrella { transform: translate(6px, -8px); }
+
+/* ---------- ⌨️ teclea contigo: el portátil sale y teclea mientras escribes ---------- */
+.typing-along:not(.perched):not(.meeting) #prop-laptop { display: inline; }
+.typing-along:not(.perched):not(.meeting) #prop-laptop .code { animation: codeType .5s steps(3) infinite; }
+.typing-along:not(.perched):not(.meeting) #wingL, .typing-along:not(.perched):not(.meeting) #wingR { animation: tapWings .18s ease-in-out infinite alternate; }
+@keyframes codeType { 50% { opacity: .2; } }
+@keyframes tapWings { to { transform: translateY(2px); } }
+
+/* ---------- 🫁 respiración guiada ---------- */
+#breath { display: none; position: absolute; left: 50%; top: 60px; transform: translateX(-50%); background: #fffdf6; border: 2px solid #3b2f2f; border-radius: 99px; padding: 4px 12px; font: 800 13px "Segoe UI", system-ui, sans-serif; color: #3b2f2f; white-space: nowrap; }
+.breathing #breath { display: block; }
+.breathing svg { transition-property: transform; transition-timing-function: ease-in-out; transform-origin: 50% 80%; }
+.breathing.breathe-in svg { transform: scale(1.18); }
+.breathing.breathe-out svg { transform: scale(0.94); }
+
+/* ---------- 🎨 estilos visuales ---------- */
+.style-pixel #flip { filter: url(#fxPixel); }
+.style-pixel #meter { font-family: Consolas, monospace; background: #9bbc0f; color: #0f380f; border-color: #0f380f; }
+.style-clay #flip { filter: url(#fxClay); }
+.style-minimal #cheeks, .style-minimal .acc, .style-minimal .season, .style-minimal #buddy, .style-minimal #badge, .style-minimal #bowtie, .style-minimal #crown, .style-minimal .trait, .style-minimal .wx { display: none !important; }
+.style-minimal #body { fill: #f6f1e3; }
+.style-minimal #belly { fill: #fffdf6; }
+.style-minimal #fx { display: none; }
+.style-minimal svg { filter: saturate(.35); }

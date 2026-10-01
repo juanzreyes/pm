@@ -20,6 +20,15 @@
     $('#run-fixrev').checked = !!cr.autoFixReview;
     if (document.activeElement !== $('#run-maxfix')) $('#run-maxfix').value = cr.maxFixes ?? 2;
     if (document.activeElement !== $('#run-budget')) $('#run-budget').value = cr.budget || 0;
+    // ---------- apariencia 2.0 ----------
+    const ss = st.settings || {};
+    segOn($('#pet-style'), ss.petStyle || 'normal');
+    $('#pet-perch').checked = ss.petPerch !== false;
+    $('#pc-react').checked = ss.pcReactions !== false;
+    $('#type-along').checked = ss.typeAlong !== false;
+    if (document.activeElement !== $('#weather-city')) $('#weather-city').value = ss.weatherCity || '';
+    const w = st.presence && st.presence.weather;
+    $('#weather-info').textContent = w ? (w.error ? `😿 ${w.error}` : `${w.place}: ${w.temp} °C · ${{ rain: '☔ lluvia', snow: '❄️ nieve', hot: '🥵 calor', cold: '🧣 frío', mild: '🌤️ agradable' }[w.kind] || ''}`) : 'Paraguas si llueve, bufanda con frío, abanico con calor (Open-Meteo, sin cuenta).';
     // ---------- informe de errores ----------
     const erp = st.errReport || {};
     $('#err-box').classList.toggle('hidden', !erp.available);
@@ -110,6 +119,13 @@
   $('#run-fixrev').addEventListener('change', (e) => pm.updateSettings({ claudeAutoFixReview: e.target.checked }));
   $('#run-maxfix').addEventListener('change', (e) => pm.updateSettings({ claudeMaxFixes: Number(e.target.value) || 0 }));
   $('#run-budget').addEventListener('change', (e) => pm.updateSettings({ claudeRunBudget: Number(e.target.value) || 0 }));
+
+  // ---------- apariencia 2.0 ----------
+  $('#pet-style').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) pm.updateSettings({ petStyle: b.dataset.v }); });
+  $('#pet-perch').addEventListener('change', (e) => pm.updateSettings({ petPerch: e.target.checked }));
+  $('#pc-react').addEventListener('change', (e) => pm.updateSettings({ pcReactions: e.target.checked }));
+  $('#type-along').addEventListener('change', (e) => pm.updateSettings({ typeAlong: e.target.checked }));
+  $('#weather-city').addEventListener('change', (e) => pm.updateSettings({ weatherCity: e.target.value }));
 
   // ---------- informe de errores ----------
   $('#err-on').addEventListener('change', (e) => pm.errorsConsent(e.target.checked));

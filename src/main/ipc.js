@@ -44,6 +44,7 @@ module.exports = function install(M) {
       M.drag = null;
       const [x, y] = M.petWin.getPosition();
       M.store.data.position = { x, y };
+      if (M.presence) M.presence.onDragged(); // lo moviste tú: se queda ahí un rato
       // En modo discreto se pega al borde más cercano.
       if (M.store.data.settings.discreet) {
         const b = M.petWin.getBounds();
@@ -270,7 +271,11 @@ module.exports = function install(M) {
     });
 
     M.ipcMain.handle('settings:update', (_e, patch) => {
-      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget', 'claudeParallel', 'claudeReview', 'claudeAutoFixCi', 'claudeAutoFixReview', 'claudeMaxFixes'];
+      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget', 'claudeParallel', 'claudeReview', 'claudeAutoFixCi', 'claudeAutoFixReview', 'claudeMaxFixes', 'petPerch', 'pcReactions', 'typeAlong', 'weatherCity', 'petStyle'];
+      if ('petStyle' in patch && !['normal', 'pixel', 'clay', 'minimal'].includes(patch.petStyle)) delete patch.petStyle;
+      if ('weatherCity' in patch) patch.weatherCity = String(patch.weatherCity || '').trim().slice(0, 80);
+      if ('weatherCity' in patch) setTimeout(() => M.presence.weatherTick(true), 50);
+      if (patch.petPerch === false) setTimeout(() => M.presence.goHome(), 50);
       if ('claudeParallel' in patch) patch.claudeParallel = Math.max(1, Math.min(3, Math.round(Number(patch.claudeParallel)) || 2));
       if ('claudeMaxFixes' in patch) patch.claudeMaxFixes = Math.max(0, Math.min(5, Math.round(Number(patch.claudeMaxFixes)) || 0));
       if ('claudeRunBudget' in patch) patch.claudeRunBudget = Math.max(0, Math.min(100, Number(patch.claudeRunBudget) || 0));
@@ -373,6 +378,8 @@ module.exports = function install(M) {
         M.isMuted()
           ? { label: '🔔 Quitar silencio', click: () => { M.setMute(0); M.say('¡Volví! 🐣', 'hop'); } }
           : { label: '🔕 Silenciar 1 hora (reunión)', click: () => { M.setMute(60); M.say('Shhh 🤫 Te dejo tranquilo 1 hora.', 'peck'); } },
+        { label: '🫁 Respirar conmigo', click: () => M.presence.breathe(4) },
+        { label: M.store.data.settings.petPerch === false ? '🪟 Sentarte en mis ventanas' : '🪟 Quedarte quieto (no subir a las ventanas)', click: () => { M.store.data.settings.petPerch = M.store.data.settings.petPerch === false; if (!M.store.data.settings.petPerch) M.presence.goHome(); M.store.save(); M.broadcast(); } },
         { label: '🙈 Ocultar (sigue en la bandeja)', click: () => { M.petWin.hide(); if (M.panelWin) M.panelWin.hide(); if (M.tray) M.tray.refreshMenu(); } },
         { type: 'separator' },
         { label: '⚙️ Ajustes…', click: () => M.openSettings() },

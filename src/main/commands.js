@@ -178,6 +178,8 @@ module.exports = function install(M) {
     { id: 'soul.callback', hidden: true, run: () => { const r = M.soul.act('callBack'); if (!r.ok) M.say('😿 ' + r.error, 'sad', 6000, { log: false }); } },
     { id: 'soul.letter', icon: '💌', label: 'Leer la carta del pollito', kw: 'carta semana viernes pollito', run: () => M.openPanel('pet#soul-letters') },
     { id: 'soul.garden', icon: '🌱', label: 'Ver la huerta del pollito', kw: 'huerta plantas cosechar maiz', run: () => M.openPanel('pet#soul-garden') },
+    { id: 'breathe', icon: '🫁', label: 'Respirar con el pollito (1 minuto)', kw: 'respirar respiracion calma estres ansiedad relajar', run: () => M.presence.breathe(4) },
+    { id: 'perch.toggle', icon: '🪟', label: 'Pollito sobre mis ventanas: activar o desactivar', kw: 'ventanas sentarse saltar quieto mover', run: () => { const s = M.store.data.settings; s.petPerch = s.petPerch === false; if (!s.petPerch) M.presence.goHome(); M.store.save(); M.broadcast(); M.say(s.petPerch ? '🪟 ¡Me subo a tus ventanas!' : '🪟 Vale, me quedo quieto aquí.', 'hop', 5000, { log: false }); } },
     { id: 'donate', icon: '💛', label: 'Apoyar PM Pollito con una donación (PayPal)', kw: 'donar donacion paypal apoyar cafe autor', run: () => M.shell.openExternal(DONATE_URL) },
     { id: 'team.import', icon: '👥', label: 'Importar la configuración del equipo (pm-equipo.json)', kw: 'equipo importar configuracion compartir jira webhook', run: () => M.team.importPack() },
     { id: 'team.export', icon: '📤', label: 'Exportar la configuración para el equipo', kw: 'equipo exportar configuracion compartir', run: () => M.openSettings('integrations') },

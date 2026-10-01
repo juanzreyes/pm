@@ -28,6 +28,34 @@
             <stop offset="0%" stop-color="#FFE45C" />
             <stop offset="100%" stop-color="#F3AE1C" />
           </radialGradient>
+          <!-- Estilos visuales (2.0): Game Boy pixelado y plastilina -->
+          <filter id="fxPixel" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" x="-10" y="-20" width="150" height="160">
+            <feFlood x="-8" y="-18" width="1" height="1" />
+            <feComposite x="-10" y="-20" width="5" height="5" />
+            <feTile result="grid" />
+            <feComposite in="SourceGraphic" in2="grid" operator="in" />
+            <feMorphology operator="dilate" radius="2.5" result="px" />
+            <feColorMatrix in="px" type="matrix" values="0.3 0.59 0.11 0 0  0.3 0.59 0.11 0 0  0.3 0.59 0.11 0 0  0 0 0 1 0" result="gray" />
+            <feComponentTransfer in="gray">
+              <feFuncR type="discrete" tableValues="0.06 0.19 0.55 0.61" />
+              <feFuncG type="discrete" tableValues="0.22 0.38 0.67 0.74" />
+              <feFuncB type="discrete" tableValues="0.06 0.19 0.06 0.06" />
+            </feComponentTransfer>
+          </filter>
+          <filter id="fxClay" x="-10%" y="-10%" width="120%" height="120%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="7" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G" result="wobble" />
+            <feGaussianBlur in="wobble" stdDeviation="1.6" result="soft" />
+            <feSpecularLighting in="soft" surfaceScale="6" specularConstant="0.9" specularExponent="14" lighting-color="#fff6e0" result="spec">
+              <feDistantLight azimuth="235" elevation="48" />
+            </feSpecularLighting>
+            <feComposite in="spec" in2="wobble" operator="in" result="specIn" />
+            <feComposite in="wobble" in2="specIn" operator="arithmetic" k1="0" k2="1" k3="0.8" k4="0" result="lit" />
+            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="3" result="grain" />
+            <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -0.18 0.12" result="grainA" />
+            <feComposite in="grainA" in2="wobble" operator="in" result="grainIn" />
+            <feMerge><feMergeNode in="lit" /><feMergeNode in="grainIn" /></feMerge>
+          </filter>
           <linearGradient id="gShell" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#FFFDF6" />
             <stop offset="100%" stop-color="#EDE3CF" />
@@ -190,6 +218,11 @@
 
             <!-- Barbilla de gallo -->
             <path id="wattle" d="M56 84 q-1 12 4 12 q5 0 4 -12z" />
+            <!-- Clima y PC (2.0) -->
+            <g id="wx-umbrella" class="wx"><path class="canopy" d="M70 30 q22 -26 48 0 q-6 -4 -12 0 q-6 -4 -12 0 q-6 -4 -12 0 q-6 -4 -12 0z" /><path class="stick" d="M94 30 v40 q0 6 -5 6" /></g>
+            <g id="wx-scarf" class="wx"><path class="wrap" d="M27 86 q33 15 66 0 l0 9 q-33 15 -66 0z" /><path class="tail" d="M33 94 l-5 22 l9 1 l3 -21z" /></g>
+            <g id="wx-fan" class="wx"><path class="handle" d="M96 104 l10 -14" /><path class="leaf" d="M106 90 l-6 -16 q12 -6 22 4z" /></g>
+            <g id="pc-antenna" class="wx"><path class="rod" d="M66 30 l10 -22" /><circle class="tip" cx="76.5" cy="7" r="3.2" /><path class="wave" d="M82 4 q4 3 0 7 M86 1 q7 6 0 13" /></g>
             <!-- Rasgos que salen de cómo trabajas (2.0) -->
             <g id="tr-owl" class="trait">
               <path class="bag" d="M39 75.5 q6 4 12 0 M69 75.5 q6 4 12 0" />
@@ -278,6 +311,8 @@
         <ellipse class="b-cheek" cx="15" cy="31" rx="2.8" ry="1.8" /><ellipse class="b-cheek" cx="35" cy="31" rx="2.8" ry="1.8" />
       </svg>
     </div>
+    <!-- Respiración guiada -->
+    <div id="breath" aria-live="polite"><span id="breath-word">Inhala</span> <b id="breath-count">4</b></div>
     <!-- De vacaciones (en vez del pollito) -->
     <div id="away" class="hit" aria-live="polite"><div id="away-emoji">🏖️</div><div id="away-sign">De vacaciones</div></div>
     <div id="meter" class="hit"><span id="meter-dot"></span><span id="meter-text">…</span><span id="unread" class="hidden"></span></div>

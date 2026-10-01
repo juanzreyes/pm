@@ -585,6 +585,8 @@ function updateLook() {
     const back = new Date(vac.until).toLocaleDateString(state.lang === 'en' ? 'en' : 'es', { weekday: 'long' });
     $('#away-sign').textContent = state.lang === 'en' ? `On vacation · back ${back}` : `De vacaciones · vuelvo el ${back}`;
   }
+  const style = (state.settings && state.settings.petStyle) || 'normal';
+  for (const x of ['pixel', 'clay', 'minimal']) body.classList.toggle('style-' + x, style === x);
   const sp = SPECIES.includes(p.species) ? p.species : 'chick';
   for (const x of SPECIES) body.classList.toggle('species-' + x, sp === x);
   const eq = state.equipped || {};
@@ -840,4 +842,90 @@ pm.onHatch(({ emoji, rarity }) => {
     setTimeout(() => { egg.remove(); prize.remove(); }, 3000);
     act('celebrate');
   }, 1400);
+});
+
+
+// =================== 2.0 · presencia en el escritorio ===================
+// Sentado sobre una ventana.
+pm.onPerch((p) => body.classList.toggle('perched', !!(p && p.on)));
+// CPU al 100%: suda y se abanica.
+pm.onPc((p) => {
+  const was = body.classList.contains('cpu-hot');
+  body.classList.toggle('cpu-hot', !!(p && p.cpuHot));
+  if (p && p.cpuHot && !was) particle('🔥', 128, 50, { size: 18, d: 1.6 });
+});
+// Reacciones al PC (se pueden apagar en Ajustes → Apariencia).
+const pcOn = () => !(state && state.settings && state.settings.pcReactions === false);
+// Batería baja (sin cargar): se le cierran los ojos y bosteza de vez en cuando.
+if (navigator.getBattery) {
+  navigator.getBattery().then((b) => {
+    const upd = () => {
+      const low = pcOn() && !b.charging && b.level <= 0.2;
+      const was = body.classList.contains('low-battery');
+      body.classList.toggle('low-battery', low);
+      if (low && !was) { act('yawn'); particle('🪫', 128, 55, { size: 18, d: 1.8 }); }
+    };
+    b.addEventListener('levelchange', upd);
+    b.addEventListener('chargingchange', upd);
+    upd();
+  }).catch(() => {});
+}
+setInterval(() => { if (body.classList.contains('low-battery') && Math.random() < 0.35) act('yawn', true); }, 120000);
+// Sin wifi: saca una antena buscando señal.
+const netUpd = () => {
+  const off = pcOn() && !navigator.onLine;
+  body.classList.toggle('offline', off);
+  if (off) particle('📶', 128, 55, { size: 16, d: 1.6 });
+};
+window.addEventListener('online', netUpd);
+window.addEventListener('offline', netUpd);
+netUpd();
+// Clima de tu ciudad: paraguas, bufanda, abanico; gotas o copos de vez en cuando.
+let weatherKind = '';
+pm.onWeather((w) => {
+  weatherKind = (w && !w.error && w.kind) || '';
+  for (const k of ['rain', 'snow', 'hot', 'cold']) body.classList.toggle('weather-' + k, weatherKind === k);
+});
+setInterval(() => {
+  if (body.classList.contains('style-minimal') || body.classList.contains('reduced')) return;
+  if (weatherKind === 'rain') for (let i = 0; i < 4; i++) particle('💧', rand(40, 160), 10, { size: 12, d: 1.4, delay: i * 0.3 });
+  if (weatherKind === 'snow') for (let i = 0; i < 4; i++) particle('❄️', rand(40, 160), 10, { size: 12, d: 2.2, delay: i * 0.4 });
+}, 9000);
+// Teclea contigo: mientras escribes, él también teclea en su portátil.
+pm.onTyping((t) => body.classList.toggle('typing-along', !!(t && t.on)));
+// Respiración guiada: se infla (inhala), espera y se desinfla (exhala).
+let breathing = null;
+pm.onBreathe((b) => {
+  if (breathing) return;
+  const svg = chick.querySelector('svg');
+  const word = $('#breath-word');
+  const count = $('#breath-count');
+  const en = state && state.lang === 'en';
+  const phases = [['in', b.inhale, en ? 'Breathe in' : 'Inhala'], ['hold', b.hold, en ? 'Hold' : 'Aguanta'], ['out', b.exhale, en ? 'Breathe out' : 'Exhala']];
+  let cycle = 0;
+  let pi = 0;
+  let left = 0;
+  body.classList.add('breathing');
+  hideBubble();
+  const next = () => {
+    if (pi >= phases.length) { pi = 0; cycle++; }
+    if (cycle >= b.cycles) {
+      clearInterval(breathing); breathing = null;
+      body.classList.remove('breathing', 'breathe-in', 'breathe-out');
+      act('love');
+      return;
+    }
+    const [k, secs, label] = phases[pi++];
+    left = secs;
+    svg.style.transitionDuration = secs + 's';
+    if (k !== 'hold') { body.classList.toggle('breathe-in', k === 'in'); body.classList.toggle('breathe-out', k === 'out'); }
+    word.textContent = label;
+    count.textContent = String(left);
+  };
+  next();
+  breathing = setInterval(() => {
+    left--;
+    if (left <= 0) next();
+    else count.textContent = String(left);
+  }, 1000);
 });

@@ -28,6 +28,21 @@ public class PmWin {
     return "";
   }
   [DllImport("user32.dll")] public static extern bool IsZoomed(IntPtr h);
+  [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr h);
+  [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+  // Ventana activa donde el pollito puede sentarse: "L,T,R,B,Z" (Z=1 si está maximizada) o "".
+  // Solo ventanas normales con barra de título (ni escritorio, ni barra de tareas, ni minimizadas).
+  public static string PerchRect(IntPtr h) {
+    if (h == IntPtr.Zero || IsIconic(h)) return "";
+    var cls = new StringBuilder(256); GetClassName(h, cls, 256);
+    var c = cls.ToString();
+    if (c == "Progman" || c == "WorkerW" || c == "Shell_TrayWnd" || c == "Shell_SecondaryTrayWnd" || c == "Windows.UI.Core.CoreWindow") return "";
+    const int WS_CAPTION = 0x00C00000;
+    if ((GetWindowLong(h, -16) & WS_CAPTION) != WS_CAPTION) return "";
+    RECT r; if (!GetWindowRect(h, out r)) return "";
+    if (r.R - r.L < 200 || r.B - r.T < 120) return "";
+    return r.L + "," + r.T + "," + r.R + "," + r.B + "," + (IsZoomed(h) ? "1" : "0");
+  }
   [DllImport("user32.dll")] public static extern int GetWindowLong(IntPtr h, int i);
   // ¿La ventana activa está en pantalla completa de verdad? (presentación, vídeo o juego)
   // Devuelve el rectángulo del monitor "L,T,R,B" o "" si no.
@@ -72,6 +87,8 @@ public class PmWin {
 }
 "@
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
+# Coordenadas en píxeles reales (Electron las pasa a su escala con screenToDip*).
+try { [void][PmWin]::SetProcessDPIAware() } catch {}
 # Controles multimedia de Windows: qué suena en cualquier app (Spotify, navegador, Apple Music…).
 $media = $null
 try {
@@ -123,10 +140,12 @@ while ($true) {
   try { $tt = [PmWin]::TeamsTitles() } catch {}
   $fs = ''
   try { $fs = [PmWin]::FullscreenMonitor($h) } catch {}
+  $wr = ''
+  try { $wr = [PmWin]::PerchRect($h) } catch {}
   $mu = ''; $ms = ''
   try { $np = NowPlaying; $mu = $np[0]; $ms = $np[1] } catch {}
   if (-not $mu) { try { $mu = [PmWin]::SpotifyTitle(); if ($mu) { $ms = 'Spotify' } } catch {} }
-  [Console]::Out.WriteLine((@{ t = $sb.ToString(); p = $pn; i = [int]($idle / 1000); m = ($mic -join '|'); tt = $tt; f = $fs; mu = $mu; ms = $ms } | ConvertTo-Json -Compress))
+  [Console]::Out.WriteLine((@{ t = $sb.ToString(); p = $pn; i = [int]($idle / 1000); m = ($mic -join '|'); tt = $tt; f = $fs; wr = $wr; mu = $mu; ms = $ms } | ConvertTo-Json -Compress))
   [Console]::Out.Flush()
   Start-Sleep -Seconds 5
 }

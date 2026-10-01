@@ -300,6 +300,22 @@ test('2.0 alma: huerta, trucos, fechas, rasgo visible y truco en el pollito', as
   assert.equal(await pet.evaluate(() => getComputedStyle(document.querySelector('#tr-hacker')).display !== 'none'), true);
 });
 
+test('2.0 presencia: estilo pixel, respiración guiada y ajustes de apariencia', async () => {
+  const panel = await waitPage('panel');
+  const pet = await waitPage('pet');
+  await panel.evaluate(() => pm.updateSettings({ petStyle: 'pixel' }));
+  await pet.waitForFunction(() => document.body.classList.contains('style-pixel'), null, { timeout: 5000 });
+  assert.match(await pet.evaluate(() => getComputedStyle(document.querySelector('#flip')).filter), /fxPixel/);
+  await panel.evaluate(() => pm.updateSettings({ petStyle: 'normal' }));
+  await pet.waitForFunction(() => !document.body.classList.contains('style-pixel'), null, { timeout: 5000 });
+  await panel.evaluate(() => pm.command('breathe'));
+  await pet.waitForFunction(() => document.body.classList.contains('breathing') && /Inhala/.test(document.querySelector('#breath').textContent), null, { timeout: 5000 });
+  await panel.evaluate(() => pm.openSettings('appearance'));
+  const st = await waitPage('settings');
+  await st.waitForFunction(() => document.querySelectorAll('#pet-style button').length === 4 && !!document.querySelector('#pet-perch'), null, { timeout: 8000 });
+  assert.equal(await st.evaluate(() => document.querySelector('#pet-perch').checked), true, 'sentarse en ventanas viene activado');
+});
+
 test('ajustes: diagnóstico sin errores de la app', async () => {
   const panel = await waitPage('panel');
   await panel.evaluate(() => pm.command('diag'));
