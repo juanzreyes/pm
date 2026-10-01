@@ -261,5 +261,5 @@ module.exports = function install(M) {
     setInterval(scheduleTick, 60e3);
   }
 
-  return { onSay, postDaily, postWeekly, save, test, remoteState, start, stopPolling };
+  return { onSay, sendTeam, postDaily, postWeekly, save, test, remoteState, start, stopPolling };
 };

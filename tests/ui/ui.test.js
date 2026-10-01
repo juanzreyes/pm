@@ -56,7 +56,8 @@ test.before(async () => {
   const now = Date.now();
   fs.writeFileSync(path.join(dir, 'pm-data.json'), JSON.stringify({
     pet: { name: 'Testito', born: now - 3 * 864e5, happiness: 80, fullness: 80, xp: 20, coins: 500 },
-    settings: { autoStartAsked: true, lang: 'es', focusWatch: false, chatter: false, sounds: false, voice: false, gitWatch: false, micWatch: false, gitRoots: [reposDir], claudeBin: fakeClaude },
+    settings: { autoStartAsked: true, lang: 'es', morningTime: '00:00', eveningTime: '23:59', focusWatch: false, chatter: false, sounds: false, voice: false, gitWatch: false, micWatch: false, gitRoots: [reposDir], claudeBin: fakeClaude, teamFolder: path.join(reposDir, 'equipo'), myName: 'Yo' },
+    farm: { id: 'yo-test', sent: [], seen: [], received: [], rewardWeek: '', pendingVisits: [] },
     flags: { tourDone: true },
     life: { running: false, lastQuitHow: 'update', lastQuitAt: now },
     // Historial con muchos commits (para el rasgo "Hacker").
@@ -370,6 +371,37 @@ test('2.0 Claude: modelo por petición, recurrentes, qué funciona y ajustes de 
   await s.evaluate(() => { const i = document.querySelector('#run-limitpct'); i.value = '120'; i.dispatchEvent(new Event('change')); });
   await s.waitForFunction(async () => (await pm.getState()).claudeRunner.limitPct === 99, null, { timeout: 5000 });
   await s.evaluate(() => pm.updateSettings({ claudeLimitPct: 85 }));
+});
+
+test('2.0 equipo: granja compartida, kudo con maíz y visita de un compañero', async () => {
+  const panel = await waitPage('panel');
+  const pet = await waitPage('pet');
+  // Dos compañeros escriben su tarjeta en la carpeta del equipo; Ana además le manda una visita a tu pollito.
+  const g = path.join(reposDir, 'equipo', 'pm-granja');
+  fs.mkdirSync(g, { recursive: true });
+  const tf = require('../../src/teamfarm');
+  const ana = tf.card({ id: 'ana', name: 'Ana', pet: { name: 'Pío', species: 'cat' }, level: 7, weekMins: 200 });
+  fs.writeFileSync(path.join(g, 'ana.json'), JSON.stringify(ana));
+  fs.writeFileSync(path.join(g, 'ana.out.json'), JSON.stringify([tf.event('visit', ana, 'yo-test', '¡hola!')]));
+  fs.writeFileSync(path.join(g, 'beto.json'), JSON.stringify(tf.card({ id: 'beto', name: 'Beto', pet: { species: 'penguin' }, focusMode: true })));
+  await panel.evaluate(() => pm.command('panel', 'pet'));
+  await panel.evaluate(() => pm.farmRefresh());
+  await panel.waitForFunction(() => document.querySelectorAll('#farm-list .mate').length === 2, null, { timeout: 8000 });
+  const r = await panel.evaluate(() => [...document.querySelectorAll('#farm-list .mate')].map((m) => [m.querySelector('b').textContent, m.className.includes('st-focus'), m.querySelector('.m-visit').disabled]));
+  assert.deepEqual(r, [['Ana', false, false], ['Beto', true, true]], 'Beto en foco: dormido y sin visitas');
+  assert.equal(await panel.evaluate(() => !document.querySelector('#farm-challenge').classList.contains('hidden')), true, 'reto de foco visible');
+  // La visita de Ana llega al pollito.
+  await pet.waitForFunction(() => document.body.classList.contains('visiting') && /Pío · de Ana/.test(document.querySelector('#visitor-tag').textContent), null, { timeout: 5000 });
+  // Kudo a Ana con mensaje: queda en tu buzón de la carpeta.
+  await panel.click('#farm-list .mate[data-id="ana"] .m-kudo');
+  await panel.fill('#farm-list .kudo-msg', 'gracias por la review');
+  await panel.click('#farm-list .kudo-form button[type=submit]');
+  await panel.waitForFunction(() => /2 kudos hoy/.test(document.querySelector('#farm-kudos-left').textContent), null, { timeout: 5000 });
+  const out = JSON.parse(fs.readFileSync(path.join(g, 'yo-test.out.json'), 'utf8'));
+  assert.deepEqual(out.map((e) => [e.type, e.to, e.msg]), [['kudo', 'ana', 'gracias por la review']]);
+  const mine = JSON.parse(fs.readFileSync(path.join(g, 'yo-test.json'), 'utf8'));
+  assert.equal(mine.name, 'Yo');
+  assert.equal('coins' in mine, false);
 });
 
 test('ajustes: diagnóstico sin errores de la app', async () => {

@@ -197,6 +197,11 @@ contextBridge.exposeInMainWorld('pm', {
   onHatch: on('pet:hatch'),
   // Cola de Claude que se ejecuta sola
   runStart: (queueId, force) => ipcRenderer.invoke('runs:start', { id: queueId, force: !!force }),
+  farmFolder: (clear) => ipcRenderer.invoke('farm:folder', clear ? '' : undefined),
+  farmKudo: (to, msg) => ipcRenderer.invoke('farm:kudo', to, msg),
+  farmVisit: (to) => ipcRenderer.invoke('farm:visit', to),
+  farmRefresh: () => ipcRenderer.invoke('farm:refresh'),
+  onVisitor: on('pet:visitor'),
   recurringSave: (r) => ipcRenderer.invoke('claudeRec:save', r),
   recurringDelete: (id) => ipcRenderer.invoke('claudeRec:delete', id),
   runAccept: (id) => ipcRenderer.invoke('runs:accept', id),

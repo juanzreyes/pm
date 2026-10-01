@@ -930,5 +930,22 @@ pm.onBreathe((b) => {
   }, 1000);
 });
 
+// 🏠 De visita: el pollito de un compañero llega caminando, se queda un rato y se va.
+const VISIT_COLORS = { chick: ['#ffe066', '#d99a14', '#ff9f1c'], duck: ['#fbfaf5', '#c9bfa8', '#ff9f1c'], cat: ['#f6a85c', '#b86b27', '#ff7b9c'], penguin: ['#3d4352', '#22262f', '#ffb020'] };
+let visitTimer = null;
+pm.onVisitor((v) => {
+  const [fill, line, beak] = VISIT_COLORS[v.species] || VISIT_COLORS.chick;
+  const belly = v.species === 'penguin' ? '<ellipse cx="25" cy="32" rx="10" ry="11" fill="#fff"/>' : '';
+  const ears = v.species === 'cat' ? `<path d="M12 18 l2 -10 l8 7z M38 18 l-2 -10 l-8 7z" fill="${fill}" stroke="${line}" stroke-width="1.2"/>` : '';
+  $('#visitor-pet').innerHTML = `<svg viewBox="0 0 50 50" width="54" height="54" aria-label="Visita"><ellipse cx="25" cy="47" rx="12" ry="2.5" fill="#000" opacity=".14"/><path d="M19 42 q-1 5 -4 6 h6z M31 42 q1 5 4 6 h-6z" fill="${beak}"/>${ears}<ellipse cx="25" cy="29" rx="16" ry="16" fill="${fill}" stroke="${line}" stroke-width="1.4"/>${belly}<ellipse cx="19.5" cy="25" rx="2.3" ry="2.8" fill="#3b2f2f"/><ellipse cx="30.5" cy="25" rx="2.3" ry="2.8" fill="#3b2f2f"/><path d="M22 31 q3 -3 6 0 q-3 3 -6 0z" fill="${beak}"/><ellipse cx="14" cy="31" rx="2.8" ry="1.8" fill="#ff9fb0" opacity=".6"/><ellipse cx="36" cy="31" rx="2.8" ry="1.8" fill="#ff9fb0" opacity=".6"/></svg>`;
+  $('#visitor-tag').textContent = `${v.petName} · de ${v.name}`;
+  body.classList.remove('visit-leaving');
+  body.classList.add('visiting');
+  clearTimeout(visitTimer);
+  visitTimer = setTimeout(() => {
+    body.classList.add('visit-leaving');
+    visitTimer = setTimeout(() => body.classList.remove('visiting', 'visit-leaving'), 1600);
+  }, Math.max(5000, Math.min(120000, v.ms || 45000)));
+});
 // Pijama tras el ritual de cierre (hasta la mañana).
 pm.onPajamas((p) => body.classList.toggle('pajamas', !!(p && p.on)));

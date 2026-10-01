@@ -442,6 +442,17 @@
         <div class="row between"><h3>📮 Postales</h3></div>
         <div id="soul-postcards" class="diary"></div>
 
+        <!-- Granja del equipo (2.0 · 5/7) -->
+        <div class="row between"><h3>👥 Granja del equipo</h3><span id="farm-kudos-left" class="pill hidden"></span></div>
+        <div id="farm-setup" class="box small">
+          <p>Los pollitos de tu equipo viven juntos en una <b>carpeta compartida</b> (OneDrive, Google Drive, una unidad de red…). Solo se comparte tu nombre, tu pollito, su nivel, si estás en foco y tus minutos de foco de la semana: <b>nunca</b> tareas, proyectos ni apps.</p>
+          <div class="row gap wrap"><button id="farm-choose" class="primary">📁 Elegir carpeta del equipo</button><span id="farm-folder" class="muted small"></span></div>
+          <label id="farm-share-row" class="row gap small hidden"><input type="checkbox" id="farm-share" /> Compartir mi pollito con el equipo</label>
+        </div>
+        <div id="farm-challenge" class="box small hidden"></div>
+        <div id="farm-list" class="farm"></div>
+        <div id="farm-received" class="diary"></div>
+
         <h3>🐾 Especie</h3>
         <div id="species" class="species"></div>
 
@@ -659,6 +670,7 @@
   <script src="panel-work.js"></script>
   <script src="panel-soul.js"></script>
   <script src="panel-coach.js"></script>
+  <script src="panel-team.js"></script>
   <script src="stats.js"></script>
 </body>
 </html>

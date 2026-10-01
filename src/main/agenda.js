@@ -307,6 +307,7 @@ module.exports = function install(M) {
       ...M.work.runsState(),
       remote: M.remote.remoteState(),
       team: M.team.teamState(),
+      farm: M.farm ? M.farm.farmState() : null,
       errReport: M.errreport.errState(),
       ...(M.soul ? M.soul.snapshot() : {}),
       presence: M.presence.presenceState(),

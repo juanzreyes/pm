@@ -283,7 +283,7 @@ module.exports = function install(M) {
     });
 
     M.ipcMain.handle('settings:update', (_e, patch) => {
-      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget', 'claudeParallel', 'claudeReview', 'claudeAutoFixCi', 'claudeAutoFixReview', 'claudeMaxFixes', 'petPerch', 'pcReactions', 'typeAlong', 'weatherCity', 'petStyle', 'stuckDetector', 'planCheck', 'bestHour', 'closingRitual', 'endOfDay', 'closeApps', 'myName', 'claudeRespectLimits', 'claudeLimitPct', 'claudeModelAuto'];
+      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget', 'claudeParallel', 'claudeReview', 'claudeAutoFixCi', 'claudeAutoFixReview', 'claudeMaxFixes', 'petPerch', 'pcReactions', 'typeAlong', 'weatherCity', 'petStyle', 'stuckDetector', 'planCheck', 'bestHour', 'closingRitual', 'endOfDay', 'closeApps', 'myName', 'claudeRespectLimits', 'claudeLimitPct', 'claudeModelAuto', 'teamShare'];
       if ('claudeLimitPct' in patch) patch.claudeLimitPct = Math.max(50, Math.min(99, Math.round(Number(patch.claudeLimitPct)) || 85));
       if ('endOfDay' in patch && !/^\d{2}:\d{2}$/.test(patch.endOfDay || '')) delete patch.endOfDay;
       if ('closeApps' in patch) patch.closeApps = (Array.isArray(patch.closeApps) ? patch.closeApps : String(patch.closeApps || '').split(/[,\n]/)).map((x) => String(x).trim().replace(/\.exe$/i, '')).filter((x) => /^[\w .-]{2,40}$/.test(x)).slice(0, 12);
@@ -292,6 +292,7 @@ module.exports = function install(M) {
       if ('weatherCity' in patch) patch.weatherCity = String(patch.weatherCity || '').trim().slice(0, 80);
       if ('weatherCity' in patch) setTimeout(() => M.presence.weatherTick(true), 50);
       if (patch.petPerch === false) setTimeout(() => M.presence.goHome(), 50);
+      if ('teamShare' in patch || 'myName' in patch) setTimeout(() => M.farm.tick(), 50);
       if ('claudeParallel' in patch) patch.claudeParallel = Math.max(1, Math.min(3, Math.round(Number(patch.claudeParallel)) || 2));
       if ('claudeMaxFixes' in patch) patch.claudeMaxFixes = Math.max(0, Math.min(5, Math.round(Number(patch.claudeMaxFixes)) || 0));
       if ('claudeRunBudget' in patch) patch.claudeRunBudget = Math.max(0, Math.min(100, Number(patch.claudeRunBudget) || 0));
@@ -661,6 +662,11 @@ module.exports = function install(M) {
     M.ipcMain.handle('queue:next', (_e, project) => !!M.plan.queueNext(project));
     // Cola de Claude que se ejecuta sola (worktree aparte + claude -p)
     M.ipcMain.handle('runs:start', (_e, a) => (a && typeof a === 'object' ? M.work.startRun(String(a.id || ''), { force: !!a.force }) : M.work.startRun(String(a || ''))));
+    // Granja del equipo (2.0 · 5/7)
+    M.ipcMain.handle('farm:folder', (e, folder) => (folder === '' ? M.farm.setFolder('') : M.farm.chooseFolder(M.BrowserWindow.fromWebContents(e.sender))));
+    M.ipcMain.handle('farm:kudo', (_e, to, msg) => M.farm.giveKudo(String(to || ''), String(msg || '')));
+    M.ipcMain.handle('farm:visit', (_e, to) => M.farm.visit(String(to || '')));
+    M.ipcMain.handle('farm:refresh', () => { M.farm.tick(); return M.farm.farmState(); });
     M.ipcMain.handle('claudeRec:save', (_e, r) => M.work.recurringSave(r || {}));
     M.ipcMain.handle('claudeRec:delete', (_e, id) => M.work.recurringDelete(String(id)));
     M.ipcMain.handle('runs:accept', (_e, id) => M.work.acceptRun(String(id)));

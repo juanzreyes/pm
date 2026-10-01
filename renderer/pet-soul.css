@@ -138,3 +138,15 @@
 /* 🌙 pijama tras el ritual de cierre */
 .pajamas #tr-owl { display: inline; }
 .pajamas:not(.trait-owl) #tr-owl .bag { display: none; }
+
+/* ---------- 🏠 de visita (granja del equipo) ---------- */
+#visitor { display: none; position: absolute; left: -60px; bottom: 6px; width: 58px; flex-direction: column; align-items: flex-start; pointer-events: none; z-index: 4; }
+.visiting #visitor { display: flex; animation: visitIn 1.6s ease-out both; }
+.visiting.visit-leaving #visitor { animation: visitOut 1.6s ease-in both; }
+#visitor-pet svg { overflow: visible; display: block; animation: visitBob 1.8s ease-in-out 1.6s infinite; }
+#visitor-tag { margin-left: 2px; font: 800 9.5px/1.2 "Segoe UI", system-ui, sans-serif; color: #3b2f2f; background: #fffdf6; border: 1.5px solid #3b2f2f; border-radius: 8px; padding: 1px 5px; white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+@keyframes visitIn { from { transform: translateX(-70px); } to { transform: translateX(0); } }
+@keyframes visitOut { from { transform: translateX(0); } to { transform: translateX(-80px); opacity: 0; } }
+@keyframes visitBob { 0%, 100% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-3px) rotate(-5deg); } 75% { transform: translateY(-3px) rotate(5deg); } }
+.reduced #visitor, .reduced #visitor-pet svg { animation: none !important; }
+.on-vacation #visitor { display: none !important; }
