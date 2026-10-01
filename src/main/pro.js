@@ -83,20 +83,34 @@ module.exports = function install(M) {
   }
 
   // ---------- línea de comandos "pm" ----------
+  // Rutas según instalador normal o Microsoft Store (src/storepaths.js).
+  const sp = require('../storepaths');
+  function installPaths() {
+    return sp.paths({ store: !!process.windowsStore, home: M.os.homedir(), localAppData: process.env.LOCALAPPDATA || M.path.join(M.os.homedir(), 'AppData', 'Local'), appDir: M.APP_DIR, execPath: process.execPath });
+  }
+  /** En la Store: copia los scripts a una carpeta estable (la del paquete cambia en cada versión). */
+  function refreshStableScripts() {
+    const p = installPaths();
+    if (!p.store) return;
+    try {
+      M.fs.mkdirSync(p.cli.dir, { recursive: true });
+      for (const [from, to] of p.copies) M.fs.copyFileSync(from, to);
+    } catch (e) { M.diag.log('main', 'Scripts de la Store: ' + e.message); }
+  }
   function cliPaths() {
-    const script = M.path.join(M.APP_DIR, 'cli', 'pm.js').replace(/app\.asar([\\/])/, 'app.asar.unpacked$1');
-    const dir = M.path.join(process.env.LOCALAPPDATA || M.path.join(M.os.homedir(), 'AppData', 'Local'), 'Microsoft', 'WindowsApps');
-    return { script, file: M.path.join(dir, 'pm.cmd'), dir };
+    const p = installPaths();
+    return { ...p.cli, exe: p.exe, store: p.store };
   }
   function cliInstalled() { try { return M.fs.readFileSync(cliPaths().file, 'utf8').includes('PM Pollito'); } catch { return false; } }
   function installCli(on) {
     const c = cliPaths();
     if (!on) { if (cliInstalled()) M.fs.unlinkSync(c.file); return false; }
     if (M.fs.existsSync(c.file) && !cliInstalled()) throw new Error('Ya existe otro comando "pm" en tu PC; no lo sobrescribo.');
-    M.fs.writeFileSync(c.file, [
-      '@echo off', 'rem PM Pollito: linea de comandos del pollito', 'chcp 65001 >nul', 'setlocal',
-      'set ELECTRON_RUN_AS_NODE=1', `"${process.execPath}" "${c.script}" %*`, '',
-    ].join('\r\n'));
+    if (c.store) refreshStableScripts();
+    M.fs.mkdirSync(c.dir, { recursive: true });
+    M.fs.writeFileSync(c.file, sp.cliCmd(c.exe, c.script));
+    // En la Store, Windows no deja a la app tocar tu PATH: te damos el comando para hacerlo una vez.
+    if (!c.onPath) M.say(`⌨️ Comando "pm" listo en ${c.dir}. Para usarlo desde cualquier terminal, añade esa carpeta a tu PATH (una sola vez).`, 'peck', 20000, { cat: 'pet', actions: [{ label: '📋 Copiar comando de PowerShell', cmd: 'copy.text', arg: sp.pathCommand(c.dir) }] });
     return true;
   }
 
@@ -262,8 +276,9 @@ module.exports = function install(M) {
   }
   /** Ruta del puente MCP y ejecutable (fuera del .asar en la versión instalada). */
   function bridgePaths() {
-    const bridge = M.path.join(M.APP_DIR, 'mcp', 'bridge.js').replace(/app\.asar([\\/])/, 'app.asar.unpacked$1');
-    return { exe: process.execPath, bridge };
+    const p = installPaths();
+    if (p.store) refreshStableScripts();
+    return { exe: p.exe, bridge: p.bridge };
   }
   function setIntegration(what, on) {
     if (what === 'mcpCode') on ? M.integrations.installMcpCode(mcpToken()) : M.integrations.uninstallMcpCode();
@@ -315,6 +330,7 @@ module.exports = function install(M) {
     updateProjectMemory,
     integrationsState,
     bridgePaths,
+    refreshStableScripts,
     setIntegration,
     isRepo,
     extCapture,

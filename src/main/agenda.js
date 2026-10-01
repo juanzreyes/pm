@@ -309,6 +309,8 @@ module.exports = function install(M) {
       team: M.team.teamState(),
       farm: M.farm ? M.farm.farmState() : null,
       game: M.gz ? M.gz.gameState() : null,
+      browserExt: M.browser ? M.browser.browserState() : null,
+      plugins: M.plugins ? M.plugins.pluginsState() : null,
       errReport: M.errreport.errState(),
       ...(M.soul ? M.soul.snapshot() : {}),
       presence: M.presence.presenceState(),

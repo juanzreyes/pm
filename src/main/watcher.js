@@ -159,7 +159,7 @@ module.exports = function install(M) {
     broadcastTimer = setTimeout(() => {
       broadcastTimer = null;
       const snap = M.snapshot();
-      for (const w of [M.petWin, M.panelWin, M.settingsWin, M.paletteWin]) if (w && !w.isDestroyed()) w.webContents.send('state', snap);
+      for (const w of [M.petWin, M.panelWin, M.settingsWin, M.paletteWin, M.widgetWin]) if (w && !w.isDestroyed()) w.webContents.send('state', snap);
     }, 16);
   }
 

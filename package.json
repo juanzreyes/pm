@@ -15,7 +15,9 @@
     "dist:mac": "electron-builder --mac --publish never",
     "test:ui": "node --test --test-concurrency=1 tests/ui/*.test.js",
     "test:all": "npm run typecheck && npm test && npm run test:ui",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "dist:linux": "electron-builder --linux --publish never",
+    "dist:store": "node scripts/store-build.js"
   },
   "author": "Juan Ramon Reyes Linares",
   "license": "MIT",
@@ -52,7 +54,10 @@
       "build/icon.png",
       "mcp/**/*",
       "cli/**/*",
-      "CHANGELOG.md"
+      "CHANGELOG.md",
+      "extensions/browser/**/*",
+      "examples/plugins/**/*",
+      "PLUGINS.md"
     ],
     "win": {
       "target": [
@@ -77,7 +82,9 @@
     },
     "asarUnpack": [
       "mcp/**/*",
-      "cli/**/*"
+      "cli/**/*",
+      "extensions/**/*",
+      "examples/**/*"
     ],
     "mac": {
       "target": [
@@ -106,6 +113,53 @@
     },
     "dmg": {
       "artifactName": "PM-Pollito-${version}-${arch}.${ext}"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "Office",
+      "executableName": "pm-pollito",
+      "synopsis": "Tu pollito project manager: límites de Claude, foco y tu día",
+      "maintainer": "Juan Ramon Reyes Linares <tfcjuanz@gmail.com>"
+    },
+    "appImage": {
+      "artifactName": "PM-Pollito-${version}.${ext}"
+    },
+    "deb": {
+      "artifactName": "pm-pollito_${version}_${arch}.${ext}",
+      "recommends": [
+        "xdotool",
+        "xprintidle"
+      ]
+    },
+    "appx": {
+      "identityName": "PMPollito",
+      "publisher": "CN=PENDIENTE-DE-PARTNER-CENTER",
+      "publisherDisplayName": "Juan Ramon Reyes Linares",
+      "applicationId": "PMPollito",
+      "displayName": "PM Pollito",
+      "backgroundColor": "#FFD84A",
+      "languages": [
+        "es-ES",
+        "en-US"
+      ],
+      "addAutoLaunchExtension": true,
+      "artifactName": "PM-Pollito-${version}.${ext}",
+      "customExtensionsPath": "build/appx-extensions.xml",
+      "minVersion": "10.0.17763.0"
     },
     "publish": [
       {

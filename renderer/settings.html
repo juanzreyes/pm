@@ -19,6 +19,7 @@
         <button data-sec="health" data-icon="activity">Salud</button>
         <button data-sec="privacy" data-icon="shield">Privacidad y datos</button>
         <button data-sec="integrations" data-icon="plug">Integraciones</button>
+        <button data-sec="plugins" data-icon="plug">Plugins</button>
         <button data-sec="remote" data-icon="bell">Avisos fuera del PC</button>
         <button data-sec="claude" data-icon="gauge">Cuenta de Claude</button>
         <button data-sec="ai" data-icon="bot">IA</button>
@@ -71,6 +72,7 @@
             <div class="seg" id="size"><button data-v="s">Pequeño</button><button data-v="m">Mediano</button><button data-v="l">Grande</button></div></div>
           <div class="opt row between"><div><b>Estilo del pollito</b><p class="muted small">Game Boy pixelado, plastilina o minimalista para una oficina seria.</p></div>
             <div class="seg" id="pet-style"><button data-v="normal">Normal</button><button data-v="pixel">👾 Pixel</button><button data-v="clay">🧱 Plastilina</button><button data-v="minimal">Minimal</button></div></div>
+          <div class="opt row between"><div><b>🪟 Widget de escritorio</b><p class="muted small">Una tarjeta en tu escritorio con tus límites de Claude, tu día, la próxima reunión y el pomodoro. Arrástrala donde quieras. (El panel de widgets de Windows 11 solo admite apps nativas de la Store, por eso va en tu escritorio).</p></div><input type="checkbox" class="switch" id="desktop-widget" /></div>
           <div class="opt row between"><div><b>Sentarse en mis ventanas</b><p class="muted small">Salta a la barra de título de la ventana que usas (no a las maximizadas). Si lo arrastras, se queda donde lo dejes 30 min.</p></div><input type="checkbox" class="switch" id="pet-perch" /></div>
           <div class="opt row between"><div><b>Reaccionar a mi PC</b><p class="muted small">Bosteza con batería baja, saca una antena sin wifi y suda con la CPU al 100%.</p></div><input type="checkbox" class="switch" id="pc-react" /></div>
           <div class="opt row between"><div><b>Teclear conmigo</b><p class="muted small">Cuando escribes, saca su portátil y teclea. No lee tus teclas: solo nota que hay actividad sin mover el ratón.</p></div><input type="checkbox" class="switch" id="type-along" /></div>
@@ -158,6 +160,14 @@
             <div class="opt row between" id="mcp-desktop-row"><div><b>Claude Desktop</b><p class="muted small">Para el chat de la app de Claude. Reinicia Claude Desktop después.</p></div><input type="checkbox" class="switch" id="mcp-desktop" /></div>
             <div class="opt row between"><div><b>Línea de estado en Claude Code</b><p class="muted small" id="sl-info">Abajo en Claude Code: 🐣 42% · 🍅 12:30 · ✅ 3/7</p></div><input type="checkbox" class="switch" id="mcp-statusline" /></div>
             <div id="mcp-msg" class="small"></div>
+          </div>
+          <div class="opt box small" id="browser-box">
+            <div class="row between"><b>🌐 Extensión del navegador (Chrome / Edge)</b><span id="bx-status" class="pill"></span></div>
+            <p class="muted">Tu sesión y tu día en la barra del navegador, "Enviar a PM" (clic derecho en cualquier página o texto) y, en modo foco, frena los sitios que distraen. Instálala desde la carpeta de PM: <code>chrome://extensions</code> o <code>edge://extensions</code> → Modo de desarrollador → <b>Cargar descomprimida</b>. Luego pega este código en la extensión:</p>
+            <div class="row gap"><input id="bx-token" readonly style="flex:1;font-family:monospace" aria-label="Código de emparejamiento" /><button id="bx-copy" class="soft">📋 Copiar</button><button id="bx-regen" class="ghost" title="Las extensiones con el código anterior dejan de funcionar">🔄 Nuevo</button></div>
+            <div class="row gap"><button id="bx-folder" class="ghost" data-icon="folder">Abrir la carpeta de la extensión</button></div>
+            <div class="opt row between"><div><b>Frenar sitios que distraen en modo foco</b><p class="muted small">Separados por comas. La extensión los cambia por una pantalla del pollito mientras dure el foco (puedes saltártela 5 min).</p></div><input type="checkbox" class="switch" id="bx-block" /></div>
+            <textarea id="bx-sites" rows="2" aria-label="Sitios que distraen"></textarea>
           </div>
           <div class="opt box small" id="runner-box">
             <div class="row between"><b>▶️ Cola de Claude que se ejecuta sola</b><span id="run-status" class="pill"></span></div>
@@ -259,6 +269,13 @@
         </div>
 
         <!-- AVISOS FUERA DEL PC -->
+        <div class="sec" id="sec-plugins" data-title="Plugins">
+          <h2>Plugins</h2>
+          <p class="muted small">Amplía PM con plugins: comandos nuevos en la paleta, reacciones a tus tareas, al foco o a Claude… Cada uno corre en su propio proceso y solo hace con PM lo que le permitas. Están desactivados hasta que tú los actives.</p>
+          <div class="row gap wrap"><button id="pl-folder" class="soft" data-icon="folder">Abrir la carpeta de plugins</button><button id="pl-scan" class="ghost">🔄 Buscar de nuevo</button><button id="pl-example" class="ghost">🐣 Instalar el ejemplo</button></div>
+          <div id="pl-list" class="col gap"></div>
+          <p class="muted small">Cómo escribir uno: <b>PLUGINS.md</b> en el proyecto de PM Pollito. ⚠️ El código de un plugin corre en tu PC como cualquier programa: instala solo plugins de personas en las que confíes.</p>
+        </div>
         <div class="sec" id="sec-remote" data-title="Avisos fuera del PC">
           <h2>Avisos fuera del PC</h2>
           <div class="opt box small">

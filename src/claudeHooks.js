@@ -80,6 +80,39 @@ function uninstall() {
  *  - POST /statusline   → línea de estado de Claude Code (recibe el JSON de la sesión, devuelve texto)
  * /status, /command y /capture exigen la cabecera "X-PM: 1" (una web no puede enviarla sin permiso).
  */
+/**
+ * Extensión del navegador (2.0): una extensión sí manda "Origin: chrome-extension://…", así que va
+ * por su propia puerta: /browser/* exige el código de emparejamiento que ves en Ajustes (una web
+ * no puede conocerlo) y que el origen sea una extensión.
+ */
+const EXT_ORIGIN = /^(chrome-extension|moz-extension|extension):\/\/[\w-]+$/;
+function browserAuth(headers, token) {
+  const origin = headers.origin || '';
+  if (origin && !EXT_ORIGIN.test(origin)) return false;
+  return !!token && String(headers.authorization || '') === `Bearer ${token}`;
+}
+function handleBrowser(req, res, url, api) {
+  const origin = req.headers.origin || '';
+  const cors = EXT_ORIGIN.test(origin) ? { 'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Headers': 'Authorization, Content-Type', 'Access-Control-Allow-Methods': 'GET, POST' } : {};
+  if (req.method === 'OPTIONS' && cors['Access-Control-Allow-Origin']) { res.writeHead(204, cors); return res.end(); }
+  const send = (code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', ...cors }); res.end(JSON.stringify(obj)); };
+  if (!api.browser || !browserAuth(req.headers, api.browser.token())) return send(401, { ok: false, error: 'Empareja la extensión con el código de PM (Ajustes → Integraciones)' });
+  api.browser.seen();
+  if (req.method === 'GET' && url === '/browser/status') return send(200, api.browser.status());
+  if (req.method !== 'POST' || !['/browser/capture', '/browser/focus', '/browser/blocked'].includes(url)) return send(404, { ok: false });
+  let body = '';
+  req.on('data', (c) => { body += c; if (body.length > 2e4) req.destroy(); });
+  req.on('end', () => {
+    let data = {};
+    try { data = JSON.parse(body || '{}'); } catch { return send(400, { ok: false, error: 'JSON no válido' }); }
+    let out;
+    try {
+      out = url === '/browser/capture' ? api.browser.capture(data) : url === '/browser/focus' ? api.browser.focus(data) : api.browser.blocked(data);
+    } catch (e) { out = { ok: false, error: e.message }; }
+    send(out && out.ok === false ? 400 : 200, out || { ok: true });
+  });
+}
+
 function startServer(onEvent, api = {}) {
   const server = http.createServer((req, res) => {
     const ip = req.socket.remoteAddress;
@@ -88,6 +121,7 @@ function startServer(onEvent, api = {}) {
       return res.end();
     }
     const url = (req.url || '').split('?')[0];
+    if (url.startsWith('/browser/')) return handleBrowser(req, res, url, api);
     const fromExtension = req.headers['x-pm'] === '1' && !req.headers.origin;
     if (url !== '/claude-hook') {
       if (!fromExtension) { res.writeHead(403); return res.end(); }
@@ -158,8 +192,8 @@ function startServer(onEvent, api = {}) {
     });
   });
   server.on('error', () => {}); // puerto ocupado: otra instancia ya escucha
-  server.listen(PORT, '127.0.0.1');
+  server.listen(api.port ?? PORT, '127.0.0.1'); // api.port: solo para tests (0 = puerto libre)
   return server;
 }
 
-module.exports = { install, uninstall, installed, startServer, settingsPath };
+module.exports = { install, uninstall, installed, startServer, settingsPath, browserAuth };

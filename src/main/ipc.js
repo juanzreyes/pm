@@ -191,6 +191,7 @@ module.exports = function install(M) {
       const wasDone = new Set(((day.standup && day.standup.today) || []).filter((t) => t.done).map((t) => t.text));
       day.standup = { yesterday: String(yesterday || '').trim(), today: list.map((text) => ({ text, done: wasDone.has(text) })), help: String(help || '').trim(), at: Date.now() };
       delete day.snoozeStandup;
+      if (M.plugins) M.plugins.emit('day:start', { tasks: list });
       const p = M.store.data.pet;
       p.happiness = M.clamp(p.happiness + 10);
       if (!day.standup.xpGiven) { day.standup.xpGiven = true; M.addXp(15); }
@@ -219,6 +220,7 @@ module.exports = function install(M) {
         M.say(all ? '¡TODAS las tareas listas! 🎉🎉' : `${M.pl ? M.pl.praise() : '¡Bien!'} "${t.text}" ✅`, all ? 'celebrate' : 'dance', 6000);
         M.work.onTaskDone(t); // si viene de un ticket: se cierra en su gestor y se cargan las horas
         if (M.soul) M.soul.onTaskDone(t, all); // riega la huerta y, si es la última, un truco
+        if (M.plugins) M.plugins.emit('task:done', { text: t.text, all });
       }
       M.store.save();
       M.broadcast();
@@ -283,7 +285,7 @@ module.exports = function install(M) {
     });
 
     M.ipcMain.handle('settings:update', (_e, patch) => {
-      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget', 'claudeParallel', 'claudeReview', 'claudeAutoFixCi', 'claudeAutoFixReview', 'claudeMaxFixes', 'petPerch', 'pcReactions', 'typeAlong', 'weatherCity', 'petStyle', 'stuckDetector', 'planCheck', 'bestHour', 'closingRitual', 'endOfDay', 'closeApps', 'myName', 'claudeRespectLimits', 'claudeLimitPct', 'claudeModelAuto', 'teamShare'];
+      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget', 'claudeParallel', 'claudeReview', 'claudeAutoFixCi', 'claudeAutoFixReview', 'claudeMaxFixes', 'petPerch', 'pcReactions', 'typeAlong', 'weatherCity', 'petStyle', 'stuckDetector', 'planCheck', 'bestHour', 'closingRitual', 'endOfDay', 'closeApps', 'myName', 'claudeRespectLimits', 'claudeLimitPct', 'claudeModelAuto', 'teamShare', 'focusBlock'];
       if ('claudeLimitPct' in patch) patch.claudeLimitPct = Math.max(50, Math.min(99, Math.round(Number(patch.claudeLimitPct)) || 85));
       if ('endOfDay' in patch && !/^\d{2}:\d{2}$/.test(patch.endOfDay || '')) delete patch.endOfDay;
       if ('closeApps' in patch) patch.closeApps = (Array.isArray(patch.closeApps) ? patch.closeApps : String(patch.closeApps || '').split(/[,\n]/)).map((x) => String(x).trim().replace(/\.exe$/i, '')).filter((x) => /^[\w .-]{2,40}$/.test(x)).slice(0, 12);
@@ -655,6 +657,15 @@ module.exports = function install(M) {
     M.ipcMain.handle('queue:next', (_e, project) => !!M.plan.queueNext(project));
     // Cola de Claude que se ejecuta sola (worktree aparte + claude -p)
     M.ipcMain.handle('runs:start', (_e, a) => (a && typeof a === 'object' ? M.work.startRun(String(a.id || ''), { force: !!a.force }) : M.work.startRun(String(a || ''))));
+    // Plugins (2.0 · 7/7)
+    M.ipcMain.handle('plugins:enable', (_e, id, on) => M.plugins.setEnabled(String(id || ''), !!on));
+    M.ipcMain.handle('plugins:scan', () => { M.plugins.scan(); M.broadcast(); return M.plugins.pluginsState(); });
+    M.ipcMain.handle('plugins:folder', () => M.plugins.openFolder());
+    M.ipcMain.handle('plugins:example', () => M.plugins.installExample());
+    // Extensión del navegador (2.0 · 7/7)
+    M.ipcMain.handle('browser:regen', () => M.browser.regenerate());
+    M.ipcMain.handle('browser:sites', (_e, list) => M.browser.saveSites(list));
+    M.ipcMain.handle('browser:folder', () => { const f = M.browser.browserState().folder; M.shell.openPath(f); return f; });
     // Granja del equipo (2.0 · 5/7)
     M.ipcMain.handle('farm:folder', (e, folder) => (folder === '' ? M.farm.setFolder('') : M.farm.chooseFolder(M.BrowserWindow.fromWebContents(e.sender))));
     M.ipcMain.handle('farm:kudo', (_e, to, msg) => M.farm.giveKudo(String(to || ''), String(msg || '')));

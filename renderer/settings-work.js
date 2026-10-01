@@ -23,10 +23,30 @@
     $('#run-fixrev').checked = !!cr.autoFixReview;
     if (document.activeElement !== $('#run-maxfix')) $('#run-maxfix').value = cr.maxFixes ?? 2;
     if (document.activeElement !== $('#run-budget')) $('#run-budget').value = cr.budget || 0;
+    // ---------- plugins ----------
+    const pl = st.plugins;
+    if (pl) {
+      $('#pl-list').innerHTML = pl.list.length ? pl.list.map((p) => (p.ok
+        ? `<div class="opt box small"><div class="row between"><div><b>${esc(p.name)}</b> <span class="muted">v${esc(p.version)}${p.author ? ' · ' + esc(p.author) : ''}</span></div><input type="checkbox" class="switch pl-toggle" data-id="${esc(p.id)}" ${p.enabled ? 'checked' : ''} aria-label="Activar ${esc(p.name)}" /></div>
+          <p class="muted">${esc(p.description)}</p>
+          <div class="small">${p.perms.map((x) => esc(x)).join(' · ') || 'Sin permisos'}</div>
+          ${p.enabled ? `<div class="small ${p.lastError ? 'err' : 'okmsg'}">${p.lastError ? '😿 ' + esc(p.lastError) : p.ready ? '✅ funcionando' : '⏳ arrancando…'}</div>` : ''}</div>`
+        : `<div class="opt box small"><b>${esc(p.id)}</b><div class="small err">😿 ${esc(p.error)}</div></div>`)).join('')
+        : '<div class="muted small">Aún no tienes plugins. Pon la carpeta de uno en la carpeta de plugins, o instala el ejemplo para ver cómo es.</div>';
+    }
+    // ---------- extensión del navegador ----------
+    const bx = st.browserExt;
+    if (bx) {
+      $('#bx-token').value = bx.token;
+      $('#bx-status').textContent = bx.connected ? '🟢 conectada' : bx.lastSeen ? 'sin conexión reciente' : 'sin emparejar';
+      $('#bx-block').checked = bx.block;
+      if (document.activeElement !== $('#bx-sites')) $('#bx-sites').value = bx.sites.join(', ');
+    }
     // ---------- apariencia 2.0 ----------
     const ss = st.settings || {};
     segOn($('#pet-style'), ss.petStyle || 'normal');
     $('#pet-perch').checked = ss.petPerch !== false;
+    $('#desktop-widget').checked = !!ss.desktopWidget;
     $('#pc-react').checked = ss.pcReactions !== false;
     $('#type-along').checked = ss.typeAlong !== false;
     if (document.activeElement !== $('#weather-city')) $('#weather-city').value = ss.weatherCity || '';
@@ -136,6 +156,24 @@
 
   // ---------- apariencia 2.0 ----------
   $('#pet-style').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) pm.updateSettings({ petStyle: b.dataset.v }); });
+  $('#pl-folder').addEventListener('click', () => pm.pluginsFolder());
+  $('#pl-scan').addEventListener('click', () => pm.pluginsScan());
+  $('#pl-example').addEventListener('click', () => pm.pluginsExample());
+  $('#pl-list').addEventListener('change', async (e) => {
+    const t = e.target.closest('.pl-toggle');
+    if (!t) return;
+    const p = (st.plugins.list || []).find((x) => x.id === t.dataset.id);
+    // Activar pide tu permiso explícito, con la lista de lo que podrá hacer.
+    if (t.checked && !confirm(`¿Activar "${p.name}"?\n\nPodrá:\n• ${p.perms.join('\n• ') || 'nada con PM'}\n\nSu código corre en tu PC: actívalo solo si confías en quien lo hizo.`)) { t.checked = false; return; }
+    const r = await pm.pluginsEnable(p.id, t.checked);
+    if (!r.ok) { t.checked = !t.checked; alert('😿 ' + r.error); }
+  });
+  $('#bx-copy').addEventListener('click', () => { navigator.clipboard.writeText($('#bx-token').value).catch(() => {}); $('#bx-copy').textContent = '✅ Copiado'; setTimeout(() => { $('#bx-copy').textContent = '📋 Copiar'; }, 1500); });
+  $('#bx-regen').addEventListener('click', () => { if (confirm('¿Crear un código nuevo? La extensión tendrá que emparejarse otra vez.')) pm.browserRegen(); });
+  $('#bx-folder').addEventListener('click', () => pm.browserFolder());
+  $('#bx-block').addEventListener('change', (e) => pm.updateSettings({ focusBlock: e.target.checked }));
+  $('#bx-sites').addEventListener('change', (e) => pm.browserSites(e.target.value));
+  $('#desktop-widget').addEventListener('change', () => pm.command('widget.toggle'));
   $('#pet-perch').addEventListener('change', (e) => pm.updateSettings({ petPerch: e.target.checked }));
   $('#pc-react').addEventListener('change', (e) => pm.updateSettings({ pcReactions: e.target.checked }));
   $('#type-along').addEventListener('change', (e) => pm.updateSettings({ typeAlong: e.target.checked }));

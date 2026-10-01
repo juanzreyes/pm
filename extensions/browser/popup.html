@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>PM Pollito</title>
+  <link rel="stylesheet" href="common.css" />
+  <style>
+    body { width: 320px; padding: 12px; display: flex; flex-direction: column; gap: 9px; }
+    #main { display: flex; flex-direction: column; gap: 9px; }
+    .lim { display: grid; grid-template-columns: 56px 1fr 38px; gap: 6px; align-items: center; }
+    .lim span:last-child { text-align: right; }
+    #focus-on { background: #ede9fe; border-color: #a78bfa; }
+    @media (prefers-color-scheme: dark) { #focus-on { background: #2e2445; } }
+  </style>
+</head>
+<body>
+  <h1><img src="icons/48.png" width="26" height="26" alt="" /> <span id="name">PM Pollito</span></h1>
+  <div id="err" class="box hidden"><span id="err-text" class="err"></span><button id="pair" class="hidden">🔗 Emparejar con PM</button></div>
+  <div id="main" class="hidden">
+    <div class="box">
+      <div class="lim"><span>Sesión</span><div class="bar"><i id="s-bar"></i></div><span id="s-pct">—</span></div>
+      <div class="lim"><span>Semana</span><div class="bar"><i id="w-bar"></i></div><span id="w-pct">—</span></div>
+      <div id="tasks" class="small"></div>
+    </div>
+    <div id="focus-off" class="box">
+      <b>🎯 Modo foco</b>
+      <div class="row"><button data-min="25">25 min</button><button data-min="50">50 min</button><span class="muted small" id="sites-n"></span></div>
+    </div>
+    <div id="focus-on" class="box hidden">
+      <div class="row between"><b id="focus-text">🎯 En foco</b><button id="focus-stop">Terminar</button></div>
+    </div>
+    <form id="add" class="row"><input id="add-text" placeholder="Anotar tarea o recordatorio…" maxlength="280" autocomplete="off" aria-label="Tarea o recordatorio" /><button class="primary" type="submit" aria-label="Anotar">＋</button></form>
+    <div class="row"><button id="page-task" style="flex:1">📌 Esta página como tarea</button><button id="page-note" title="A las notas de hoy" aria-label="Guardar en notas">📝</button></div>
+    <div id="msg" class="small muted" aria-live="polite"></div>
+  </div>
+  <script src="lib.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -167,6 +167,12 @@ module.exports = function install(M) {
 
   function setAutoStart(on) {
     if (M.TEST) return; // los tests nunca tocan el inicio de Windows
+    if (process.windowsStore) {
+      // Versión de la Store: el inicio con Windows es una "tarea de inicio" que controla Windows.
+      M.shell.openExternal('ms-settings:startupapps');
+      M.say('🚀 En la versión de la Store, el inicio con Windows se activa en Configuración → Aplicaciones → Inicio (busca PM Pollito).', 'peck', 12000, { log: false });
+      return;
+    }
     const opts = { openAtLogin: !!on };
     if (!M.app.isPackaged) {
       opts.path = process.execPath;

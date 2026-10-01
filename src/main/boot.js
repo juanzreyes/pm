@@ -38,10 +38,11 @@ module.exports = function install(M) {
     startTimers();
     registerShortcuts();
 
-    if (!M.SAFE) M.stopFocus = M.focus.start(M.onFocusSample);
+    if (!M.SAFE) M.stopFocus = M.focus.start(M.onFocusSample, (why) => M.diag.log('main', 'Vigilante de foco (Linux): ' + why));
 
     // En la versión instalada, el inicio con Windows debe apuntar al .exe instalado (no al de desarrollo).
-    if (app.isPackaged && store.data.settings.autoStart) M.setAutoStart(true);
+    if (app.isPackaged && store.data.settings.autoStart && !process.windowsStore) M.setAutoStart(true);
+    if (process.windowsStore) M.refreshStableScripts(); // CLI y MCP apuntan a copias estables
 
     // "Siempre debe estar ahí": activa el inicio con Windows una vez (se puede quitar en Ajustes).
     if (!store.data.settings.autoStartAsked && store.data.pet.name) {
@@ -145,10 +146,10 @@ module.exports = function install(M) {
       getUsage: () => M.usage,
       petName: () => store.data.pet.name || 'PM',
       weekGoals: () => (M.ex ? M.ex.goals() : []),
-      onPomodoroDone: () => M.pl && M.pl.onPomodoroDone(),
+      onPomodoroDone: () => { if (M.pl) M.pl.onPomodoroDone(); if (M.plugins) M.plugins.emit('pomodoro:done', { count: M.today().pomodoros || 0 }); },
       trackBranch: (name, dt) => M.dev && M.dev.trackBranch(name, dt),
       onGitStatuses: (statuses, repos) => { if (M.dev) { M.dev.setBranches(statuses); M.dev.prePushAll(repos); } },
-      onClaudeDone: (proj) => (M.plan ? M.plan.onClaudeDone(proj) : false),
+      onClaudeDone: (proj) => { if (M.plugins) M.plugins.emit('claude:done', { project: proj }); return M.plan ? M.plan.onClaudeDone(proj) : false; },
       onClaudeRaw: (ev) => { if (M.sess) M.sess.onEvent(ev); },
       captureHook: (text) => {
         const q = text.match(/^(?:tarea:\s*)?(?:para claude|for claude|cola)(?:\[([^\]]*)\])?\s*:\s*([\s\S]+)$/i);
@@ -171,7 +172,7 @@ module.exports = function install(M) {
     });
     if (!M.SAFE) {
       M.prod.start({ status: M.extStatus, command: M.extCommand, capture: (text) => M.extCapture(text), devEvent: (ev) => (M.dev ? M.dev.devEvent(ev) : false),
-        mcpToken: M.mcpToken, mcp: (msg) => M.mcpMod.handle(msg, M.mcpRun, { version: app.getVersion() }), statusline: M.statusLineText });
+        browser: M.browser.api, mcpToken: M.mcpToken, mcp: (msg) => M.mcpMod.handle(msg, M.mcpRun, { version: app.getVersion() }), statusline: M.statusLineText });
     }
 
     M.ai = M.aiMod.create({
@@ -235,6 +236,8 @@ module.exports = function install(M) {
     M.soul = require('../petsoul').create({ ...common, levelInfo: M.levelInfo, aiTone: () => M.pl.aiTone(), log: (e) => M.diag.log('main', 'Alma del pollito: ' + e.message) });
     if (!M.SAFE) M.soul.start();
     if (!M.SAFE) { M.presence.start(); M.coach.start(); M.farm.start(); M.gz.start(); }
+    if (!M.TEST) M.widget.start();
+    if (!M.SAFE) M.plugins.start(); // solo los que activaste (en modo seguro, ninguno)
     if (!M.SAFE) { M.work.start(); M.remote.start(); setTimeout(() => M.team.applyBundled(), 8000); }
   }
 

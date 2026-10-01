@@ -316,6 +316,7 @@ function focusTick() {
   const was = focusWas;
   focusWas = m;
   sendPet('pet:focusmode', !!m);
+  if (M.plugins) M.plugins.emit(m ? 'focus:start' : 'focus:end', { mode: m || was });
   if (tray) tray.refreshMenu && tray.refreshMenu();
   M.broadcast();
   if (!m && was) {
@@ -654,7 +655,7 @@ function openGame(mode = '') {
 // ---------- actualizaciones automáticas (solo en la versión instalada) ----------
 let updater = null;
 function getUpdater() {
-  if (!app.isPackaged) return null;
+  if (!app.isPackaged || process.windowsStore) return null; // en la Store, las actualizaciones las pone la Store
   if (!updater) {
     try {
       updater = require('electron-updater').autoUpdater;
@@ -676,7 +677,7 @@ function getUpdater() {
 }
 async function checkUpdates(manual) {
   const u = getUpdater();
-  if (!u) return { ok: false, error: app.isPackaged ? 'No hay servidor de actualizaciones configurado.' : 'Las actualizaciones solo funcionan en la versión instalada.' };
+  if (!u) return { ok: false, error: process.windowsStore ? 'Instalaste PM desde la Microsoft Store: se actualiza solo desde ahí.' : app.isPackaged ? 'No hay servidor de actualizaciones configurado.' : 'Las actualizaciones solo funcionan en la versión instalada.' };
   try {
     const r = await u.checkForUpdates();
     const v = r && r.updateInfo && r.updateInfo.version;
@@ -796,7 +797,8 @@ function paletteCommands() {
     .concat(repos.map((r) => ({ id: 'context.open', arg: path.basename(r), icon: '🎯', label: T('Trabajar en ') + path.basename(r), kw: 'contexto trabajar abrir proyecto cambiar ' + path.basename(r) })))
     .concat(repos.map((r) => ({ id: 'where.resume', arg: path.basename(r), icon: '📍', label: T('¿Dónde me quedé en ') + path.basename(r) + '?', kw: 'donde me quede retomar resumen ultimo ' + path.basename(r) })));
   const tpl = ex ? ex.templates().map((t) => ({ id: 'template.apply', arg: t.id, icon: t.emoji || '🧩', label: T('Aplicar plantilla: ') + t.name, kw: 'plantilla dia ' + t.name })) : [];
-  return M.COMMANDS.filter((c) => !c.hidden && (!c.when || c.when())).map((c) => ({ id: c.id, icon: c.icon, label: T(c.label), kw: c.kw })).concat(tpl).concat(mem).concat(profiles.list().list.filter((p) => p.id !== profiles.active().id).map((p) => ({ id: 'profile', arg: p.id, icon: p.emoji, label: T('Cambiar al perfil ') + p.name, kw: 'perfil cambiar ' + p.name })));
+  const plug = M.plugins ? M.plugins.paletteCommands() : [];
+  return M.COMMANDS.filter((c) => !c.hidden && (!c.when || c.when())).map((c) => ({ id: c.id, icon: c.icon, label: T(c.label), kw: c.kw })).concat(tpl).concat(mem).concat(plug).concat(profiles.list().list.filter((p) => p.id !== profiles.active().id).map((p) => ({ id: 'profile', arg: p.id, icon: p.emoji, label: T('Cambiar al perfil ') + p.name, kw: 'perfil cambiar ' + p.name })));
 }
 
 // Recarga todas las ventanas (p. ej. al cambiar el idioma).
@@ -1079,6 +1081,7 @@ const M = {
   get updateProjectMemory() { return mods.pro.updateProjectMemory; },
   get integrationsState() { return mods.pro.integrationsState; },
   get bridgePaths() { return mods.pro.bridgePaths; },
+  get refreshStableScripts() { return mods.pro.refreshStableScripts; },
   get setIntegration() { return mods.pro.setIntegration; },
   get isRepo() { return mods.pro.isRepo; },
   get extCapture() { return mods.pro.extCapture; },
@@ -1160,6 +1163,12 @@ mods.whereami = require('./src/main/whereami')(M);
 M.whereami = mods.whereami;
 mods.coach = require('./src/main/coach')(M);
 M.coach = mods.coach;
+mods.plugins = require('./src/main/plugins')(M);
+M.plugins = mods.plugins;
+mods.browser = require('./src/main/browserext')(M);
+M.browser = mods.browser;
+mods.widget = require('./src/main/widget')(M);
+M.widget = mods.widget;
 mods.gz = require('./src/main/gamezone')(M);
 M.gz = mods.gz;
 mods.farm = require('./src/main/teamfarm')(M);
@@ -1173,7 +1182,7 @@ M.remote = mods.remote;
 app.whenReady().then(() => mods.boot.boot());
 
 app.on('second-instance', () => M.openPanel('chat'));
-app.on('will-quit', () => globalShortcut.unregisterAll());
+app.on('will-quit', () => { globalShortcut.unregisterAll(); if (M.plugins) M.plugins.stopAll(); });
 app.on('before-quit', () => {
   quitting = true;
   M.writeBoot({ pending: false, fails: 0, at: Date.now() });

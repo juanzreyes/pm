@@ -28,6 +28,8 @@ jobs:
           git config --global user.email "ci@pm-pollito.invalid"
       - run: npm run typecheck
       - run: npm test
+      - name: Chromium para probar la extensión del navegador
+        run: npx playwright install chromium
       - run: npm run test:ui
 
   # macOS: la app nunca se probó en un Mac. Este trabajo lo prueba en cada push; es informativo
@@ -60,3 +62,33 @@ jobs:
           path: |
             dist/*.dmg
             dist/*.zip
+
+  # Linux: igual que Mac, informativo hasta que pase estable. La interfaz se prueba con una
+  # pantalla virtual (xvfb). El vigilante de foco usa xdotool (solo X11, no Wayland).
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: sudo apt-get update && sudo apt-get install -y xvfb xdotool
+      - run: npm ci
+      - name: Identidad de git (los tests crean repos de prueba)
+        run: |
+          git config --global user.name "PM Pollito CI"
+          git config --global user.email "ci@pm-pollito.invalid"
+      - run: npm run typecheck
+      - run: npm test
+      - run: xvfb-run -a npm run test:ui
+      - name: Compilar para Linux (AppImage y .deb)
+        run: npx electron-builder --linux --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PM-Pollito-linux
+          path: |
+            dist/*.AppImage
+            dist/*.deb

@@ -9,3 +9,6 @@ reporting.config.json
 public/*.exe
 public/*.vsix
 vscode-extension/*.vsix
+
+# Datos de tu cuenta de Partner Center (Microsoft Store)
+store.config.json

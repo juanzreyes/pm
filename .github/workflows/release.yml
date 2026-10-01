@@ -38,6 +38,8 @@ jobs:
         run: |
           git config --global user.name "PM Pollito CI"
           git config --global user.email "ci@pm-pollito.invalid"
+      - name: Chromium para probar la extensión del navegador
+        run: npx playwright install chromium
       - run: npm run test:all
       - name: Destino del informe de errores (opcional, secreto ERROR_WEBHOOK)
         shell: bash
@@ -78,5 +80,25 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
       - name: Adjuntar al release
         run: gh release upload "$GITHUB_REF_NAME" dist/*.dmg dist/*.zip --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Versión para Linux (AppImage y .deb), adjunta al mismo release. No se actualiza sola.
+  linux:
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Compilar para Linux
+        run: npx electron-builder --linux --publish never
+      - name: Adjuntar al release
+        run: gh release upload "$GITHUB_REF_NAME" dist/*.AppImage dist/*.deb --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

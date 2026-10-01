@@ -434,6 +434,33 @@ test('2.0 juego: misiones, pase, minijuegos nuevos, exclusivos en la tienda y tu
   await panel.click('#wr-close');
 });
 
+test('2.0 plataforma: plugin en utilityProcess, widget de escritorio y extensión emparejable', async () => {
+  const panel = await waitPage('panel');
+  // Plugin de ejemplo: se instala, se activa (en su propio proceso de Electron) y su comando sale en la paleta.
+  await panel.evaluate(() => pm.pluginsExample());
+  const r = await panel.evaluate(() => pm.pluginsEnable('hola-pollito', true));
+  assert.equal(r.ok, true);
+  await panel.waitForFunction(async () => (await pm.getState()).plugins.list.some((p) => p.id === 'hola-pollito' && p.ready), null, { timeout: 10000 });
+  await panel.waitForFunction(async () => (await pm.paletteList()).some((c) => c.arg === 'hola-pollito:frase'), null, { timeout: 5000 });
+  await panel.evaluate(() => pm.command('plugin.run', 'hola-pollito:frase'));
+  // Lo que dice un plugin queda en el centro de avisos (y sale en la burbuja si el pollito está visible).
+  await panel.waitForFunction(async () => (await pm.getState()).inbox.some((x) => /^🧩 /.test(x.text)), null, { timeout: 5000 });
+  // Ajustes: la sección de plugins lo muestra funcionando; la extensión tiene su código.
+  await panel.evaluate(() => pm.openSettings('plugins'));
+  const st = await waitPage('settings');
+  await st.waitForFunction(() => /funcionando/.test(document.querySelector('#pl-list').textContent), null, { timeout: 8000 });
+  assert.match(await st.evaluate(() => document.querySelector('#bx-token').value), /^[0-9a-f]{32}$/);
+  await panel.evaluate(() => pm.pluginsEnable('hola-pollito', false));
+  // Widget de escritorio.
+  await panel.evaluate(() => pm.command('widget.toggle'));
+  const w = await waitPage('widget');
+  await w.waitForFunction(() => /Testito/.test(document.querySelector('#name').textContent) && /✅/.test(document.querySelector('#tasks').textContent), null, { timeout: 8000 });
+  await w.click('#w-close');
+  await sleep(500);
+  assert.equal(page('widget'), undefined, 'se cierra');
+  assert.equal((await panel.evaluate(() => pm.getState())).settings.desktopWidget, false);
+});
+
 test('ajustes: diagnóstico sin errores de la app', async () => {
   const panel = await waitPage('panel');
   await panel.evaluate(() => pm.command('diag'));

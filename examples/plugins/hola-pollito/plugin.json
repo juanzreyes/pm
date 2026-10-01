@@ -1,0 +1,9 @@
+{
+  "id": "hola-pollito",
+  "name": "Hola, pollito",
+  "version": "1.0.0",
+  "description": "Plugin de ejemplo: una frase para empezar, celebra cada 5 tareas y añade una pausa tras cada pomodoro largo.",
+  "author": "PM Pollito",
+  "main": "index.js",
+  "permissions": ["say", "commands", "events", "storage", "status"]
+}

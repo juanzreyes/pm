@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>PM Pollito · Emparejar</title>
+  <link rel="stylesheet" href="common.css" />
+  <style>
+    body { max-width: 520px; margin: 40px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 14px; }
+    ol { padding-left: 20px; }
+    li { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <h1><img src="icons/48.png" width="32" height="32" alt="" /> Emparejar con PM Pollito</h1>
+  <div class="box">
+    <ol class="small">
+      <li>Abre PM Pollito en este PC.</li>
+      <li>Ve a <b>Ajustes → Integraciones → Extensión del navegador</b> y copia el código.</li>
+      <li>Pégalo aquí:</li>
+    </ol>
+    <form id="f" class="row"><input id="code" placeholder="Código de emparejamiento" autocomplete="off" spellcheck="false" style="font-family:monospace" aria-label="Código de emparejamiento" /><button class="primary" type="submit">Emparejar</button></form>
+    <details class="small"><summary class="muted">Avanzado</summary><div class="row" style="margin-top:6px"><label for="port">Puerto de PM</label><input id="port" type="number" min="1024" max="65535" placeholder="47823" style="max-width:110px" /></div></details>
+    <div id="msg" class="small" aria-live="polite"></div>
+  </div>
+  <div class="box small">
+    <b>🙅 Sitios propios en modo foco</b>
+    <p class="muted">La extensión ya puede frenar YouTube, X, Facebook, Instagram, TikTok, Reddit, Netflix y Twitch. Si en PM añades otros sitios, dale permiso aquí para frenarlos también.</p>
+    <div class="row"><button id="perm">Permitir sitios propios</button><span id="perm-msg" class="muted"></span></div>
+  </div>
+  <p class="muted small">Todo se queda en tu PC: la extensión solo habla con PM en 127.0.0.1.</p>
+  <script src="lib.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

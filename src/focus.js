@@ -250,8 +250,37 @@ function startMac(onSample) {
   return () => { stopped = true; };
 }
 
-function start(onSample) {
+// ---------- Linux (X11): ventana activa con xdotool, inactividad con xprintidle ----------
+// En Wayland no hay forma estándar de leer la ventana activa: el vigilante no da muestras y
+// PM sigue funcionando sin medir el foco (lo dice en Diagnóstico).
+const LINUX_SH = 'w=$(xdotool getactivewindow 2>/dev/null) || exit 3; t=$(xdotool getwindowname "$w" 2>/dev/null); pid=$(xdotool getwindowpid "$w" 2>/dev/null); p=""; [ -n "$pid" ] && p=$(cat /proc/$pid/comm 2>/dev/null); i=$(xprintidle 2>/dev/null || echo 0); printf "%s\\n%s\\n%s\\n" "$p" "$t" "$i"';
+/** Salida del script de Linux → muestra como la de Windows (o null si no hay ventana). */
+function parseLinux(out) {
+  const [p = '', t = '', i = '0'] = String(out || '').split('\n');
+  if (!p.trim() && !t.trim()) return null;
+  return { t: t.trim(), p: p.trim().toLowerCase(), i: Math.floor((Number(i) || 0) / 1000), m: '', tt: '', f: '', mu: '' };
+}
+/** @param {(s: object) => void} onSample @param {(why: string) => void} [onError] */
+function startLinux(onSample, onError = (_why) => {}) {
+  const { execFile } = require('child_process');
+  let stopped = false;
+  let warned = false;
+  const tick = () => {
+    if (stopped) return;
+    execFile('/bin/sh', ['-c', LINUX_SH], { timeout: 4000 }, (err, out) => {
+      const s = err ? null : parseLinux(out);
+      if (s) { try { onSample(s); } catch { /* muestra rara */ } }
+      else if (!warned) { warned = true; onError(process.env.WAYLAND_DISPLAY ? 'Wayland: no se puede leer la ventana activa' : 'Falta xdotool (sudo apt install xdotool xprintidle)'); }
+      if (!stopped) setTimeout(tick, 5000);
+    });
+  };
+  tick();
+  return () => { stopped = true; };
+}
+
+function start(onSample, onError) {
   if (process.platform === 'darwin') return startMac(onSample);
+  if (process.platform === 'linux') return startLinux(onSample, onError);
   let child = null;
   let stopped = false;
   let buf = '';
@@ -304,4 +333,4 @@ function presentingFrom(sample) {
   return null;
 }
 
-module.exports = { start, classify, meetingFrom, presentingFrom };
+module.exports = { start, classify, meetingFrom, presentingFrom, parseLinux };

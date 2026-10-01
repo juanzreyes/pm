@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "PM Pollito",
+  "version": "2.0.0",
+  "description": "Tu pollito PM en el navegador: límites de Claude, tu día, \"Enviar a PM\" y sitios que distraen frenados en modo foco.",
+  "icons": { "16": "icons/16.png", "48": "icons/48.png", "128": "icons/128.png" },
+  "action": { "default_popup": "popup.html", "default_title": "PM Pollito", "default_icon": { "16": "icons/16.png", "48": "icons/48.png" } },
+  "options_page": "options.html",
+  "background": { "service_worker": "background.js" },
+  "permissions": ["storage", "contextMenus", "alarms", "declarativeNetRequest", "activeTab"],
+  "host_permissions": [
+    "http://127.0.0.1/*",
+    "*://*.youtube.com/*", "*://*.x.com/*", "*://*.twitter.com/*", "*://*.facebook.com/*", "*://*.instagram.com/*",
+    "*://*.tiktok.com/*", "*://*.reddit.com/*", "*://*.netflix.com/*", "*://*.twitch.tv/*"
+  ],
+  "optional_host_permissions": ["*://*/*"],
+  "web_accessible_resources": [{ "resources": ["blocked.html"], "matches": ["<all_urls>"] }]
+}

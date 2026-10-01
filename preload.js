@@ -202,6 +202,13 @@ contextBridge.exposeInMainWorld('pm', {
   onHatch: on('pet:hatch'),
   // Cola de Claude que se ejecuta sola
   runStart: (queueId, force) => ipcRenderer.invoke('runs:start', { id: queueId, force: !!force }),
+  pluginsEnable: (id, on) => ipcRenderer.invoke('plugins:enable', id, on),
+  pluginsScan: () => ipcRenderer.invoke('plugins:scan'),
+  pluginsFolder: () => ipcRenderer.invoke('plugins:folder'),
+  pluginsExample: () => ipcRenderer.invoke('plugins:example'),
+  browserRegen: () => ipcRenderer.invoke('browser:regen'),
+  browserSites: (list) => ipcRenderer.invoke('browser:sites', list),
+  browserFolder: () => ipcRenderer.invoke('browser:folder'),
   farmFolder: (clear) => ipcRenderer.invoke('farm:folder', clear ? '' : undefined),
   farmKudo: (to, msg) => ipcRenderer.invoke('farm:kudo', to, msg),
   farmVisit: (to) => ipcRenderer.invoke('farm:visit', to),

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+  <title>PM Pollito · Widget</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --ink: #3b2f2f; --card: #fffdf6; --line: #efe2bf; --muted: #8a7a66; --yellow: #ffd84a; --green: #3fb36f; --orange: #ff9f1c; --red: #e5484d; }
+    body.dark { --ink: #f3e9d2; --card: #2a2420; --line: #4a3f36; --muted: #b8a88f; } /* sigue el tema de PM, no solo el del sistema */
+    html, body { width: 300px; height: 196px; background: transparent; overflow: hidden; user-select: none;
+      font: 600 12.5px/1.35 "Segoe UI Rounded", "Nunito", "Segoe UI", system-ui, sans-serif; color: var(--ink); }
+    .card { position: absolute; inset: 6px; background: var(--card); border: 2px solid var(--ink); border-radius: 18px; box-shadow: 0 3px 0 var(--ink);
+      padding: 9px 12px; display: flex; flex-direction: column; gap: 6px; -webkit-app-region: drag; }
+    .top { display: flex; align-items: center; gap: 8px; }
+    .top b { font-size: 14px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chick { width: 26px; height: 26px; flex: none; }
+    button { -webkit-app-region: no-drag; font: inherit; color: var(--ink); background: transparent; border: 1.5px solid var(--line); border-radius: 9px; padding: 1px 7px; cursor: pointer; }
+    button:hover { border-color: var(--ink); }
+    button:focus-visible { outline: 2px solid var(--orange); outline-offset: 1px; }
+    .lim { display: grid; grid-template-columns: 58px 1fr 38px; align-items: center; gap: 6px; }
+    .bar { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+    .bar i { display: block; height: 100%; border-radius: 99px; background: var(--green); transition: width .5s; }
+    .bar i.warn { background: var(--orange); }
+    .bar i.hot { background: var(--red); }
+    .pct { text-align: right; font-variant-numeric: tabular-nums; }
+    .row { display: flex; gap: 6px; align-items: center; min-width: 0; }
+    .row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .muted { color: var(--muted); }
+    .acts { display: flex; gap: 5px; margin-top: auto; }
+    .acts button { flex: 1; }
+    @media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="top">
+      <svg class="chick" viewBox="0 0 50 50" aria-hidden="true"><ellipse cx="25" cy="27" rx="18" ry="18" fill="#ffd84a" stroke="#d99a14" stroke-width="2"/><ellipse cx="19" cy="24" rx="2.6" ry="3.2" fill="#3b2f2f"/><ellipse cx="31" cy="24" rx="2.6" ry="3.2" fill="#3b2f2f"/><path d="M21 30 q4 -4 8 0 q-4 4 -8 0z" fill="#ff9f1c"/></svg>
+      <b id="name">PM</b>
+      <span id="focus" class="muted" hidden>🎯 foco</span>
+      <button id="w-close" title="Ocultar el widget" aria-label="Ocultar">✕</button>
+    </div>
+    <div class="lim"><span>Sesión</span><div class="bar"><i id="s-bar"></i></div><span id="s-pct" class="pct">—</span></div>
+    <div class="lim"><span>Semana</span><div class="bar"><i id="w-bar"></i></div><span id="w-pct" class="pct">—</span></div>
+    <div class="row"><span id="tasks">✅ —</span></div>
+    <div class="row"><span id="next" class="muted">📅 Sin reuniones pendientes</span></div>
+    <div class="acts">
+      <button id="w-pomo">🍅 Pomodoro</button>
+      <button id="w-add">＋ Tarea</button>
+      <button id="w-panel">🐣 Abrir</button>
+    </div>
+  </div>
+  <script src="../src/i18n-extra.js"></script>
+  <script src="../src/i18n.js"></script>
+  <script src="widget.js"></script>
+</body>
+</html>
