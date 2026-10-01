@@ -262,6 +262,7 @@ function buyItem(id) {
   if (!item) return { ok: false, error: 'Ese accesorio no existe.' };
   p.owned = p.owned || [];
   if (p.owned.includes(id)) return equipItem(id);
+  if (item.exclusive) return { ok: false, error: item.exclusive === 'pass' ? 'Este se gana en el pase de temporada 🎟️' : 'Este sale de un huevo dorado 🥚' };
   if ((p.coins || 0) < item.price) return { ok: false, error: `Te faltan ${item.price - (p.coins || 0)} 🌽. ¡Completa tareas y pomodoros para ganar más!` };
   p.coins -= item.price;
   p.owned.push(id);
@@ -627,8 +628,9 @@ function createPanel() {
 }
 
 // ---------- minijuego: atrapa el maíz ----------
-function openGame() {
-  if (gameWin && !gameWin.isDestroyed()) { gameWin.show(); gameWin.focus(); return; }
+function openGame(mode = '') {
+  mode = ['corn', 'bugs', 'snake'].includes(mode) ? mode : '';
+  if (gameWin && !gameWin.isDestroyed()) { gameWin.show(); gameWin.focus(); if (mode) gameWin.webContents.send('game:mode', mode); return; }
   const d = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea;
   gameWin = new BrowserWindow({
     width: 460,
@@ -645,7 +647,7 @@ function openGame() {
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, spellcheck: false, autoplayPolicy: 'no-user-gesture-required' },
   });
   gameWin.setAlwaysOnTop(true, 'screen-saver', 2);
-  gameWin.loadFile(path.join(__dirname, 'renderer', 'game.html'));
+  gameWin.loadFile(path.join(__dirname, 'renderer', 'game.html'), mode ? { query: { mode } } : undefined);
   gameWin.on('closed', () => (gameWin = null));
 }
 
@@ -1158,6 +1160,8 @@ mods.whereami = require('./src/main/whereami')(M);
 M.whereami = mods.whereami;
 mods.coach = require('./src/main/coach')(M);
 M.coach = mods.coach;
+mods.gz = require('./src/main/gamezone')(M);
+M.gz = mods.gz;
 mods.farm = require('./src/main/teamfarm')(M);
 M.farm = mods.farm;
 mods.errreport = require('./src/main/errreport')(M);

@@ -38,17 +38,19 @@ function weekFocusMins(days, now = new Date()) {
 
 const clean = (s, n) => String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, n);
 
+const GAMES = ['corn', 'bugs', 'snake'];
+const cleanGames = (o) => Object.fromEntries(GAMES.map((k) => [k, Math.max(0, Math.min(999, Math.floor(Number(o && o[k]) || 0)))]));
 /**
  * Tarjeta pública. Lista blanca: lo que no está aquí no sale de tu PC.
- * @param {{ id: string, name?: string, pet?: { name?: string, species?: string, happiness?: number }, level?: number, focusUntil?: number, focusMode?: boolean, weekMins?: number, streak?: number, kudos?: number, now?: number }} o
+ * @param {{ id: string, name?: string, pet?: { name?: string, species?: string, happiness?: number }, level?: number, focusUntil?: number, focusMode?: boolean, weekMins?: number, streak?: number, kudos?: number, games?: Object<string, number>, now?: number }} o
  */
-function card({ id, name, pet = {}, level = 1, focusUntil = 0, focusMode = false, weekMins = 0, streak = 0, kudos = 0, now = Date.now() }) {
+function card({ id, name, pet = {}, level = 1, focusUntil = 0, focusMode = false, weekMins = 0, streak = 0, kudos = 0, games = {}, now = Date.now() }) {
   return {
     v: 1, id: clean(id, 40), name: clean(name, 40) || 'Alguien', petName: clean(pet.name, 30) || 'PM',
     species: SPECIES.includes(pet.species) ? pet.species : 'chick', level: Math.max(1, Math.floor(level) || 1),
     mood: (pet.happiness ?? 70) >= 60 ? 'feliz' : (pet.happiness ?? 70) >= 30 ? 'normal' : 'triste',
     focus: !!focusMode, focusUntil: focusUntil > now ? focusUntil : 0,
-    week: weekKey(new Date(now)), weekMins: Math.max(0, Math.round(weekMins)), streak: Math.max(0, streak | 0), kudos: Math.max(0, kudos | 0), at: now,
+    week: weekKey(new Date(now)), weekMins: Math.max(0, Math.round(weekMins)), streak: Math.max(0, streak | 0), kudos: Math.max(0, kudos | 0), games: cleanGames(games), at: now,
   };
 }
 
@@ -62,7 +64,7 @@ function parseCard(raw) {
     species: SPECIES.includes(c.species) ? c.species : 'chick', level: Math.max(1, Math.min(999, Math.floor(c.level) || 1)),
     mood: ['feliz', 'normal', 'triste'].includes(c.mood) ? c.mood : 'normal', focus: !!c.focus, focusUntil: Number(c.focusUntil) || 0,
     week: typeof c.week === 'string' ? c.week : '', weekMins: Math.max(0, Math.min(10080, Number(c.weekMins) || 0)),
-    streak: Math.max(0, Math.min(9999, Number(c.streak) || 0)), kudos: Math.max(0, Number(c.kudos) || 0), at: c.at,
+    streak: Math.max(0, Math.min(9999, Number(c.streak) || 0)), kudos: Math.max(0, Number(c.kudos) || 0), games: cleanGames(c.games), at: c.at,
   };
 }
 
@@ -90,6 +92,13 @@ function challenge(cards, now = Date.now()) {
   const done = members.reduce((a, c) => a + c.weekMins, 0);
   const top = members.slice().sort((a, b) => b.weekMins - a.weekMins).slice(0, 3).map((c) => ({ name: c.name, mins: c.weekMins }));
   return { week: wk, goal, done, pct: Math.min(100, Math.round((done / goal) * 100)), members: members.length, reached: done >= goal, top };
+}
+
+/** Ranking de minijuegos del equipo (contigo): los 3 mejores de cada juego. */
+function leaderboard(cards) {
+  const out = {};
+  for (const k of GAMES) out[k] = cards.filter((c) => c && c.games && c.games[k] > 0).map((c) => ({ id: c.id, name: c.name, score: c.games[k] })).sort((a, b) => b.score - a.score).slice(0, 3);
+  return out;
 }
 
 /** Evento para el buzón de salida. type: 'kudo' | 'visit'. */
@@ -130,4 +139,4 @@ function canVisit(mate, sent, now = Date.now()) {
   return { ok: true };
 }
 
-module.exports = { weekKey, weekFocusMins, card, parseCard, statusOf, farm, challenge, event, trimOutbox, inbox, kudosLeft, canVisit, KUDO_CORN, KUDOS_PER_DAY, GOAL_PER_PERSON, SPECIES };
+module.exports = { leaderboard, weekKey, weekFocusMins, card, parseCard, statusOf, farm, challenge, event, trimOutbox, inbox, kudosLeft, canVisit, KUDO_CORN, KUDOS_PER_DAY, GOAL_PER_PERSON, SPECIES };

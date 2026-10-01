@@ -404,6 +404,36 @@ test('2.0 equipo: granja compartida, kudo con maíz y visita de un compañero', 
   assert.equal('coins' in mine, false);
 });
 
+test('2.0 juego: misiones, pase, minijuegos nuevos, exclusivos en la tienda y tu año', async () => {
+  const panel = await waitPage('panel');
+  await panel.evaluate(() => pm.command('panel', 'pet'));
+  await panel.waitForFunction(() => document.querySelectorAll('#game-missions .mission').length === 3 && document.querySelectorAll('#game-pass .pass-tier').length === 20, null, { timeout: 8000 });
+  assert.match(await panel.textContent('#game-eggs'), /Próximo huevo a los 7 días/);
+  const shop = await panel.evaluate(() => [...document.querySelectorAll('#shop .item')].filter((i) => /galaxia|arcoíris/.test(i.textContent)).map((i) => i.querySelector('button').disabled));
+  assert.deepEqual(shop, [true, true], 'los exclusivos no se compran');
+  // Menú de minijuegos → aplastá los bugs.
+  await panel.evaluate(() => pm.openGame());
+  const game = await waitPage('game');
+  await game.waitForSelector('#menu:not(.hidden) [data-mode="bugs"]', { timeout: 5000 });
+  await game.click('[data-mode="bugs"]');
+  await game.waitForFunction(() => /Aplasta los bugs/.test(document.querySelector('#ov-title').textContent) && document.querySelector('#c').className === 'm-bugs', null, { timeout: 5000 });
+  await game.click('#play');
+  await sleep(1500);
+  // Un clic en cada pantalla: si había un bug, cuenta.
+  for (const [x, y] of [[70, 64], [170, 64], [270, 64], [370, 64]]) await game.mouse.click(x + 10, y + 52 + 8);
+  const r = await game.evaluate(() => pm.gameEnd(7, 'snake'));
+  assert.equal(r.best, 7);
+  await game.evaluate(() => pm.gameClose());
+  await panel.waitForFunction(() => state.game.bestScores.snake === 7 && state.game.gamesToday >= 1 && state.game.season.pts >= 7, null, { timeout: 5000 });
+  // Tu año: la tarjeta se dibuja.
+  await panel.evaluate(() => pm.command('wrapped'));
+  await panel.waitForSelector('#o-wrapped:not(.hidden)', { timeout: 5000 });
+  await sleep(300);
+  const px = await panel.evaluate(() => { const c = document.querySelector('#wr-canvas'); const d = c.getContext('2d').getImageData(10, 10, 1, 1).data; return d[3]; });
+  assert.equal(px, 255, 'el canvas tiene la tarjeta');
+  await panel.click('#wr-close');
+});
+
 test('ajustes: diagnóstico sin errores de la app', async () => {
   const panel = await waitPage('panel');
   await panel.evaluate(() => pm.command('diag'));

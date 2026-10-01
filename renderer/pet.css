@@ -493,3 +493,10 @@ svg * { transform-box: fill-box; }
 .reduced #bod, .reduced #shadow, .reduced #tuft, .reduced .wing, .reduced #comb, .reduced #tail-rooster { animation-duration: 4s !important; }
 .reduced .p, .reduced .confetti, .reduced .zzz { display: none; }
 .reduced #bubble { animation: none; }
+
+/* Plumas exclusivas (2.0: pase de temporada y huevos dorados) */
+.skin-sunset #body, .skin-sunset .wing ellipse, .skin-sunset #tuft path, .skin-sunset #belly, .skin-sunset #tail-young path { filter: hue-rotate(-25deg) saturate(1.5) brightness(.98); }
+.skin-galaxy #body, .skin-galaxy .wing ellipse, .skin-galaxy #tuft path, .skin-galaxy #belly, .skin-galaxy #tail-young path { filter: hue-rotate(215deg) saturate(1.4) brightness(.72) drop-shadow(0 0 3px #8b5cf6); }
+.skin-rainbow #body, .skin-rainbow .wing ellipse, .skin-rainbow #tuft path, .skin-rainbow #belly, .skin-rainbow #tail-young path { animation: rainbowSkin 6s linear infinite; }
+@keyframes rainbowSkin { from { filter: hue-rotate(0deg) saturate(1.3); } to { filter: hue-rotate(360deg) saturate(1.3); } }
+.reduced .skin-rainbow #body, .reduced.skin-rainbow #body { animation: none; filter: hue-rotate(120deg) saturate(1.3); }

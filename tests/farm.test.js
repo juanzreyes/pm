@@ -18,7 +18,7 @@ test('semana y minutos de foco: de lunes a hoy, en minutos', () => {
 
 test('tarjeta pública: solo lo de la lista blanca, y se valida al leer', () => {
   const c = tf.card({ id: 'a1', name: 'Ana', pet: { name: 'Kiwi', species: 'duck', happiness: 20, coins: 999, tasks: ['secreto'] }, level: 4, focusMode: true, weekMins: 120, now: NOW });
-  assert.deepEqual(Object.keys(c).sort(), ['at', 'focus', 'focusUntil', 'id', 'kudos', 'level', 'mood', 'name', 'petName', 'species', 'streak', 'v', 'week', 'weekMins']);
+  assert.deepEqual(Object.keys(c).sort(), ['at', 'focus', 'focusUntil', 'games', 'id', 'kudos', 'level', 'mood', 'name', 'petName', 'species', 'streak', 'v', 'week', 'weekMins']);
   assert.equal(c.mood, 'triste');
   assert.equal(JSON.stringify(c).includes('secreto'), false);
   assert.equal(tf.parseCard('{nope'), null);

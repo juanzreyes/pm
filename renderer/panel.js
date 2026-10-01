@@ -80,7 +80,7 @@ function show(view) {
     if (typeof startTour === 'function') startTour();
     return;
   }
-  if (view === 'prompts' || view === 'blocks' || view === 'whatsnew' || view === 'friday' || view === 'meetingnotes') {
+  if (view === 'prompts' || view === 'blocks' || view === 'whatsnew' || view === 'friday' || view === 'meetingnotes' || view === 'wrapped') {
     if (window.openExtra) window.openExtra(view);
     return;
   }
@@ -527,6 +527,7 @@ function renderGami() {
     let btn;
     if (x.equipped) btn = `<button class="wear" data-unequip="${x.slot}">Quitarse</button>`;
     else if (x.owned) btn = `<button class="wear" data-equip="${x.id}">Equipar</button>`;
+    else if (x.exclusive) btn = `<button class="buy" disabled title="${x.exclusive === 'pass' ? 'Se gana en el pase de temporada' : 'Sale de un huevo dorado'}">${x.exclusive === 'pass' ? '🎟️ Pase' : '🥚 Huevo'}</button>`;
     else btn = `<button class="buy" data-buy="${x.id}" ${state.coins < x.price ? 'disabled' : ''}>🌽 ${x.price}</button>`;
     return `<div class="item ${x.equipped ? 'eq' : ''}" title="${esc(SLOT_NAMES[x.slot] || x.slot)}"><span class="e">${x.emoji}</span><span class="n">${esc(x.name)}</span>${btn}</div>`;
   }).join('');

@@ -25,6 +25,7 @@ module.exports = function install(M) {
     return tf.card({
       id: myId(), name: set().myName || d.pet.name || 'Yo', pet: d.pet, level: M.levelInfo(d.pet.xp || 0).level,
       focusMode: !!M.focusMode(), focusUntil: d.focusUntil || 0, weekMins: tf.weekFocusMins(d.days), streak, kudos: (F().received || []).filter((e) => e.type === 'kudo').length,
+      games: { corn: d.pet.bestScore || 0, ...(d.pet.bestScores || {}) },
     });
   }
 
@@ -162,7 +163,7 @@ module.exports = function install(M) {
     const me = on() ? myCard() : null;
     return {
       folder: set().teamFolder || '', share: set().teamShare !== false, on: on(), error: lastErr,
-      me, mates, challenge: me ? tf.challenge([me, ...mates]) : null,
+      me, mates, challenge: me ? tf.challenge([me, ...mates]) : null, leaderboard: me ? tf.leaderboard([me, ...mates]) : null,
       kudosLeft: tf.kudosLeft(f.sent), received: (f.received || []).slice(-8).reverse(), pendingVisits: (f.pendingVisits || []).length,
     };
   }

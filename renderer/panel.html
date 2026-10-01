@@ -394,8 +394,17 @@
 
         <div class="row gap">
           <button id="open-stats" class="soft grow" data-icon="chart">Estadísticas</button>
-          <button id="open-game" class="soft grow" data-icon="game">Minijuego</button>
+          <button id="open-game" class="soft grow" data-icon="game">Minijuegos</button>
+          <button id="game-wrapped" class="soft grow" title="Tu año con PM Pollito">🎁 Mi año</button>
         </div>
+
+        <!-- Juego (2.0 · 6/7) -->
+        <div class="row between"><h3>🎯 Misiones de hoy</h3><span id="game-bonus" class="pill hidden">🎉 ¡Las 3!</span></div>
+        <div id="game-missions" class="missions"></div>
+        <div class="row between" id="game-season"><h3>🎟️ Pase de temporada</h3><span id="game-season-name" class="muted small"></span></div>
+        <div id="game-pass" class="box small"></div>
+        <div class="row between"><h3>🥚 Huevos dorados</h3><span id="game-streak" class="muted small"></span></div>
+        <div id="game-eggs" class="box small"></div>
 
         <div class="row between"><h3>🏅 Logros</h3><span id="ach-count" class="pill"></span></div>
         <div id="achievements" class="ach-grid"></div>
@@ -451,6 +460,7 @@
         </div>
         <div id="farm-challenge" class="box small hidden"></div>
         <div id="farm-list" class="farm"></div>
+        <div id="farm-leaderboard" class="box small hidden"></div>
         <div id="farm-received" class="diary"></div>
 
         <h3>🐾 Especie</h3>
@@ -515,6 +525,15 @@
       </div>
     </div>
 
+    <div id="o-wrapped" class="overlay hidden" role="dialog" aria-label="Tu año con PM Pollito">
+      <div class="row between">
+        <h2>🎁 Tu año con PM Pollito</h2>
+        <button type="button" id="wr-close" class="icon" title="Cerrar">✕</button>
+      </div>
+      <canvas id="wr-canvas" width="720" height="960" aria-label="Tarjeta de tu año"></canvas>
+      <div class="row gap"><button type="button" id="wr-save" class="primary grow">💾 Guardar imagen</button><button type="button" id="wr-copy" class="ghost">📋 Copiar texto</button></div>
+      <p class="muted small">Para compartir con tu equipo o en redes. Todo se calcula en tu PC con tus propios datos.</p>
+    </div>
     <div id="o-meeting" class="overlay hidden" role="dialog" aria-label="Notas de reunión">
       <div class="row between">
         <h2>📝 Notas de reunión → tareas</h2>
@@ -671,6 +690,7 @@
   <script src="panel-soul.js"></script>
   <script src="panel-coach.js"></script>
   <script src="panel-team.js"></script>
+  <script src="panel-game.js"></script>
   <script src="stats.js"></script>
 </body>
 </html>

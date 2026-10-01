@@ -59,11 +59,20 @@
       const inp = list.querySelector('.kudo-msg');
       if (inp) { inp.value = typed; if (hadFocus || !typing) inp.focus(); }
     }
+    // 🏅 Ranking de minijuegos del equipo.
+    const lb = f.leaderboard;
+    const has = lb && f.mates.length && Object.values(lb).some((l) => l.length);
+    $('#farm-leaderboard').classList.toggle('hidden', !has);
+    if (has) {
+      const G = { corn: '🌽 Maíz', bugs: '🐞 Bugs', snake: '🐍 Viborita' };
+      $('#farm-leaderboard').innerHTML = '<b>🏅 Ranking de minijuegos</b><div class="lb">' + Object.entries(G).map(([k, n]) => `<div><div class="muted">${n}</div>${(lb[k] || []).map((x, i) => `<div class="${f.me && x.id === f.me.id ? 'lb-me' : ''}">${['🥇', '🥈', '🥉'][i]} ${esc(x.name)} <b>${x.score}</b></div>`).join('') || '<div class="muted">—</div>'}</div>`).join('') + '</div><button class="ghost mini" id="farm-play">🎮 Jugar</button>';
+    }
     const rec = f.received || [];
     $('#farm-received').innerHTML = rec.length ? '<div class="muted small"><b>Kudos que recibiste</b></div>' + rec.map((k) => `<div class="small">🌽 <b>${esc(k.fromName)}</b>${k.msg ? `: «${esc(k.msg)}»` : ''} <span class="muted">${new Date(k.at).toLocaleDateString()}</span></div>`).join('') : '';
     tr($('#v-pet'));
   }
 
+  $('#farm-leaderboard').addEventListener('click', (e) => { if (e.target.closest('#farm-play')) pm.openGame(); });
   $('#farm-choose').addEventListener('click', async () => { const r = await pm.farmFolder(); if (r && r.error) toast('😿 ' + r.error); });
   $('#farm-share').addEventListener('change', (e) => pm.updateSettings({ teamShare: e.target.checked }));
   $('#farm-list').addEventListener('click', async (e) => {

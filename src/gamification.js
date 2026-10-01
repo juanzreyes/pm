@@ -31,6 +31,11 @@ const SHOP = [
   { id: 'skin-gold', slot: 'skin', name: 'Plumas doradas', emoji: '✨', price: 600 },
   { id: 'buddy-chick', slot: 'buddy', name: 'Amiguito pollito', emoji: '🐤', price: 350 },
   { id: 'buddy-duck', slot: 'buddy', name: 'Amiguito patito', emoji: '🦆', price: 400 },
+  // Exclusivos (2.0): no se compran, se ganan en el pase de temporada o en los huevos dorados.
+  { id: 'skin-sunset', slot: 'skin', name: 'Plumas atardecer', emoji: '🌅', price: 0, exclusive: 'pass' },
+  { id: 'skin-galaxy', slot: 'skin', name: 'Plumas galaxia', emoji: '🌌', price: 0, exclusive: 'pass' },
+  { id: 'skin-rainbow', slot: 'skin', name: 'Plumas arcoíris', emoji: '🌈', price: 0, exclusive: 'egg' },
+  { id: 'buddy-golden', slot: 'buddy', name: 'Amiguito dorado', emoji: '🥇', price: 0, exclusive: 'egg' },
 ];
 
 // ---------- Logros ----------
@@ -58,6 +63,10 @@ const ACHIEVEMENTS = [
   { id: 'level-5', emoji: '🐥', name: 'Evolución', desc: 'Llega a nivel 5 (pollo joven)', reward: 80, test: (c) => c.level >= 5 },
   { id: 'level-10', emoji: '🐓', name: '¡Soy un gallo!', desc: 'Llega a nivel 10', reward: 200, test: (c) => c.level >= 10 },
   { id: 'gamer', emoji: '🎮', name: 'Gamer', desc: 'Consigue 30 puntos en el minijuego', reward: 40, test: (c) => (c.data.pet.bestScore || 0) >= 30 },
+  { id: 'bug-squasher', emoji: '🐞', name: 'Exterminador', desc: 'Aplasta 40 bugs en una partida', reward: 50, test: (c) => ((c.data.pet.bestScores || {}).bugs || 0) >= 40 },
+  { id: 'snake-long', emoji: '🐍', name: 'Viborita larga', desc: 'Come 25 granos en la viborita', reward: 50, test: (c) => ((c.data.pet.bestScores || {}).snake || 0) >= 25 },
+  { id: 'golden-egg', emoji: '🥚', name: 'Huevo dorado', desc: 'Consigue tu primer huevo dorado (7 días de racha)', reward: 30, test: (c) => ((c.data.game && c.data.game.eggs) || []).length >= 1 },
+  { id: 'season-10', emoji: '🎟️', name: 'Temporada a tope', desc: 'Llega al nivel 10 del pase de temporada', reward: 80, test: (c) => !!(c.data.game && c.data.game.season && c.data.game.season.tier >= 10) },
   { id: 'shopper', emoji: '🛍️', name: 'Fashionista', desc: 'Compra 3 accesorios', reward: 50, test: (c) => (c.data.pet.owned || []).length >= 3 },
 ];
 

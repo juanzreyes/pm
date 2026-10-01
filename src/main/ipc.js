@@ -618,20 +618,13 @@ module.exports = function install(M) {
     });
 
     // ----- minijuego -----
-    M.ipcMain.on('game:open', () => M.openGame());
-    M.ipcMain.handle('game:end', (_e, score) => {
-      score = Math.max(0, Math.min(500, Math.floor(Number(score) || 0)));
-      const p = M.store.data.pet;
-      const best = score > (p.bestScore || 0);
-      if (best) p.bestScore = score;
-      p.coins = (p.coins || 0) + score;
-      p.happiness = M.clamp(p.happiness + 8);
-      M.store.save();
-      M.say(`🎮 ¡${score} granos atrapados! +${score} 🌽${best ? ' ¡NUEVO RÉCORD! 🏆' : ''}`, 'celebrate', 9000);
-      M.checkAchievements();
-      M.broadcast();
-      return { best: p.bestScore, coins: Math.floor(p.coins) };
-    });
+    M.ipcMain.on('game:open', (_e, mode) => M.openGame(String(mode || '')));
+    M.ipcMain.handle('game:end', (_e, score, mode) => M.gz.onGameEnd(String(mode || 'corn'), score));
+    // Juego 2.0 · 6/7: misiones, huevos dorados y tu año
+    M.ipcMain.handle('mission:claim', (_e, id) => M.gz.claimMission(String(id || '')));
+    M.ipcMain.handle('egg:open', (_e, streak) => M.gz.openEgg(Number(streak)));
+    M.ipcMain.handle('wrapped:get', (_e, year) => M.gz.wrappedData(year));
+    M.ipcMain.handle('wrapped:save', (e, dataUrl) => M.gz.saveWrapped(dataUrl, M.BrowserWindow.fromWebContents(e.sender)));
     M.ipcMain.on('game:close', () => { if (M.gameWin && !M.gameWin.isDestroyed()) M.gameWin.close(); });
 
     // ----- actualizaciones -----

@@ -22,7 +22,12 @@ module.exports = function install(M) {
     { id: 'daily.copy', icon: '📋', label: 'Copiar daily para Slack/Teams', kw: 'copiar daily slack teams', run: () => M.openPanel('daily-copy') },
     { id: 'stats', icon: '📈', label: 'Estadísticas del mes', kw: 'estadisticas graficos mes', run: () => M.openPanel('stats') },
     { id: 'join', icon: '🎧', label: 'Unirme a la próxima reunión', kw: 'reunion teams unirme meet zoom', when: () => !!M.nextJoinable(), run: () => { const e = M.nextJoinable(); if (e) M.joinMeeting(e.join.url); } },
-    { id: 'game', icon: '🎮', label: 'Minijuego: atrapa el maíz', kw: 'juego jugar minijuego', run: () => M.openGame() },
+    { id: 'game', icon: '🎮', label: 'Minijuegos (atrapa el maíz, aplasta los bugs, viborita)', kw: 'juego jugar minijuego', run: () => M.openGame() },
+    { id: 'game.bugs', icon: '🐞', label: 'Minijuego: aplasta los bugs', kw: 'juego bugs aplastar insectos minijuego', run: () => M.openGame('bugs') },
+    { id: 'game.snake', icon: '🐍', label: 'Minijuego: la viborita', kw: 'juego viborita serpiente snake minijuego', run: () => M.openGame('snake') },
+    { id: 'wrapped', icon: '🎁', label: 'Tu año con PM Pollito (resumen para compartir)', kw: 'wrapped año resumen anual compartir estadisticas', run: () => M.openPanel('wrapped') },
+    { id: 'mission.claim', hidden: true, run: (id) => M.gz.claimMission(id) },
+    { id: 'egg.open', hidden: true, run: (s) => { M.gz.openEgg(Number(s)); M.openPanel('pet'); } },
     { id: 'feed', icon: '🌽', label: 'Dar de comer al pollito', kw: 'comer maiz alimentar', run: () => M.feed() },
     { id: 'pet', icon: '💛', label: 'Acariciar al pollito', kw: 'acariciar mimo', run: () => M.petPet() },
     { id: 'bath', icon: '🛁', label: 'Bañar al pollito', kw: 'banar bano limpiar ducha', run: () => {

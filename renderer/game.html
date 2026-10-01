@@ -14,7 +14,22 @@
       border-bottom: 2px solid #3b2f2f; -webkit-app-region: drag; font-weight: 900; }
     header button { -webkit-app-region: no-drag; width: 28px; height: 28px; border-radius: 10px; border: 2px solid #3b2f2f; background: #fff6d0; cursor: pointer; font-weight: 900; }
     .hud { display: flex; gap: 14px; font-size: 13px; }
-    canvas { display: block; background: linear-gradient(#bfe6ff, #eaf7ff 70%, #cfe9b0 70%); cursor: none; }
+    canvas { display: block; background: linear-gradient(#ffe9a8, #fff4d0); }
+    canvas.m-corn { background: linear-gradient(#bfe6ff, #eaf7ff 70%, #cfe9b0 70%); cursor: none; }
+    canvas.m-bugs { background: linear-gradient(#e9e2ff, #f6f1ff); cursor: crosshair; }
+    canvas.m-snake { background: #b9e08f; }
+    .hidden { display: none !important; }
+    #menu { position: absolute; left: 8px; right: 8px; top: 52px; bottom: 8px; display: flex; flex-direction: column; gap: 10px; padding: 18px 22px; background: #fff9e8; border-radius: 0 0 20px 20px; }
+    #menu h2 { font-size: 18px; }
+    .game-btn { display: flex; align-items: center; gap: 12px; text-align: left; background: #fffdf6; border: 2.5px solid #3b2f2f; border-radius: 16px; padding: 10px 14px; font: inherit; color: inherit; box-shadow: 0 3px 0 #3b2f2f; cursor: pointer; transition: transform .12s; }
+    .game-btn:hover { transform: translateY(-2px); }
+    .game-btn:active { transform: translateY(1px); box-shadow: 0 1px 0 #3b2f2f; }
+    .game-btn .ge { font-size: 30px; }
+    .game-btn b { display: block; font-size: 15px; }
+    .game-btn small { color: #7a6a55; font-size: 12px; }
+    #menu-note { font-size: 12px; color: #7a6a55; text-align: center; }
+    #menu-btn { width: auto; padding: 0 8px; margin-right: 6px; }
+    @media (prefers-reduced-motion: reduce) { .game-btn { transition: none; } }
     .overlay { position: absolute; left: 8px; right: 8px; top: 52px; bottom: 8px; display: grid; place-items: center; text-align: center; background: rgba(255, 249, 232, .9); }
     .overlay.hidden { display: none; }
     .overlay h2 { font-size: 22px; margin-bottom: 6px; }
@@ -25,13 +40,20 @@
 <body>
   <div class="card">
     <header>
-      <span>🎮 Atrapa el maíz</span>
-      <span class="hud"><span id="score">🌽 0</span><span id="time">⏱ 45</span></span>
-      <button id="x" title="Cerrar">✕</button>
+      <span id="title">🎮 Minijuegos</span>
+      <span id="hud" class="hud hidden"><span id="score">🌽 0</span><span id="time">⏱ 45</span></span>
+      <span><button id="menu-btn" class="hidden" title="Elegir otro juego">☰</button><button id="x" title="Cerrar">✕</button></span>
     </header>
     <canvas id="c" width="440" height="330"></canvas>
   </div>
-  <div id="ov" class="overlay">
+  <div id="menu" class="hidden">
+    <h2>¿A qué jugamos?</h2>
+    <button class="game-btn" data-mode="corn"><span class="ge">🌽</span><span><b>Atrapa el maíz</b><small id="best-corn">Sin récord</small></span></button>
+    <button class="game-btn" data-mode="bugs"><span class="ge">🐞</span><span><b>Aplasta los bugs</b><small id="best-bugs">Sin récord</small></span></button>
+    <button class="game-btn" data-mode="snake"><span class="ge">🐍</span><span><b>La viborita</b><small id="best-snake">Sin récord</small></span></button>
+    <div id="menu-note"></div>
+  </div>
+  <div id="ov" class="overlay hidden">
     <div>
       <h2 id="ov-title">🐣 ¡A comer!</h2>
       <p id="ov-text">Mueve el pollito con el ratón o las flechas.<br>Atrapa 🌽 (+1) y ⭐ (+5). Esquiva las 🪨 (−3).<br>Cada grano es maíz para la tienda.</p>

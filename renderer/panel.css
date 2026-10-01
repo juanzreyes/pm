@@ -640,3 +640,29 @@ html.reduced .run.running .run-progress { animation: none; }
 @keyframes zz { 0%, 100% { transform: translateY(0); opacity: .5; } 50% { transform: translateY(-4px); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .mate-pet svg, .mate-pet .zz { animation: none !important; } }
 .mate-acts button:disabled { opacity: .35; filter: grayscale(1); cursor: not-allowed; }
+#farm-leaderboard .lb { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+#farm-leaderboard .lb-me { font-weight: 800; color: var(--orange, #e8890c); }
+#farm-play { align-self: flex-start; }
+
+/* ---------- 🎯 Misiones · 🎟️ pase · 🥚 huevos · 🎁 tu año (2.0) ---------- */
+.missions { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+.mission { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--card); font-size: 13px; }
+.mission .me { font-size: 20px; flex: none; }
+.mission .mt { flex: 1; min-width: 0; }
+.mission .bar { height: 7px; margin-top: 4px; }
+.mission.done { border-color: var(--green); }
+.mission.claimed { opacity: .6; }
+.mission.claimed .mt b { text-decoration: line-through; }
+.pass-track { display: flex; gap: 4px; overflow-x: auto; padding: 4px 0 6px; scrollbar-width: thin; }
+.pass-tier { flex: none; width: 38px; text-align: center; border: 1.5px solid var(--line); border-radius: 10px; padding: 3px 0; font-size: 16px; background: var(--card); position: relative; }
+.pass-tier small { display: block; font-size: 9.5px; font-weight: 800; color: var(--muted, #8a7a66); }
+.pass-tier.got { background: #fff3c4; border-color: #e8b923; }
+.pass-tier.big { border-width: 2.5px; }
+.pass-tier.now { outline: 2.5px solid var(--ink); }
+.eggs { display: flex; gap: 8px; flex-wrap: wrap; }
+.egg { display: flex; flex-direction: column; align-items: center; gap: 2px; border: 1.5px solid var(--line); border-radius: 12px; padding: 6px 8px; background: var(--card); font-size: 11px; min-width: 70px; }
+.egg .ee { font-size: 26px; line-height: 1; }
+.egg.closed .ee { animation: eggWiggle 2.4s ease-in-out infinite; filter: drop-shadow(0 0 4px #ffd700); }
+@keyframes eggWiggle { 0%, 80%, 100% { transform: rotate(0); } 85% { transform: rotate(-10deg); } 90% { transform: rotate(9deg); } 95% { transform: rotate(-5deg); } }
+#wr-canvas { width: 100%; height: auto; border-radius: 16px; border: 2px solid var(--ink); }
+@media (prefers-reduced-motion: reduce) { .egg.closed .ee { animation: none; } }
