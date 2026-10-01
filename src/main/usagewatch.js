@@ -27,7 +27,8 @@ module.exports = function install(M) {
       if (manualTok) {
         sources.push({ source: 'manual', run: () => M.usageApi.fetchLimits(manualTok), bad: 'El token que pegaste no es válido o caducó.' });
       }
-      const cc = M.usageApi.readClaudeCodeSession();
+      // En los tests no se lee la sesión real de Claude Code del equipo: tu uso de verdad no debe cambiar el resultado.
+      const cc = M.TEST ? { found: false } : M.usageApi.readClaudeCodeSession();
       if (cc.found && !(cc.expiresAt && cc.expiresAt < Date.now())) {
         sources.push({
           source: 'claude-code',

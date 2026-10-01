@@ -185,9 +185,29 @@
         <form id="queue-form" class="row">
           <input id="queue-input" placeholder="Lo que le pedirás a Claude cuando termine…" maxlength="4000" autocomplete="off" />
           <select id="queue-project" aria-label="Proyecto" title="Proyecto (para poder ejecutarla sola con ▶️)"><option value="">Proyecto…</option></select>
+          <select id="queue-model" aria-label="Modelo" title="Modelo de Claude: automático elige según la tarea"><option value="auto">🧠 Auto</option><option value="haiku">Haiku</option><option value="sonnet">Sonnet</option><option value="opus">Opus</option></select>
           <button class="primary" type="submit">＋</button>
         </form>
+        <div id="queue-pause" class="box small hidden"></div>
         <div id="claude-runs" class="runs"></div>
+        <details id="claude-recurring" class="recurring">
+          <summary><b>🔁 Peticiones recurrentes para Claude</b> <span id="crec-count" class="pill"></span></summary>
+          <div id="crec-list"></div>
+          <form id="crec-form" class="col">
+            <textarea id="crec-text" rows="2" maxlength="4000" placeholder="Actualiza las dependencias, corre los tests y abre un PR si todo pasa"></textarea>
+            <div class="row gap wrap">
+              <select id="crec-project" aria-label="Proyecto"><option value="">Proyecto…</option></select>
+              <select id="crec-days" aria-label="Cuándo"><option value="1,2,3,4,5">Lun a vie</option><option value="0,1,2,3,4,5,6">Todos los días</option><option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option><option value="4">Jueves</option><option value="5">Viernes</option></select>
+              <input id="crec-time" type="time" value="09:00" aria-label="Hora" style="width:auto" />
+              <label class="small"><input id="crec-auto" type="checkbox" /> lanzarla sola</label>
+              <button class="primary mini" type="submit">＋</button>
+            </div>
+          </form>
+        </details>
+        <details id="claude-stats" class="recurring">
+          <summary><b>📈 Qué te funciona con Claude</b> <span id="cstats-count" class="pill"></span></summary>
+          <div id="cstats"></div>
+        </details>
 
         <h3>⏰ Recordatorios</h3>
         <ul id="reminders" class="editlist"></ul>

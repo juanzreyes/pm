@@ -167,7 +167,7 @@ contextBridge.exposeInMainWorld('pm', {
   diagOpen: () => ipcRenderer.invoke('diag:open'),
   reportError: (msg) => ipcRenderer.send('diag:error', msg),
   // Programación, organización y vida del pollito
-  queueAdd: (text, project) => ipcRenderer.invoke('queue:add', { text, project }),
+  queueAdd: (text, project, model) => ipcRenderer.invoke('queue:add', { text, project, model }),
   queueRemove: (id) => ipcRenderer.invoke('queue:remove', id),
   queueNext: (project) => ipcRenderer.invoke('queue:next', project),
   prioritize: (withBlocks) => ipcRenderer.invoke('day:prioritize', withBlocks),
@@ -196,7 +196,9 @@ contextBridge.exposeInMainWorld('pm', {
   gitRepos: () => ipcRenderer.invoke('git:repos'),
   onHatch: on('pet:hatch'),
   // Cola de Claude que se ejecuta sola
-  runStart: (queueId) => ipcRenderer.invoke('runs:start', queueId),
+  runStart: (queueId, force) => ipcRenderer.invoke('runs:start', { id: queueId, force: !!force }),
+  recurringSave: (r) => ipcRenderer.invoke('claudeRec:save', r),
+  recurringDelete: (id) => ipcRenderer.invoke('claudeRec:delete', id),
   runAccept: (id) => ipcRenderer.invoke('runs:accept', id),
   runPr: (id) => ipcRenderer.invoke('runs:pr', id),
   runFix: (id, kind) => ipcRenderer.invoke('runs:fix', `${id}:${kind}`),

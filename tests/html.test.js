@@ -13,3 +13,11 @@ test('ningún HTML de la app repite un id', () => {
     assert.deepEqual(dup, [], `${f} repite: ${dup.join(', ')}`);
   }
 });
+
+test('IPC: ningún canal se registra dos veces (rompería el arranque)', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'src', 'main', 'ipc.js'), 'utf8');
+  const seen = new Set();
+  const dup = [];
+  for (const m of src.matchAll(/ipcMain\.(?:handle|on)\('([^']+)'/g)) { if (seen.has(m[1])) dup.push(m[1]); seen.add(m[1]); }
+  assert.deepEqual(dup, []);
+});

@@ -100,7 +100,7 @@
       const resume = r.sessionId && ['review', 'failed', 'empty'].includes(r.status) ? `<button type="button" class="link run-resume" title="Seguir la conversación en una terminal, dentro de la copia del repo">claude --resume</button>` : '';
       return `<div class="run ${r.status} ${r.kind === 'fix' ? 'fix' : ''}" data-id="${esc(r.id)}" data-ses="${esc(r.sessionId || '')}">
         <div class="row between"><span>${ic} <b>${esc(r.project)}</b> <span class="muted small"><span>${lab}</span>${['running', 'reviewing', 'testing'].includes(r.status) ? ' · ' + ago(r.startedAt) : r.endedAt ? ' · ' + ago(r.endedAt) : ''}${stat}${cost}</span></span></div>
-        <div class="small run-text">${r.issueKey ? `<span class="pill">${esc(r.issueKey)}</span> ` : ''}${esc(r.text.length > 120 ? r.text.slice(0, 119) + '…' : r.text)}</div>
+        <div class="small run-text">${r.issueKey ? `<span class="pill">${esc(r.issueKey)}</span> ` : ''}${r.model ? `<span class="pill" title="${esc(r.modelWhy || '')}">🧠 ${esc(r.model)}</span> ` : ''}${esc(r.text.length > 120 ? r.text.slice(0, 119) + '…' : r.text)}</div>
         ${r.error ? `<div class="small err">${esc(r.error)}</div>` : ''}
         ${progress}
         ${tests}
@@ -138,16 +138,52 @@
     try {
       const list = await pm.gitRepos();
       repoNames = list.map((r) => r.name);
+      $('#crec-project').innerHTML = '<option value="">Proyecto…</option>' + list.map((r) => `<option value="${esc(r.name)}">${esc(r.name)}</option>`).join('');
       const sel = $('#queue-project');
       sel.innerHTML = '<option value="">Proyecto…</option>' + list.map((r) => `<option value="${esc(r.name)}">${esc(r.name)}</option>`).join('');
     } catch { reposLoaded = false; }
   }
 
   const prevRender = window.renderExtras;
+  // ================= ⏸️ PAUSA POR LÍMITES · 🔁 RECURRENTES · 📈 QUÉ FUNCIONA =================
+  function renderPause() {
+    const p = state.queuePause;
+    $('#queue-pause').classList.toggle('hidden', !p);
+    if (p) $('#queue-pause').innerHTML = `<b>⏸️ Cola de Claude en pausa</b><div>${esc(p.reason.charAt(0).toUpperCase() + p.reason.slice(1))}. Sigo sola a las ${new Date(p.until).toLocaleTimeString(state.lang === 'en' ? 'en' : 'es', { hour: '2-digit', minute: '2-digit' })}. <span class="muted">Con ▶ puedes lanzar una igual.</span></div>`;
+  }
+  const DAYS = { '1,2,3,4,5': 'lun–vie', '0,1,2,3,4,5,6': 'todos los días', 1: 'lunes', 2: 'martes', 3: 'miércoles', 4: 'jueves', 5: 'viernes', 6: 'sábados', 0: 'domingos' };
+  function renderRecurring() {
+    const list = state.claudeRecurring || [];
+    $('#crec-count').textContent = String(list.length);
+    $('#crec-list').innerHTML = list.length ? list.map((r) => `<div class="qi" data-id="${esc(r.id)}"><span class="qt">${esc(r.text.length > 110 ? r.text.slice(0, 109) + '…' : r.text)} <span class="pill">${esc(r.project)}</span> <span class="muted small">${esc(DAYS[r.days.join(',')] || r.days.join(','))} · ${esc(r.time)}${r.autoRun ? ' · ▶ sola' : ''}</span></span><button class="icon mini crec-del" aria-label="Quitar">✕</button></div>`).join('')
+      : '<div class="muted small">Pídele a Claude cosas que se repiten: "cada lunes, actualiza dependencias y abre PR", "cada mañana, resume mis PRs pendientes".</div>';
+    tr($('#claude-recurring'));
+  }
+  $('#crec-list').addEventListener('click', (e) => { const d = e.target.closest('.crec-del'); if (d) pm.recurringDelete(d.closest('.qi').dataset.id); });
+  $('#crec-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const r = await pm.recurringSave({ text: $('#crec-text').value, project: $('#crec-project').value, days: $('#crec-days').value, time: $('#crec-time').value, autoRun: $('#crec-auto').checked });
+    if (!r.ok) return toast('😿 ' + r.error);
+    $('#crec-text').value = '';
+  });
+  const KIND_NAMES = { tests: '🧪 Tests', bug: '🐞 Bugs', refactor: '♻️ Refactor', docs: '📝 Docs', deps: '📦 Dependencias', feature: '✨ Funcionalidades', otro: '• Otras' };
+  function renderStats() {
+    const st = state.claudeStats || { rows: [], tips: [], total: 0 };
+    $('#cstats-count').textContent = String(st.total);
+    $('#cstats').innerHTML = st.total ? `<table class="cstats"><thead><tr><th>Tipo</th><th>Veces</th><th>Bien</th><th>Coste medio</th><th>Duración</th></tr></thead><tbody>${st.rows.map((r) => `<tr><td>${KIND_NAMES[r.kind] || r.kind}</td><td>${r.n}</td><td class="${r.rate >= 0.7 ? 'okmsg' : r.rate < 0.4 ? 'err' : ''}">${Math.round(r.rate * 100)}%</td><td>$${r.avgCost.toFixed(2)}</td><td>${Math.round(r.avgMins)} min</td></tr>`).join('')}</tbody></table>
+      ${st.tips.map((t) => `<div class="small">💡 ${esc(t)}</div>`).join('')}
+      <div class="muted small">"Bien" = el PR se mezcló, quedó abierto o aceptaste los cambios.</div>`
+      : '<div class="muted small">Cuando Claude haga peticiones de tu cola, aquí verás qué tipo de pedidos te funcionan mejor.</div>';
+    tr($('#claude-stats'));
+  }
+
   window.renderExtras = () => {
     if (prevRender) prevRender();
     renderTickets();
     renderRuns();
+    renderPause();
+    renderRecurring();
+    renderStats();
     loadRepos();
   };
   if (typeof state !== 'undefined' && state) window.renderExtras();

@@ -283,7 +283,8 @@ module.exports = function install(M) {
     });
 
     M.ipcMain.handle('settings:update', (_e, patch) => {
-      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget', 'claudeParallel', 'claudeReview', 'claudeAutoFixCi', 'claudeAutoFixReview', 'claudeMaxFixes', 'petPerch', 'pcReactions', 'typeAlong', 'weatherCity', 'petStyle', 'stuckDetector', 'planCheck', 'bestHour', 'closingRitual', 'endOfDay', 'closeApps', 'myName'];
+      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget', 'claudeParallel', 'claudeReview', 'claudeAutoFixCi', 'claudeAutoFixReview', 'claudeMaxFixes', 'petPerch', 'pcReactions', 'typeAlong', 'weatherCity', 'petStyle', 'stuckDetector', 'planCheck', 'bestHour', 'closingRitual', 'endOfDay', 'closeApps', 'myName', 'claudeRespectLimits', 'claudeLimitPct', 'claudeModelAuto'];
+      if ('claudeLimitPct' in patch) patch.claudeLimitPct = Math.max(50, Math.min(99, Math.round(Number(patch.claudeLimitPct)) || 85));
       if ('endOfDay' in patch && !/^\d{2}:\d{2}$/.test(patch.endOfDay || '')) delete patch.endOfDay;
       if ('closeApps' in patch) patch.closeApps = (Array.isArray(patch.closeApps) ? patch.closeApps : String(patch.closeApps || '').split(/[,\n]/)).map((x) => String(x).trim().replace(/\.exe$/i, '')).filter((x) => /^[\w .-]{2,40}$/.test(x)).slice(0, 12);
       if ('myName' in patch) patch.myName = String(patch.myName || '').trim().slice(0, 40);
@@ -655,11 +656,13 @@ module.exports = function install(M) {
     M.ipcMain.handle('projmem:update', (_e, repo) => { try { return { ok: true, file: M.updateProjectMemory(repo) }; } catch (e) { return { ok: false, error: e.message }; } });
     M.ipcMain.handle('git:repos', () => require('../git').discover(M.prod.snapshot().git.roots || []).map((r) => ({ path: r, name: M.path.basename(r) })));
     // ----- programación, organización y vida del pollito -----
-    M.ipcMain.handle('queue:add', (_e, { text, project }) => M.plan.queueAdd(text, project));
+    M.ipcMain.handle('queue:add', (_e, { text, project, model }) => M.plan.queueAdd(text, project, { model }));
     M.ipcMain.handle('queue:remove', (_e, id) => M.plan.queueRemove(id));
     M.ipcMain.handle('queue:next', (_e, project) => !!M.plan.queueNext(project));
     // Cola de Claude que se ejecuta sola (worktree aparte + claude -p)
-    M.ipcMain.handle('runs:start', (_e, queueId) => M.work.startRun(String(queueId || '')));
+    M.ipcMain.handle('runs:start', (_e, a) => (a && typeof a === 'object' ? M.work.startRun(String(a.id || ''), { force: !!a.force }) : M.work.startRun(String(a || ''))));
+    M.ipcMain.handle('claudeRec:save', (_e, r) => M.work.recurringSave(r || {}));
+    M.ipcMain.handle('claudeRec:delete', (_e, id) => M.work.recurringDelete(String(id)));
     M.ipcMain.handle('runs:accept', (_e, id) => M.work.acceptRun(String(id)));
     M.ipcMain.handle('runs:discard', (_e, id) => M.work.discardRun(String(id)));
     M.ipcMain.handle('runs:open', (_e, id) => { M.work.openRun(String(id)); return true; });

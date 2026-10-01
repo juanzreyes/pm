@@ -15,6 +15,9 @@
     $('#run-auto').checked = !!cr.auto;
     $('#run-tests').checked = cr.tests !== false;
     segOn($('#run-par'), String(cr.parallel || 2));
+    $('#run-limits').checked = cr.respectLimits !== false;
+    if (document.activeElement !== $('#run-limitpct')) $('#run-limitpct').value = cr.limitPct || 85;
+    $('#run-modelauto').checked = cr.modelAuto !== false;
     $('#run-review').checked = cr.review !== false;
     $('#run-fixci').checked = cr.autoFixCi !== false;
     $('#run-fixrev').checked = !!cr.autoFixReview;
@@ -121,6 +124,9 @@
   $('#run-bin-pick').addEventListener('click', async () => { st = await pm.chooseClaudeBin(); render(); });
   $('#run-auto').addEventListener('change', (e) => pm.updateSettings({ claudeAutoRun: e.target.checked }));
   $('#run-tests').addEventListener('change', (e) => pm.updateSettings({ claudeRunTests: e.target.checked }));
+  $('#run-limits').addEventListener('change', (e) => pm.updateSettings({ claudeRespectLimits: e.target.checked }));
+  $('#run-limitpct').addEventListener('change', (e) => pm.updateSettings({ claudeLimitPct: Number(e.target.value) || 85 }));
+  $('#run-modelauto').addEventListener('change', (e) => pm.updateSettings({ claudeModelAuto: e.target.checked }));
   $('#run-par').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) pm.updateSettings({ claudeParallel: Number(b.dataset.v) }); });
   $('#run-review').addEventListener('change', (e) => pm.updateSettings({ claudeReview: e.target.checked }));
   $('#run-fixci').addEventListener('change', (e) => pm.updateSettings({ claudeAutoFixCi: e.target.checked }));

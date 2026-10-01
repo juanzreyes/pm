@@ -343,6 +343,35 @@ test('2.0 productividad: mis proyectos, notas de reunión → tareas y modo pato
   await panel.waitForFunction(() => document.querySelector('#duck-banner').classList.contains('hidden'), null, { timeout: 5000 });
 });
 
+test('2.0 Claude: modelo por petición, recurrentes, qué funciona y ajustes de límites', async () => {
+  const panel = await waitPage('panel');
+  await panel.evaluate(() => pm.command('panel', 'day'));
+  await panel.waitForFunction(() => document.querySelectorAll('#crec-project option').length > 1, null, { timeout: 8000 });
+  await panel.fill('#queue-input', 'corrige el typo del título');
+  await panel.selectOption('#queue-model', 'haiku');
+  await panel.press('#queue-input', 'Enter');
+  await panel.waitForFunction(() => [...document.querySelectorAll('#claude-queue .qi')].some((q) => /corrige el typo[\s\S]*🧠 haiku/.test(q.textContent)), null, { timeout: 5000 });
+  await panel.evaluate(() => { document.querySelector('#claude-recurring').open = true; document.querySelector('#claude-stats').open = true; });
+  await panel.fill('#crec-text', 'Actualiza dependencias y abre PR');
+  await panel.selectOption('#crec-project', 'demo');
+  await panel.selectOption('#crec-days', '1');
+  await panel.click('#crec-form button[type=submit]');
+  await panel.waitForFunction(() => /Actualiza dependencias[\s\S]*demo[\s\S]*lunes · 09:00/.test(document.querySelector('#crec-list').textContent), null, { timeout: 5000 });
+  // Las peticiones de los tests anteriores ya cuentan en "qué te funciona".
+  const st = await panel.evaluate(() => ({ n: Number(document.querySelector('#cstats-count').textContent), rows: document.querySelectorAll('#cstats tbody tr').length }));
+  assert.ok(st.n >= 2 && st.rows >= 1, JSON.stringify(st));
+  await panel.evaluate(() => { document.querySelector('#crec-list .crec-del').click(); });
+  await panel.waitForFunction(() => document.querySelector('#crec-count').textContent === '0', null, { timeout: 5000 });
+  await panel.evaluate(() => [...document.querySelectorAll('#claude-queue .qi')].find((q) => /corrige el typo/.test(q.textContent)).querySelector('.q-del').click());
+  await panel.evaluate(() => pm.openSettings('integrations'));
+  const s = await waitPage('settings');
+  await s.waitForFunction(() => !!document.querySelector('#run-limits') && document.querySelector('#run-limitpct').value === '85', null, { timeout: 8000 });
+  assert.deepEqual(await s.evaluate(() => ({ lim: document.querySelector('#run-limits').checked, auto: document.querySelector('#run-modelauto').checked })), { lim: true, auto: true });
+  await s.evaluate(() => { const i = document.querySelector('#run-limitpct'); i.value = '120'; i.dispatchEvent(new Event('change')); });
+  await s.waitForFunction(async () => (await pm.getState()).claudeRunner.limitPct === 99, null, { timeout: 5000 });
+  await s.evaluate(() => pm.updateSettings({ claudeLimitPct: 85 }));
+});
+
 test('ajustes: diagnóstico sin errores de la app', async () => {
   const panel = await waitPage('panel');
   await panel.evaluate(() => pm.command('diag'));

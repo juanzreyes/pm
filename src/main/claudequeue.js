@@ -53,11 +53,30 @@ module.exports = function install(M) {
   // =====================================================================
   // PETICIONES DE LA COLA
   // =====================================================================
-  /** Lanza una petición de la cola. */
-  async function startRun(queueId) {
+  // ---------- ⏸️ respetar tus límites y 🧠 modelo según la tarea ----------
+  const stats = require('../claudestats');
+  const guardOn = () => set().claudeRespectLimits !== false;
+  const limitPct = () => Math.max(50, Math.min(99, Number(set().claudeLimitPct) || 85));
+  function guard() {
+    if (!guardOn()) return { ok: true };
+    return stats.limitGuard(M.usage, limitPct());
+  }
+  /** Modelo para una petición: el que elegiste para ella, o automático según la tarea y tu presupuesto. */
+  function modelFor(q) {
+    if (q.model && q.model !== 'auto') return { model: q.model, why: 'lo elegiste tú' };
+    if (set().claudeModelAuto === false) return { model: '', why: 'el de tu configuración de Claude Code' };
+    let pct = 0;
+    try { pct = M.plan.budgetState().pct || 0; } catch { /* sin presupuesto */ }
+    return stats.chooseModel(q.text, { budgetPct: pct });
+  }
+
+  /** Lanza una petición de la cola. opts.force: aunque estés cerca del límite. */
+  async function startRun(queueId, opts = {}) {
     const q = (S().claudeQueue || []).find((x) => x.id === queueId) || (queueId ? null : nextRunnable());
     if (!q) return { ok: false, error: 'Esa petición ya no está en la cola' };
     if (busy()) return { ok: false, error: `Ya hay ${active()} en marcha (máximo ${limit()} a la vez); esta va después` };
+    const g = guard();
+    if (!g.ok && !opts.force) return { ok: false, limit: true, error: `⏸️ Mejor esperar: ${g.reason}. Se reinicia a las ${new Date(g.until).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}.` };
     const bin = needBin();
     if (!bin) return { ok: false, error: 'No encontré Claude Code' };
     const repo = q.project ? M.repoByName(q.project) : null;
@@ -79,8 +98,11 @@ module.exports = function install(M) {
     run.status = 'running';
     saveRuns();
     petWorking();
-    M.say(`🤖 Empiezo con "${shortText(q.text)}" en ${q.project}. Trabajo en una copia aparte: tu carpeta no se toca.`, 'peck', 7000, { log: false });
-    const job = runner.launch({ bin, cwd: run.dir, prompt: q.text, permission: permission(), budgetUsd: budget(), onProgress: onProgress(run) });
+    const m = modelFor(q);
+    run.model = m.model;
+    run.modelWhy = m.why;
+    M.say(`🤖 Empiezo con "${shortText(q.text)}" en ${q.project}${m.model ? ` con ${m.model} (${m.why})` : ''}. Trabajo en una copia aparte: tu carpeta no se toca.`, 'peck', 7000, { log: false });
+    const job = runner.launch({ bin, cwd: run.dir, prompt: q.text, permission: permission(), budgetUsd: budget(), onProgress: onProgress(run), model: m.model });
     live[id] = job;
     job.promise.then((r) => finishRun(run, r));
     return { ok: true, id };
@@ -103,7 +125,7 @@ module.exports = function install(M) {
     if (r.ok && stat.files.length && set().claudeReview !== false) {
       run.status = 'reviewing';
       saveRuns();
-      try { run.review = await runner.review({ bin: claudeBin(), cwd: run.dir, request: run.text, budgetUsd: reviewBudget() }); } catch (e) { run.review = { ok: false, verdict: 'error', text: e.message, cost: 0 }; }
+      try { run.review = await runner.review({ bin: claudeBin(), cwd: run.dir, request: run.text, budgetUsd: reviewBudget(), model: set().claudeModelAuto === false ? '' : 'sonnet' }); } catch (e) { run.review = { ok: false, verdict: 'error', text: e.message, cost: 0 }; }
       if (run.review) run.cost = (run.cost || 0) + (run.review.cost || 0);
     }
     petWorking();
@@ -279,6 +301,7 @@ module.exports = function install(M) {
     processFixQueue();
   }
   function processFixQueue() {
+    if (!guard().ok) return; // los arreglos automáticos también esperan a que se reinicie tu límite
     for (const run of runs().filter((r) => r.pendingFix)) {
       if (busy()) break;
       startFix(run, run.pendingFix);
@@ -320,7 +343,7 @@ module.exports = function install(M) {
     saveRuns();
     petWorking();
     M.say(`🔧 Claude se pone con ${kind === 'ci' ? 'el CI' : 'la revisión'} del PR de ${parent.project} (intento ${parent.fixes} de ${maxFixes() || 1}).`, 'peck', 7000, { log: false });
-    const job = runner.launch({ bin, cwd: fix.dir, prompt, permission: permission(), budgetUsd: budget(), onProgress: onProgress(fix) });
+    const job = runner.launch({ bin, cwd: fix.dir, prompt, permission: permission(), budgetUsd: budget(), onProgress: onProgress(fix), model: parent.model || '' });
     live[id] = job;
     job.promise.then((r) => finishFix(fix, parent, r));
   }
@@ -393,9 +416,26 @@ module.exports = function install(M) {
   function nextRunnable() {
     return (S().claudeQueue || []).find((q) => q.project && M.repoByName(q.project)) || null;
   }
-  /** Modo automático: llena los huecos libres con la cola. */
+  /** Modo automático: llena los huecos libres con la cola (si tus límites lo permiten). */
   function autoTick() {
     if (M.TEST || !set().claudeAutoRun) return;
+    const g = guard();
+    const paused = S().queuePause;
+    if (!g.ok) {
+      if (!paused && nextRunnable()) {
+        S().queuePause = { until: g.until, reason: g.reason, at: Date.now() };
+        M.store.save();
+        M.broadcast();
+        M.say(`⏸️ Pausé la cola de Claude: ${g.reason}. Sigo sola a las ${new Date(g.until).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}, cuando se reinicie.`, 'peck', 12000, { cat: 'usage' });
+      }
+      return;
+    }
+    if (paused) {
+      delete S().queuePause;
+      M.store.save();
+      M.broadcast();
+      if (nextRunnable()) M.say('▶️ Se reinició tu límite: retomo la cola de Claude.', 'hop', 8000, { cat: 'claude' });
+    }
     while (!busy()) {
       // Nunca más de 3 esperando revisión: que no se acumule trabajo sin mirar.
       if (runs().filter((r) => r.status === 'review').length >= 3) return;
@@ -425,9 +465,13 @@ module.exports = function install(M) {
         review: r.review ? { ok: r.review.ok, verdict: r.review.verdict, text: r.review.text } : null,
         progress: r.progress || null, pr: r.pr || '', prState: r.prState || '', ci: r.ci || null, fixes: r.fixes || 0, pendingFix: r.pendingFix || '',
         canFixCi: !!(r.status === 'pr' && r.lastCi && r.ci && r.ci.failed), canFixReview: !!(r.status === 'pr' && r.lastReview),
-        issueKey: r.issue ? r.issue.key : '', prReady: prReady(r),
+        issueKey: r.issue ? r.issue.key : '', prReady: prReady(r), model: r.model || '', modelWhy: r.modelWhy || '',
       })),
+      claudeStats: stats.stats(runs()),
+      claudeRecurring: recurring(),
+      queuePause: S().queuePause || null,
       claudeRunner: {
+        respectLimits: guardOn(), limitPct: limitPct(), modelAuto: set().claudeModelAuto !== false,
         bin: claudeBin(), auto: !!set().claudeAutoRun, tests: set().claudeRunTests !== false, review: set().claudeReview !== false, budget: budget(),
         parallel: limit(), autoFixCi: set().claudeAutoFixCi !== false, autoFixReview: !!set().claudeAutoFixReview, maxFixes: maxFixes(),
         permission: permission(), busy: busy(), active: active(),
@@ -435,13 +479,48 @@ module.exports = function install(M) {
     };
   }
 
+  // ---------- 🔁 peticiones recurrentes ----------
+  const recurring = () => (S().claudeRecurring = S().claudeRecurring || []);
+  /** Guarda (o crea) una petición recurrente: "cada lunes, actualiza dependencias y abre PR". */
+  function recurringSave(r) {
+    const text = String(r.text || '').trim().slice(0, 4000);
+    const project = String(r.project || '').trim();
+    const days = (Array.isArray(r.days) ? r.days : String(r.days || '').split(',')).map(Number).filter((d) => d >= 0 && d <= 6);
+    const time = /^\d{2}:\d{2}$/.test(r.time || '') ? r.time : '09:00';
+    if (!text || !project || !days.length) return { ok: false, error: 'Falta la petición, el proyecto o los días' };
+    const list = recurring();
+    const ex = r.id && list.find((x) => x.id === r.id);
+    const data = { text, project, days, time, autoRun: !!r.autoRun, model: ['haiku', 'sonnet', 'opus'].includes(r.model) ? r.model : 'auto' };
+    if (ex) Object.assign(ex, data); else list.push({ id: newId(), ...data, lastRun: '' });
+    saveRuns();
+    return { ok: true };
+  }
+  function recurringDelete(id) {
+    S().claudeRecurring = recurring().filter((x) => x.id !== id);
+    (S().tombstones = S().tombstones || {})[id] = Date.now();
+    saveRuns();
+    return { ok: true };
+  }
+  function recurringTick(now = new Date()) {
+    for (const r of recurring()) {
+      if (!stats.isDue(r, now)) continue;
+      r.lastRun = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      M.plan.queueAdd(r.text, r.project, { model: r.model });
+      const q = (S().claudeQueue || []).slice(-1)[0];
+      M.store.save();
+      M.say(`🔁 Toca: «${shortText(r.text)}» (${r.project}). ${r.autoRun ? 'La lanzo ya.' : 'Está en la cola.'}`, 'peck', 8000, { cat: 'claude', target: { cmd: 'panel', arg: 'day#claude-queue' } });
+      if (r.autoRun && q) startRun(q.id).then((res) => { if (!res.ok) M.diag.log('main', 'Recurrente: ' + res.error); });
+    }
+  }
+
   function start() {
     recover();
     if (M.TEST) return;
+    setInterval(() => { try { recurringTick(); } catch (e) { M.diag.log('main', 'Recurrentes: ' + e.message); } }, 60e3);
     setInterval(autoTick, 60e3);
     setTimeout(watchPRs, 25e3);
     setInterval(watchPRs, 3 * 60e3);
   }
 
-  return { startRun, acceptRun, prRun, fixRun, discardRun, openRun, stopRun, clearRuns, runsState, start, onPrStatus, watchPRs };
+  return { startRun, acceptRun, prRun, fixRun, discardRun, openRun, stopRun, clearRuns, runsState, start, onPrStatus, watchPRs, recurringSave, recurringDelete, recurringTick, autoTick, guard, modelFor };
 };

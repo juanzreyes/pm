@@ -106,8 +106,9 @@ function describeTool(name, input = {}) {
  * Lee la salida en vivo (stream-json) y llama a onProgress({ icon, what, target, steps }) en cada herramienta.
  * Devuelve { promise, kill }. La promesa resuelve { ok, result, cost, turns, sessionId, error }.
  */
-function launch({ bin, cwd, prompt, permission = 'acceptEdits', timeoutMs = 30 * 60e3, budgetUsd = 0, onProgress = null }) {
+function launch({ bin, cwd, prompt, permission = 'acceptEdits', timeoutMs = 30 * 60e3, budgetUsd = 0, onProgress = null, model = '' }) {
   const args = ['-p', '--output-format', 'stream-json', '--verbose', '--permission-mode', permission];
+  if (/^[\w.-]+$/.test(model)) args.push('--model', model); // alias (haiku, sonnet, opus…) o nombre completo
   if (budgetUsd > 0) args.push('--max-budget-usd', String(budgetUsd)); // Claude se detiene al llegar al tope
   const c = command(bin, args);
   const child = spawn(c.file, c.args, { cwd, shell: c.shell, windowsHide: true, env: { ...process.env, ...c.env } });
@@ -178,11 +179,11 @@ Responde en español. La PRIMERA línea debe ser exactamente "VEREDICTO: OK" (si
 {{DIFF}}
 </diff>`;
 /** Revisión de solo lectura (dontAsk: cualquier edición se deniega). */
-async function review({ bin, cwd, request, budgetUsd = 1, timeoutMs = 10 * 60e3 }) {
+async function review({ bin, cwd, request, budgetUsd = 1, timeoutMs = 10 * 60e3, model = '' }) {
   const diff = await stagedDiff(cwd);
   if (!diff.trim()) return null;
   const prompt = REVIEW_PROMPT.replace('{{PETICION}}', String(request || '').slice(0, 3000)).replace('{{DIFF}}', diff);
-  const r = await launch({ bin, cwd, prompt, permission: 'dontAsk', budgetUsd, timeoutMs }).promise;
+  const r = await launch({ bin, cwd, prompt, permission: 'dontAsk', budgetUsd, timeoutMs, model }).promise;
   if (!r.ok && !r.result) return { ok: false, verdict: 'error', text: r.error || 'La revisión falló', cost: r.cost || 0 };
   const text = String(r.result || '').trim();
   const verdict = /^\s*VEREDICTO:\s*OK/i.test(text) ? 'ok' : /VEREDICTO:\s*REVISAR/i.test(text) ? 'revisar' : 'revisar';

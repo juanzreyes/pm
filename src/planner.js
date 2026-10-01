@@ -28,7 +28,7 @@ function create(ctx) {
   function queueAdd(text, project, extra = {}) {
     text = String(text || '').trim().slice(0, 12000);
     if (!text) return false;
-    queue().push({ id: newId(), text, project: project || '', at: Date.now(), ...(extra.issue ? { issue: extra.issue } : {}) });
+    queue().push({ id: newId(), text, project: project || '', at: Date.now(), ...(extra.issue ? { issue: extra.issue } : {}), ...(['haiku', 'sonnet', 'opus'].includes(extra.model) ? { model: extra.model } : {}) });
     ctx.store.save();
     ctx.broadcast();
     return true;

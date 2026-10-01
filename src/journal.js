@@ -39,6 +39,11 @@ function walk(dir, out, minMtime) {
 // Mensajes que no son peticiones reales del usuario.
 const NOISE = /^(<command-|<local-command|Caveat:|\[Request interrupted|<system-reminder>|<task-notification>|This session is being continued)/;
 
+// Contexto que el IDE/Claude Code pega dentro de tu mensaje (<ide_opened_file>, <ide_selection>,
+// <system-reminder>…): no es lo que pediste, así que no debe salir en tu diario ni en el standup.
+const CONTEXT_TAG = /<([a-z]+[_-][a-z_-]+)\b[^>]*>[\s\S]*?<\/\1>/g;
+const stripContext = (s) => s.replace(CONTEXT_TAG, ' ');
+
 function textOf(content) {
   if (typeof content === 'string') return content;
   if (Array.isArray(content)) {
@@ -66,7 +71,7 @@ function promptsOf(f) {
     if (j.type !== 'user' || j.isMeta || j.isSidechain || !j.message) continue;
     const at = Date.parse(j.timestamp);
     if (!at) continue;
-    const text = textOf(j.message.content).replace(/\s+/g, ' ').trim();
+    const text = stripContext(textOf(j.message.content)).replace(/\s+/g, ' ').trim();
     if (text.length < 4 || NOISE.test(text)) continue;
     items.push({ at, text: text.slice(0, 400), key: j.uuid || `${at}|${text.slice(0, 40)}`, cwd: j.cwd });
   }
