@@ -1,5 +1,9 @@
 # Novedades de PM Pollito
 
+## 2.0.1 — Tu día, bien contado
+- **✍️ Resumen redactado por proyecto**: el "¿Qué hiciste ayer?" del daily, el texto del daily para el canal y la caja "En qué trabajé hoy" ya no copian lo que le escribiste a Claude: muestran, por cada proyecto, el tiempo y una o dos frases sobre en qué trabajaste, redactadas por Claude (Haiku, unos centavos de tu plan) a partir de tu tiempo, tus commits y tus peticiones. Si no hay Claude disponible (o lo apagas en Ajustes → General), un resumen automático más simple sin salir de tu PC.
+- **🔎 PM encuentra el Claude Code de la app de escritorio de Claude** (pestaña Code): ya no hace falta instalarlo aparte para la cola ni para el resumen.
+
 ## 2.0.0 — El pollito crece
 **🐣 El alma del pollito**
 - **Rasgos que salen de cómo trabajas** (búho nocturno, madrugador, hacker, constante…) y se ven en el pollito.

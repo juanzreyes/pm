@@ -8,21 +8,24 @@ const hours = (secs) => {
 const fmtTok = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + ' M' : n >= 1e3 ? (n / 1e3).toFixed(1) + ' k' : String(n || 0));
 const dayName = (d) => d.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'short' });
 
+/** Una línea del resumen: "📁 proyecto · 2 h" va en negrita (sin viñeta); el resto, con viñeta. */
+const summaryLine = (l) => (/^📁/u.test(l) ? `*${l}*` : `• ${l.replace(/^[•\-✅⬜📦🤖]\s*/u, '')}`);
+
 /** Daily en formato para pegar en Slack / Teams. */
 function daily(day, date = new Date(), commitsYesterday = [], extras = {}) {
   const s = day.standup || { yesterday: '', today: [], help: '' };
   const lines = [`*Daily · ${dayName(date)}*`, ''];
   lines.push('✅ *Ayer:*');
   const y = (s.yesterday || '').split('\n').map((l) => l.trim()).filter(Boolean);
-  if (y.length) y.forEach((l) => lines.push(`• ${l.replace(/^[•\-✅⬜📦]\s*/u, '')}`));
+  if (y.length) y.forEach((l) => lines.push(summaryLine(l)));
   else if (commitsYesterday.length) commitsYesterday.forEach((c) => lines.push(`• [${c.repo}] ${c.subject}`));
   else lines.push('• —');
   lines.push('', '📋 *Hoy:*');
   if (s.today.length) s.today.forEach((t) => lines.push(`• ${t.done ? '~' + t.text + '~ ✔' : t.text}`));
   else lines.push('• —');
   if (extras.claudeToday && extras.claudeToday.length) {
-    lines.push('', '🤖 *Con Claude hoy:*');
-    extras.claudeToday.forEach((l) => lines.push(`• ${l}`));
+    lines.push('', '🛠️ *En qué trabajé hoy:*');
+    extras.claudeToday.forEach((l) => lines.push(summaryLine(l)));
   }
   lines.push('', `🚧 *Bloqueos / ayuda:* ${s.help || 'Ninguno'}`);
   return lines.join('\n');

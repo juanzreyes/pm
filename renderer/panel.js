@@ -899,7 +899,9 @@ function openStandup() {
     $('#su-intro').textContent = 'Puedes ajustar el plan de hoy.';
   } else {
     const pt = (prev && prev.standup && prev.standup.today) || [];
-    $('#su-yesterday').value = pt.map((t) => `${t.done ? '✅' : '⬜'} ${t.text}`).join('\n');
+    // "¿Qué hiciste ayer?": un resumen redactado por proyecto (no tus peticiones tal cual) + cómo fue el plan.
+    const planLine = pt.length ? `✅ Del plan: ${pt.filter((t) => t.done).length} de ${pt.length} tareas hechas.` : '';
+    $('#su-yesterday').value = planLine;
     suTasks = prev && prev.review && prev.review.carry ? pt.filter((t) => !t.done).map((t) => t.text) : [];
     // Las recurrentes de hoy ya vienen puestas 🔁
     for (const t of state.recurringToday || []) if (!suTasks.includes(t)) suTasks.push(t);
@@ -907,21 +909,14 @@ function openStandup() {
     for (const t of state.mondayPlan || []) if (!suTasks.includes(t)) suTasks.push(t);
     $('#su-help').value = '';
     $('#su-intro').textContent = prev ? `Te dejé lo que planeaste el ${dayLabel(prev.date)} para que lo ajustes.` : 'Cuéntame para organizar el día.';
-    // Añade tus commits del último día laborable (git) a "¿Qué hiciste ayer?".
-    const base = $('#su-yesterday').value;
-    pm.gitYesterday().then((commits) => {
-      if (!commits || !commits.length || $('#su-yesterday').value !== base) return;
-      const lines = commits.slice(-12).map((c) => `📦 [${c.repo}] ${c.subject}`);
-      $('#su-yesterday').value = (base ? base + '\n' : '') + lines.join('\n');
-      $('#su-intro').textContent += ` Añadí tus ${commits.length} commit${commits.length === 1 ? '' : 's'} de git 📦`;
-    }).catch(() => {}).finally(() => {
-      // …y lo que le pediste a Claude Code ese día.
-      const cj = (state.claudeJournal && state.claudeJournal.prev) || [];
-      if (!cj.length) return;
-      const cur = $('#su-yesterday').value;
-      $('#su-yesterday').value = (cur ? cur + '\n' : '') + cj.map((p) => `🤖 [${p.project}] ${p.items.join(' · ')}`).join('\n');
-      $('#su-intro').textContent += ' y lo que hiciste con Claude 🤖';
-    });
+    // El resumen lo redacta Claude con tu tiempo por proyecto, tus commits y lo que le pediste ese día.
+    const ph = $('#su-yesterday').placeholder;
+    $('#su-yesterday').placeholder = '✨ Redactando en qué trabajaste…';
+    pm.workSummary('prev').then((r) => {
+      if (!r || !r.text || $('#su-yesterday').value !== planLine) return; // si ya escribiste algo, no lo piso
+      $('#su-yesterday').value = r.text + (planLine ? '\n\n' + planLine : '');
+      $('#su-intro').textContent += ' Te resumí en qué trabajaste en cada proyecto ✍️';
+    }).catch(() => {}).finally(() => { $('#su-yesterday').placeholder = ph; });
   }
   renderSuTasks();
   $('#o-standup').classList.remove('hidden');

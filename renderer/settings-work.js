@@ -55,6 +55,7 @@
     // ---------- productividad 2.0 ----------
     if (document.activeElement !== $('#s-endofday')) $('#s-endofday').value = (st.coach && st.coach.endOfDay) || '';
     $('#s-ritual').checked = ss.closingRitual !== false;
+    $('#s-sumclaude').checked = ss.summaryWithClaude !== false;
     if (document.activeElement !== $('#s-closeapps')) $('#s-closeapps').value = (ss.closeApps || []).join(', ');
     $('#s-stuck').checked = ss.stuckDetector !== false;
     $('#s-plancheck').checked = ss.planCheck !== false;
@@ -182,6 +183,7 @@
   // ---------- productividad 2.0 ----------
   $('#s-endofday').addEventListener('change', (e) => e.target.value && pm.updateSettings({ endOfDay: e.target.value }));
   $('#s-ritual').addEventListener('change', (e) => pm.updateSettings({ closingRitual: e.target.checked }));
+  $('#s-sumclaude').addEventListener('change', (e) => pm.updateSettings({ summaryWithClaude: e.target.checked }));
   $('#s-closeapps').addEventListener('change', (e) => pm.updateSettings({ closeApps: e.target.value }));
   $('#s-stuck').addEventListener('change', (e) => pm.updateSettings({ stuckDetector: e.target.checked }));
   $('#s-plancheck').addEventListener('change', (e) => pm.updateSettings({ planCheck: e.target.checked }));

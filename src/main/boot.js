@@ -168,7 +168,10 @@ module.exports = function install(M) {
         M.say(msg, 'peck', 7000, { log: false, target: { cmd: 'panel', arg: 'day#recurring' } });
         return msg;
       },
-      claudeToday: () => (M.ex ? M.ex.journalText(M.ex.claudeJournal().today, '').map((l) => l.trim()) : []),
+      claudeToday: async () => {
+        try { await Promise.race([M.worksum.get('today'), new Promise((r) => setTimeout(r, 25000))]); } catch { /* se usa lo guardado */ }
+        return M.worksum.cachedLines('today');
+      },
     });
     if (!M.SAFE) {
       M.prod.start({ status: M.extStatus, command: M.extCommand, capture: (text) => M.extCapture(text), devEvent: (ev) => (M.dev ? M.dev.devEvent(ev) : false),

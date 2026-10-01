@@ -241,6 +241,7 @@ function create(ctx) {
     const { from, to } = git.lastWorkday();
     return git.commits(git.discover(roots()), from, to);
   }
+  const commitsBetween = (from, to) => git.commits(git.discover(roots()), from, to);
 
   // ================= GITHUB =================
   let gh = { status: 'off' };
@@ -327,7 +328,7 @@ function create(ctx) {
   async function dailyText() {
     let commits = [];
     try { commits = await lastWorkdayCommits(); } catch { /* sin git */ }
-    return report.daily(ctx.today(), new Date(), commits, { claudeToday: ctx.claudeToday ? ctx.claudeToday() : [] });
+    return report.daily(ctx.today(), new Date(), commits, { claudeToday: ctx.claudeToday ? await ctx.claudeToday() : [] });
   }
   const timesheet = () => report.timesheetCsv(S(), 30);
 
@@ -370,7 +371,7 @@ function create(ctx) {
     start, snapshot, onSample, scoldStep,
     pomoStart, pomoStop, pomoState, isPomoFocus: () => !!(pomo && pomo.phase === 'focus'),
     capture, addReminder, addReminderAt, removeReminder,
-    gitRefresh, lastWorkdayCommits, ghRefresh,
+    gitRefresh, lastWorkdayCommits, commitsBetween, ghRefresh,
     hooksInstall, hooksUninstall,
     weeklyReport, dailyText, timesheet, projectOf,
   };

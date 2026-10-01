@@ -18,6 +18,20 @@ function git(cwd, args) {
   });
 }
 
+/**
+ * El Claude Code que trae la app de escritorio de Claude (pestaña Code):
+ * <datos de Claude>/claude-code/<versión>/<id>/claude(.exe). Devuelve los candidatos, el más nuevo primero.
+ */
+function bundledByDesktop(h = os.homedir()) {
+  const base = WIN ? path.join(process.env.APPDATA || path.join(h, 'AppData', 'Roaming'), 'Claude', 'claude-code')
+    : process.platform === 'darwin' ? path.join(h, 'Library', 'Application Support', 'Claude', 'claude-code') : path.join(h, '.config', 'Claude', 'claude-code');
+  const ls = (d) => { try { return fs.readdirSync(d, { withFileTypes: true }).filter((x) => x.isDirectory()).map((x) => x.name); } catch { return []; } };
+  const num = (v) => v.split('.').map((n) => Number(n) || 0);
+  const newer = (a, b) => { const x = num(a), y = num(b); for (let i = 0; i < Math.max(x.length, y.length); i++) if ((x[i] || 0) !== (y[i] || 0)) return (y[i] || 0) - (x[i] || 0); return 0; };
+  return ls(base).filter((v) => /^\d+(\.\d+)*$/.test(v)).sort(newer)
+    .flatMap((v) => ls(path.join(base, v)).map((id) => path.join(base, v, id, WIN ? 'claude.exe' : 'claude')));
+}
+
 /** Busca el ejecutable de Claude Code: el configurado, el PATH y las rutas de instalación habituales. */
 function findClaude(custom) {
   const h = os.homedir();
@@ -28,6 +42,7 @@ function findClaude(custom) {
     path.join(h, '.local', 'bin', WIN ? 'claude.exe' : 'claude'),
     path.join(h, '.claude', 'local', WIN ? 'claude.exe' : 'claude'),
     ...(WIN ? [path.join(process.env.APPDATA || path.join(h, 'AppData', 'Roaming'), 'npm', 'claude.cmd')] : ['/usr/local/bin/claude', '/opt/homebrew/bin/claude']),
+    ...bundledByDesktop(h),
   );
   for (const c of cands) {
     try { if (fs.statSync(c).isFile()) return c; } catch { /* no está */ }
@@ -307,4 +322,4 @@ async function openPR({ owner, repo, token, head, base, title, body }, http = fe
   return j.html_url;
 }
 
-module.exports = { describeTool, stagedDiff, review, prepareOn, commitAndPush, findClaude, prepare, launch, changes, accept, discard, git, slug, linkDeps, unlinkDeps, detectTests, runTests, githubRepoOf, pushBranch, openPR };
+module.exports = { describeTool, stagedDiff, review, prepareOn, commitAndPush, findClaude, bundledByDesktop, prepare, launch, changes, accept, discard, git, slug, linkDeps, unlinkDeps, detectTests, runTests, githubRepoOf, pushBranch, openPR };

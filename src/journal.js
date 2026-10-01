@@ -37,7 +37,8 @@ function walk(dir, out, minMtime) {
 }
 
 // Mensajes que no son peticiones reales del usuario.
-const NOISE = /^(<command-|<local-command|Caveat:|\[Request interrupted|<system-reminder>|<task-notification>|This session is being continued)/;
+// (También las que hace el propio PM para redactar el resumen del día: src/worksummary.js → MARK.)
+const NOISE = /^(<command-|<local-command|Caveat:|\[Request interrupted|<system-reminder>|<task-notification>|This session is being continued|\[PM Pollito · resumen)/;
 
 // Contexto que el IDE/Claude Code pega dentro de tu mensaje (<ide_opened_file>, <ide_selection>,
 // <system-reminder>…): no es lo que pediste, así que no debe salir en tu diario ni en el standup.

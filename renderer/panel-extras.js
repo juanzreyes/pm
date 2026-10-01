@@ -109,23 +109,40 @@
     }, 250);
   });
 
-  function renderJournal() {
-    if ($('#claude-journal').dataset.ai === '1') return; // se está mostrando el resumen de la IA
-    const j = (state.claudeJournal && state.claudeJournal.today) || [];
-    $('#claude-journal').innerHTML = j.length
-      ? j.map((p) => `<div class="cj"><b>📁 ${esc(p.project)}</b> <span class="pill">${p.count} peticiones</span><ul>${p.items.map((i) => `<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')
-      : '<span class="muted">Hoy aún no le pediste nada a Claude Code. Lo que le pidas aparecerá aquí y en tu daily de mañana.</span>';
-  }
-  $('#journal-ai').addEventListener('click', async () => {
+  // 🛠️ En qué trabajé hoy: resumen redactado por proyecto (no la lista de lo que le escribiste a Claude).
+  let summary = null; // { text, by, at }
+  let summaryAt = 0;
+  let loading = false;
+  const BY = { ai: 'redactado con Claude', claude: 'redactado con Claude Code', local: 'resumen automático' };
+  function paintSummary() {
     const box = $('#claude-journal');
-    box.innerHTML = '<span class="muted">Resumiendo… ✨</span>';
-    const t = await pm.journalAi('today');
-    if (!t) { box.dataset.ai = ''; renderJournal(); return; }
-    box.dataset.ai = '1';
-    box.innerHTML = `<div style="white-space:pre-wrap">${esc(t)}</div><div class="row gap"><button class="ghost mini" id="cj-copy">📋 Copiar</button><button class="ghost mini" id="cj-back">↩ Ver peticiones</button></div>`;
-    $('#cj-copy').onclick = () => { navigator.clipboard.writeText(t); toast('📋 Copiado'); };
-    $('#cj-back').onclick = () => { box.dataset.ai = ''; renderJournal(); };
-  });
+    if (!summary || !summary.text) {
+      box.innerHTML = loading ? '<span class="muted">✨ Redactando en qué trabajaste…</span>'
+        : '<span class="muted">Aún no hay trabajo de hoy que resumir. Cuando trabajes en tus proyectos (commits, Claude Code o tiempo en el editor) lo verás aquí, ya redactado, y en tu daily de mañana.</span>';
+      return;
+    }
+    const blocks = summary.text.split(/\n\s*\n/).map((b) => {
+      const [head, ...rest] = b.split('\n');
+      return `<div class="cj"><b>${esc(head)}</b><p>${esc(rest.join(' '))}</p></div>`;
+    }).join('');
+    box.innerHTML = `${blocks}<div class="row between"><span class="muted small">${BY[summary.by] || ''}</span><button class="ghost mini" id="cj-copy">📋 Copiar</button></div>`;
+    $('#cj-copy').onclick = () => { navigator.clipboard.writeText(summary.text); toast('📋 Copiado'); };
+  }
+  async function loadSummary(force = false) {
+    if (loading) return;
+    loading = true;
+    summaryAt = Date.now();
+    if (force || !summary) paintSummary();
+    try { summary = await pm.workSummary('today', force); } catch { /* se queda el anterior */ }
+    loading = false;
+    paintSummary();
+  }
+  // Se pide al abrir el panel y, como mucho, cada 30 min (si nada cambió, sale de lo guardado).
+  function renderJournal() {
+    if (!summary || Date.now() - summaryAt > 30 * 60e3) loadSummary();
+    else paintSummary();
+  }
+  $('#journal-ai').addEventListener('click', () => loadSummary(true));
 
   $('#btn-blocks').addEventListener('click', () => show('blocks'));
   $('#btn-monthly').addEventListener('click', () => pm.monthlyPdf('current'));

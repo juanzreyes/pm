@@ -141,6 +141,7 @@ contextBridge.exposeInMainWorld('pm', {
   play: (kind) => ipcRenderer.invoke('pet:play', kind),
   // Diario de Claude, prompts, bloques, objetivos, hábitos, notas
   journalAi: (which) => ipcRenderer.invoke('journal:ai', which),
+  workSummary: (which, force) => ipcRenderer.invoke('worksummary:get', which, force),
   journalRefresh: () => ipcRenderer.invoke('journal:refresh'),
   promptCopy: (id) => ipcRenderer.invoke('prompts:copy', id),
   promptSave: (p) => ipcRenderer.invoke('prompts:save', p),

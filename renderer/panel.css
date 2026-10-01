@@ -666,3 +666,7 @@ html.reduced .run.running .run-progress { animation: none; }
 @keyframes eggWiggle { 0%, 80%, 100% { transform: rotate(0); } 85% { transform: rotate(-10deg); } 90% { transform: rotate(9deg); } 95% { transform: rotate(-5deg); } }
 #wr-canvas { width: 100%; height: auto; border-radius: 16px; border: 2px solid var(--ink); }
 @media (prefers-reduced-motion: reduce) { .egg.closed .ee { animation: none; } }
+#claude-journal .cj p { margin: 2px 0 8px; line-height: 1.4; }
+#claude-journal .cj:last-of-type p { margin-bottom: 4px; }
+/* El resumen por proyecto ocupa varias líneas: más alto, y crece con la ventana. */
+#su-yesterday { min-height: 150px; resize: vertical; line-height: 1.4; }

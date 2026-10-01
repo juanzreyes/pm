@@ -285,7 +285,7 @@ module.exports = function install(M) {
     });
 
     M.ipcMain.handle('settings:update', (_e, patch) => {
-      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget', 'claudeParallel', 'claudeReview', 'claudeAutoFixCi', 'claudeAutoFixReview', 'claudeMaxFixes', 'petPerch', 'pcReactions', 'typeAlong', 'weatherCity', 'petStyle', 'stuckDetector', 'planCheck', 'bestHour', 'closingRitual', 'endOfDay', 'closeApps', 'myName', 'claudeRespectLimits', 'claudeLimitPct', 'claudeModelAuto', 'teamShare', 'focusBlock'];
+      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget', 'claudeParallel', 'claudeReview', 'claudeAutoFixCi', 'claudeAutoFixReview', 'claudeMaxFixes', 'petPerch', 'pcReactions', 'typeAlong', 'weatherCity', 'petStyle', 'stuckDetector', 'planCheck', 'bestHour', 'closingRitual', 'endOfDay', 'closeApps', 'myName', 'claudeRespectLimits', 'claudeLimitPct', 'claudeModelAuto', 'teamShare', 'focusBlock', 'summaryWithClaude'];
       if ('claudeLimitPct' in patch) patch.claudeLimitPct = Math.max(50, Math.min(99, Math.round(Number(patch.claudeLimitPct)) || 85));
       if ('endOfDay' in patch && !/^\d{2}:\d{2}$/.test(patch.endOfDay || '')) delete patch.endOfDay;
       if ('closeApps' in patch) patch.closeApps = (Array.isArray(patch.closeApps) ? patch.closeApps : String(patch.closeApps || '').split(/[,\n]/)).map((x) => String(x).trim().replace(/\.exe$/i, '')).filter((x) => /^[\w .-]{2,40}$/.test(x)).slice(0, 12);
@@ -853,6 +853,8 @@ module.exports = function install(M) {
 
     // ----- diario de Claude, prompts, bloques, objetivos, hábitos, notas, copias, informe mensual -----
     M.ipcMain.handle('journal:ai', (_e, which) => M.ex.aiJournal(which));
+    // Resumen redactado del día por proyecto (en vez de tus peticiones tal cual).
+    M.ipcMain.handle('worksummary:get', (_e, which, force) => M.worksum.get(which === 'prev' ? 'prev' : 'today', { force: !!force }));
     M.ipcMain.handle('journal:refresh', () => { M.ex.claudeJournal(true); M.broadcast(); return true; });
     M.ipcMain.handle('prompts:copy', (_e, id) => M.ex.copyPrompt(id));
     M.ipcMain.handle('prompts:save', (_e, p) => M.ex.savePrompt(p || {}));

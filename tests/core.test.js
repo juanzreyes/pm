@@ -66,7 +66,7 @@ test('daily para Slack incluye ayer, hoy y bloqueos', () => {
   const t = report.daily({ standup: { yesterday: 'Terminé el login', today: [{ text: 'Tests', done: true }, { text: 'Deploy', done: false }], help: '' } }, new Date(), [], { claudeToday: ['[pm] tests'] });
   assert.match(t, /Terminé el login/);
   assert.match(t, /~Tests~ ✔/);
-  assert.match(t, /Con Claude hoy/);
+  assert.match(t, /En qué trabajé hoy/);
   assert.match(t, /Ninguno/);
 });
 
