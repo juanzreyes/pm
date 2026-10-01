@@ -1,5 +1,43 @@
 # Novedades de PM Pollito
 
+## 2.0.0 — El pollito crece
+**🐣 El alma del pollito**
+- **Rasgos que salen de cómo trabajas** (búho nocturno, madrugador, hacker, constante…) y se ven en el pollito.
+- **Huerta** que se riega con tus tareas, **trucos** que practica y aprende, **familia** (cuando se jubila, su cría hereda un rasgo), **sueños** de lo que hicieron ayer, **cartas del viernes**, **postales** y **fechas que recuerda** (cumpleaños, entregas).
+- **Vacaciones**: le pones un cartel y nada se marchita mientras no estás.
+
+**🪟 Presencia en el escritorio**
+- **Se sienta en tus ventanas**, reacciona al PC (CPU caliente, ventiladores), **teclea contigo**, **trae el tiempo** (paraguas, bufanda, abanico; Open-Meteo, sin cuenta) y te guía para **respirar**.
+- **Estilos**: normal, pixel, plastilina o minimalista.
+
+**🎯 Productividad**
+- **Mis proyectos**: "¿dónde me quedé?" al volver a un repo y contextos que abren lo necesario.
+- **Detector de atasco**, **abogado del diablo** con tu plan, **tu mejor hora** para lo difícil y **ritual de cierre** (cierra apps, pijama al pollito).
+- **Notas de reunión → tareas** (solo las tuyas marcadas), **modo pato de goma** en el chat y **documento de logros** del mes o del año para tu evaluación.
+
+**🤖 Claude**
+- **Respeta tus límites**: si la sesión pasa del 85 % (ajustable) o el pronóstico dice que la llenarás, la cola espera al reinicio.
+- **Peticiones recurrentes** ("cada lunes, actualiza dependencias y abre PR"), **modelo según la tarea** (Haiku, Sonnet u Opus; un escalón menos si el presupuesto va alto) y **qué te funciona**: tasa de éxito, coste y duración por tipo de petición, con consejos.
+
+**👥 Equipo**
+- **Granja del equipo** en una carpeta compartida, sin servidor: ves los pollitos de tus compañeros (dormidos si están en foco). Solo se comparte nombre, pollito, nivel, foco y minutos de foco de la semana.
+- **Kudos con maíz** (3 al día, también al canal del equipo), **visitas** de pollito a pollito que esperan a que termines tu foco y **reto de foco semanal** con premio.
+
+**🎮 Juego**
+- **Misiones diarias**, **pase de temporada** mensual y gratis (plumas exclusivas en los niveles 10 y 20), **huevos dorados** por rachas largas.
+- **Minijuegos nuevos**: *Aplasta los bugs* y *La viborita*, con récords y ranking del equipo.
+- **Tu año con PM Pollito**: tarjeta para compartir con tu tipo de año, horas de foco, proyecto estrella y más.
+
+**🧩 Plataforma**
+- **Widget de escritorio** con tus límites, tu día, la próxima reunión y el pomodoro.
+- **Extensión del navegador** (Chrome/Edge): sesión en el icono, "Enviar a PM" con clic derecho y, en foco, frena los sitios que distraen.
+- **Plugins** con permisos que apruebas, cada uno en su propio proceso (ver PLUGINS.md).
+- **Lista para la Microsoft Store** (`npm run dist:store`, ver MICROSOFT-STORE.md) y **Linux** (AppImage y .deb).
+
+**🔧 Arreglos**
+- El diario y el daily ya no muestran el contexto que pega el IDE (`<ide_opened_file>…`) como si fuera tu petición.
+- Los tests ya no leen la sesión real de Claude Code del equipo ni dependen de la hora del día.
+
 ## 1.8.0 — Claude cierra el ciclo
 - **🔧 Claude arregla su propio PR**: PM vigila los PR que abrió Claude. Si falla el CI, le pasa el log del error y sube el arreglo a la misma rama (automático, con un máximo de intentos). Si en la revisión piden cambios, te ofrece "Aplicar la revisión" (o lo hace solo, si lo activas). Te avisa cuando el CI pasa y cuando mezclan o cierran el PR.
 - **👀 Claude en vivo**: mientras trabaja ves qué hace ("✏️ Editando src/cart.js · 14 pasos").

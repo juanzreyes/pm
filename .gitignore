@@ -12,3 +12,4 @@ vscode-extension/*.vsix
 
 # Datos de tu cuenta de Partner Center (Microsoft Store)
 store.config.json
+public/*.zip

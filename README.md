@@ -129,6 +129,18 @@ Widget de escritorio con un pollito tamagotchi que vive encima de todas tus vent
 - **Informe de errores opcional**: solo si la copia trae un destino (`reporting.config.json` con `{"errorWebhook": "https://…"}` junto a la app, ignorado por git; en CI se crea desde el secreto `ERROR_WEBHOOK`) y la persona dice que sí. Envía por el webhook (Discord/Slack/Teams) los errores nuevos agrupados (máx. 5 por envío, 20 al día, sin repetir el mismo fallo en un mes), limpiados por `src/errreport.js`: rutas de usuario, correos, tokens (`ghp_`, `sk-ant-`, `Bearer`…), parámetros de URLs y cadenas largas tipo clave. Los eventos (`info`) nunca se envían.
 - **Donación**: comando `donate` (paleta, Acerca de y Ajustes → Acerca de) → página de donación de PayPal a la cuenta del autor.
 
+### El pollito crece (2.0)
+- **Alma** (`src/petsoul.js`, `renderer/panel-soul.js`): rasgos calculados de tu historial, huerta, trucos, linaje, sueños, cartas, postales, fechas y vacaciones.
+- **Presencia** (`src/main/presence.js`): se posa en la ventana activa (rectángulo que da `src/focus.js`), reacciona a la CPU, teclea contigo, clima por Open-Meteo y respiración guiada; estilos con filtros SVG.
+- **Coach** (`src/coachlib.js`, `src/main/coach.js`, `src/main/whereami.js`): ¿dónde me quedé?, contextos por proyecto, detector de atasco, revisión del plan, mejor hora, ritual de cierre, notas de reunión → tareas, pato de goma y documento de logros.
+- **Claude** (`src/claudestats.js`): la cola respeta tus límites (`claudeRespectLimits`, `claudeLimitPct`), peticiones recurrentes, modelo según la tarea (`claudeModelAuto`, `--model`) y estadísticas por tipo de petición.
+- **Equipo** (`src/teamfarm.js`, `src/main/teamfarm.js`): granja en una carpeta compartida (`teamFolder`): cada PM escribe `pm-granja/<id>.json` (tarjeta pública de lista blanca) y `<id>.out.json` (kudos y visitas). Reto de foco semanal y ranking de minijuegos.
+- **Juego** (`src/gamezone.js`, `src/main/gamezone.js`, `renderer/game.js`): misiones diarias deterministas por fecha, pase de temporada (150 puntos por nivel, 20 niveles), huevos dorados por racha, *Aplasta los bugs*, *La viborita* y "Tu año" (canvas → PNG).
+- **Widget de escritorio** (`src/main/widget.js`, `renderer/widget.*`). El panel de widgets de Windows 11 solo admite proveedores nativos empaquetados (MSIX + COM), no apps Electron.
+- **Extensión del navegador** (`extensions/browser/`, Manifest V3): usa `/browser/*` del servidor local con un código de emparejamiento (Ajustes → Integraciones) y solo acepta orígenes de extensión. En foco, reglas de `declarativeNetRequest` llevan los sitios que distraen a `blocked.html`. Instalación: `chrome://extensions` o `edge://extensions` → Modo de desarrollador → Cargar descomprimida → la carpeta `extensions/browser` (Ajustes tiene un botón que la abre).
+- **Plugins** (`src/pluginlib.js`, `src/plugins/host.js`, `src/main/plugins.js`): ver [PLUGINS.md](PLUGINS.md).
+- **Microsoft Store**: ver [MICROSOFT-STORE.md](MICROSOFT-STORE.md). **Linux**: `npm run dist:linux` (AppImage y .deb); el vigilante de foco necesita `xdotool` (X11).
+
 ### Integración continua (GitHub Actions)
 - `.github/workflows/tests.yml`: en cada push a `main`/`development` y en cada PR corre tipos, lógica e interfaz en Windows, y lo mismo en macOS (informativo, con `continue-on-error`, hasta que pase en verde de forma estable) más un `.dmg` como artefacto. El release también adjunta el `.dmg`/`.zip` de Mac (sin firma de Apple: se abre con clic derecho → Abrir y no se actualiza solo).
 - `.github/workflows/release.yml`: al subir una etiqueta igual a la versión (`git tag v1.7.0 && git push origin v1.7.0`) comprueba el CHANGELOG, pasa todos los tests, compila y publica el release con el token de Actions; deja además la carpeta `public/` como artefacto. Si defines los secretos `CSC_LINK` y `CSC_KEY_PASSWORD`, el instalador sale firmado.
@@ -278,6 +290,11 @@ src/petlife.js     casita, huevos y colección, diario, personalidades, modo mú
 src/i18n-extra.js  portugués y francés
 tests/             tests automáticos (npm test)
 src/diag.js        registro de errores (pm-errors.log) y métricas
+src/petsoul.js     alma del pollito (rasgos, huerta, trucos, linaje, sueños, cartas) · src/coachlib.js coach
+src/claudestats.js límites, recurrentes, modelo y estadísticas de la cola de Claude
+src/teamfarm.js    granja del equipo · src/gamezone.js misiones, pase, huevos y "tu año"
+src/storepaths.js  rutas de la CLI y el MCP (instalador o Microsoft Store) · src/pluginlib.js plugins
+extensions/browser/ extensión de Chrome/Edge · examples/plugins/ plugin de ejemplo
 src/journal.js     peticiones a Claude Code por proyecto (~/.claude/projects)
 src/backup.js      copia de seguridad en carpeta sincronizada
 src/monthly.js     HTML del informe mensual (→ PDF)

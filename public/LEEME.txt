@@ -1,5 +1,5 @@
-﻿PM POLLITO 1.8.0 🐣  —  tu pollito Project Manager
-Hecho con ❤️ por Juanzreyes · 28 de septiembre de 2026
+﻿PM POLLITO 2.0.0 🐣  —  tu pollito Project Manager
+Hecho con ❤️ por Juanzreyes · 1 de octubre de 2026
 =====================================================================
 
 QUÉ ES
@@ -13,7 +13,7 @@ REQUISITOS
 - Opcional: una cuenta de Claude (Pro o Max) para ver tus límites de uso.
 
 INSTALAR (1 minuto)
-1. Haz doble clic en  PM-Pollito-Setup-1.8.0.exe  (78.7 MB).
+1. Haz doble clic en  PM-Pollito-Setup-2.0.0.exe  (78.8 MB).
 2. Si Windows muestra "Windows protegió su PC", pulsa "Más información" y luego
    "Ejecutar de todas formas". (Aparece porque el instalador aún no está firmado
    con un certificado; el archivo es seguro: puedes comprobarlo con SHA256.txt.)
@@ -35,6 +35,15 @@ Muestra el pollito en la barra de estado de VS Code (% de Claude, pomodoro, tare
   → elige  pm-pollito-vscode-1.1.0.vsix
 - O en una terminal:  code --install-extension pm-pollito-vscode-1.1.0.vsix
 
+EXTENSIÓN PARA CHROME / EDGE (opcional)
+Tu sesión de Claude en el icono, "Enviar a PM" con clic derecho y, en modo foco, frena
+los sitios que distraen.
+1. Descomprime  pm-pollito-navegador-2.0.0.zip  en una carpeta que no vayas a borrar.
+2. Abre chrome://extensions (o edge://extensions) → activa "Modo de desarrollador"
+   → "Cargar descomprimida" → elige esa carpeta.
+3. En PM: Ajustes → Integraciones → Extensión del navegador → copia el código y
+   pégalo en la página que abre la extensión.
+
 PRIVACIDAD
 Todo se guarda solo en tu PC (%APPDATA%\pm-pollito). No hay servidores propios:
 PM solo habla con Claude, GitHub o tu correo si tú los conectas. En Ajustes →
@@ -48,4 +57,4 @@ DESINSTALAR
 Configuración de Windows → Aplicaciones → "PM Pollito" → Desinstalar.
 
 COMPROBAR LOS ARCHIVOS (opcional)
-En PowerShell:  Get-FileHash .\PM-Pollito-Setup-1.8.0.exe  y compara con SHA256.txt.
+En PowerShell:  Get-FileHash .\PM-Pollito-Setup-2.0.0.exe  y compara con SHA256.txt.

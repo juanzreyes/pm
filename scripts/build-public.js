@@ -21,7 +21,7 @@ fs.mkdirSync(pub, { recursive: true });
 
 // 1) Limpia versiones anteriores para que solo quede la última.
 for (const f of fs.readdirSync(pub)) {
-  if (/^PM-Pollito-Setup-.*\.exe$/i.test(f) || /\.vsix$/i.test(f)) fs.unlinkSync(path.join(pub, f));
+  if (/^PM-Pollito-Setup-.*\.exe$/i.test(f) || /\.vsix$/i.test(f) || /^pm-pollito-navegador-.*\.zip$/i.test(f)) fs.unlinkSync(path.join(pub, f));
 }
 
 // 2) Instalador.
@@ -54,9 +54,23 @@ try {
   console.warn('No se pudo empaquetar la extensión de VS Code:', e.message);
 }
 
+// 3b) Extensión del navegador (Chrome/Edge) en un .zip para "Cargar descomprimida".
+let browserZip = null;
+try {
+  const bext = path.join(__dirname, '..', 'extensions', 'browser');
+  const bver = JSON.parse(fs.readFileSync(path.join(bext, 'manifest.json'), 'utf8')).version;
+  browserZip = `pm-pollito-navegador-${bver}.zip`;
+  const out = path.join(pub, browserZip);
+  if (process.platform === 'win32') execSync(`powershell -NoProfile -Command "Compress-Archive -Path '${bext.replace(/'/g, "''")}\\*' -DestinationPath '${out.replace(/'/g, "''")}' -Force"`, { stdio: 'ignore' });
+  else execSync(`cd "${bext}" && zip -qr "${out}" .`, { stdio: 'ignore' });
+} catch (e) {
+  browserZip = null;
+  console.warn('No se pudo empaquetar la extensión del navegador:', e.message);
+}
+
 // 4) Huellas SHA-256.
 const sha = (f) => crypto.createHash('sha256').update(fs.readFileSync(path.join(pub, f))).digest('hex');
-const files = [setup, vsix].filter(Boolean);
+const files = [setup, vsix, browserZip].filter(Boolean);
 fs.writeFileSync(path.join(pub, 'SHA256.txt'), files.map((f) => `${sha(f)}  ${f}`).join('\r\n') + '\r\n');
 
 // 5) Instrucciones.
@@ -98,6 +112,15 @@ Muestra el pollito en la barra de estado de VS Code (% de Claude, pomodoro, tare
 - En VS Code: menú Extensiones (Ctrl+Shift+X) → "..." → "Instalar desde VSIX…"
   → elige  ${vsix}
 - O en una terminal:  code --install-extension ${vsix}
+` : ''}${browserZip ? `
+EXTENSIÓN PARA CHROME / EDGE (opcional)
+Tu sesión de Claude en el icono, "Enviar a PM" con clic derecho y, en modo foco, frena
+los sitios que distraen.
+1. Descomprime  ${browserZip}  en una carpeta que no vayas a borrar.
+2. Abre chrome://extensions (o edge://extensions) → activa "Modo de desarrollador"
+   → "Cargar descomprimida" → elige esa carpeta.
+3. En PM: Ajustes → Integraciones → Extensión del navegador → copia el código y
+   pégalo en la página que abre la extensión.
 ` : ''}
 PRIVACIDAD
 Todo se guarda solo en tu PC (%APPDATA%\\pm-pollito). No hay servidores propios:
@@ -155,6 +178,7 @@ h2{margin-top:36px}h3{margin:18px 0 6px}ul{margin:0;padding-left:20px}footer{mar
 <div class="cta">
   <a class="btn" href="${esc(setup)}" download>⬇️ Descargar para Windows <small>${mb(setup)} MB</small></a>
   ${vsix ? `<a class="btn alt" href="${esc(vsix)}" download>🧩 Extensión de VS Code</a>` : ''}
+  ${browserZip ? `<a class="btn alt" href="${esc(browserZip)}" download>🌐 Extensión de Chrome / Edge</a>` : ''}
   <a class="btn alt" href="LEEME.txt">📄 Cómo instalar</a>
 </div>
 <div class="grid">

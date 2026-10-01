@@ -260,7 +260,7 @@ module.exports = function install(M) {
       store.data.lastVersionSeen = v;
       store.save();
       if (seen && seen !== v && store.data.pet.name) {
-        M.say(`🎁 ¡Me actualicé a la ${v}! Tengo cosas nuevas: ves a Claude trabajar en vivo, varias peticiones a la vez, una segunda opinión antes del PR y Claude arregla solo el CI de sus PRs.`, 'celebrate', 15000, {
+        M.say(`🎁 ¡Me actualicé a la ${v}! ¡Crecí! Tengo rasgos, huerta y trucos, me siento en tus ventanas, misiones y pase de temporada, granja del equipo, widget, extensión del navegador y plugins.`, 'celebrate', 15000, {
           cat: 'pet', actions: [{ label: '✨ Ver novedades', cmd: 'whatsnew' }],
         });
       }
