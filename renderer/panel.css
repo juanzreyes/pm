@@ -608,3 +608,11 @@ html.reduced .run.running .run-progress { animation: none; }
 #soul-date-form #soul-date-label { flex: 1 1 100%; }
 #soul-date-form #soul-date-date, #soul-date-form #soul-date-kind { flex: 1 1 0; width: auto; min-width: 0; }
 #soul-date-form button { flex: none; }
+/* 2.0: productividad */
+.pj-list { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
+.pj { background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 6px 8px; }
+.pj textarea, .pj input { font-size: 12px; }
+#pj-resume div { margin-top: 2px; }
+.duck-banner { background: #fff3c4; color: #3b2f2f; border: 1.5px solid #e9c46a; border-radius: 10px; padding: 5px 8px; font-size: 12px; margin-bottom: 6px; }
+.mt-item { display: flex; align-items: center; gap: 6px; padding: 3px 0; border-bottom: 1px dashed var(--line); font-size: 12.5px; }
+#mt-text { min-height: 140px; }

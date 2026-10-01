@@ -29,6 +29,14 @@
     if (document.activeElement !== $('#weather-city')) $('#weather-city').value = ss.weatherCity || '';
     const w = st.presence && st.presence.weather;
     $('#weather-info').textContent = w ? (w.error ? `😿 ${w.error}` : `${w.place}: ${w.temp} °C · ${{ rain: '☔ lluvia', snow: '❄️ nieve', hot: '🥵 calor', cold: '🧣 frío', mild: '🌤️ agradable' }[w.kind] || ''}`) : 'Paraguas si llueve, bufanda con frío, abanico con calor (Open-Meteo, sin cuenta).';
+    // ---------- productividad 2.0 ----------
+    if (document.activeElement !== $('#s-endofday')) $('#s-endofday').value = (st.coach && st.coach.endOfDay) || '';
+    $('#s-ritual').checked = ss.closingRitual !== false;
+    if (document.activeElement !== $('#s-closeapps')) $('#s-closeapps').value = (ss.closeApps || []).join(', ');
+    $('#s-stuck').checked = ss.stuckDetector !== false;
+    $('#s-plancheck').checked = ss.planCheck !== false;
+    $('#s-besthour').checked = ss.bestHour !== false;
+    if (document.activeElement !== $('#s-myname')) $('#s-myname').value = ss.myName || '';
     // ---------- informe de errores ----------
     const erp = st.errReport || {};
     $('#err-box').classList.toggle('hidden', !erp.available);
@@ -126,6 +134,15 @@
   $('#pc-react').addEventListener('change', (e) => pm.updateSettings({ pcReactions: e.target.checked }));
   $('#type-along').addEventListener('change', (e) => pm.updateSettings({ typeAlong: e.target.checked }));
   $('#weather-city').addEventListener('change', (e) => pm.updateSettings({ weatherCity: e.target.value }));
+
+  // ---------- productividad 2.0 ----------
+  $('#s-endofday').addEventListener('change', (e) => e.target.value && pm.updateSettings({ endOfDay: e.target.value }));
+  $('#s-ritual').addEventListener('change', (e) => pm.updateSettings({ closingRitual: e.target.checked }));
+  $('#s-closeapps').addEventListener('change', (e) => pm.updateSettings({ closeApps: e.target.value }));
+  $('#s-stuck').addEventListener('change', (e) => pm.updateSettings({ stuckDetector: e.target.checked }));
+  $('#s-plancheck').addEventListener('change', (e) => pm.updateSettings({ planCheck: e.target.checked }));
+  $('#s-besthour').addEventListener('change', (e) => pm.updateSettings({ bestHour: e.target.checked }));
+  $('#s-myname').addEventListener('change', (e) => pm.updateSettings({ myName: e.target.value }));
 
   // ---------- informe de errores ----------
   $('#err-on').addEventListener('change', (e) => pm.errorsConsent(e.target.checked));

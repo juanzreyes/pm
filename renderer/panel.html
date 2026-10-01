@@ -45,6 +45,7 @@
           <button data-q="Ayuda">?</button>
           <button type="button" id="chip-prompts" title="Biblioteca de prompts">📚 Prompts</button>
         </div>
+        <div id="duck-banner" class="duck-banner hidden">🦆 Modo pato de goma: explícame y te pregunto · escribe <b>listo</b> para salir</div>
         <form id="chat-form">
           <input id="chat-input" autocomplete="off" placeholder="Pregúntame algo… pío 🐣" maxlength="500" />
           <button type="submit" class="primary">➤</button>
@@ -98,6 +99,19 @@
           <button class="primary" type="submit">＋</button>
         </form>
         <div id="day-notes"></div>
+
+        <details id="pj-section" class="recurring">
+          <summary><b>🎯 Mis proyectos</b> <span class="muted small">retomar y cambiar de contexto</span></summary>
+          <div id="pj-resume" class="box small hidden"></div>
+          <div id="pj-list" class="pj-list"></div>
+          <button type="button" id="pj-more" class="link hidden"></button>
+          <div class="row gap wrap">
+            <button type="button" class="soft mini" data-brag="month">🏆 Logros del mes</button>
+            <button type="button" class="ghost mini" data-brag="lastmonth">Mes pasado</button>
+            <button type="button" class="ghost mini" data-brag="year">Año</button>
+            <button type="button" class="ghost mini" id="pj-meeting">📝 Notas de reunión → tareas</button>
+          </div>
+        </details>
 
         <details id="tickets" class="recurring hidden">
           <summary><b>🎫 Mis tickets</b> <span id="tk-count" class="pill"></span></summary>
@@ -470,6 +484,17 @@
       </div>
     </div>
 
+    <div id="o-meeting" class="overlay hidden" role="dialog" aria-label="Notas de reunión">
+      <div class="row between">
+        <h2>📝 Notas de reunión → tareas</h2>
+        <button type="button" id="mt-close" class="icon" title="Cerrar">✕</button>
+      </div>
+      <p class="muted small">Pega la transcripción de Teams o tus notas. Saco las acciones y quién las tiene; tú eliges cuáles son tuyas.</p>
+      <textarea id="mt-text" class="report" placeholder="Ana: enviar el presupuesto el viernes&#10;Yo reviso el PR del carrito&#10;Acción: actualizar el tablero…"></textarea>
+      <div class="row gap"><input id="mt-me" placeholder="Tu nombre en la reunión (para marcar las tuyas)" maxlength="40" /><button type="button" id="mt-go" class="primary">🔎 Sacar acciones</button></div>
+      <div id="mt-list" class="box small hidden"></div>
+      <div id="mt-actions" class="row gap hidden"><button type="button" id="mt-add" class="primary grow">＋ Añadir las marcadas a mi día</button><button type="button" id="mt-copy" class="ghost">📋 Copiar las de otros</button></div>
+    </div>
     <div id="o-report" class="overlay hidden">
       <div class="row between">
         <h2 id="rp-title">📊 Informe semanal</h2>
@@ -613,6 +638,7 @@
   <script src="panel-life.js"></script>
   <script src="panel-work.js"></script>
   <script src="panel-soul.js"></script>
+  <script src="panel-coach.js"></script>
   <script src="stats.js"></script>
 </body>
 </html>

@@ -134,3 +134,7 @@
 .style-minimal #belly { fill: #fffdf6; }
 .style-minimal #fx { display: none; }
 .style-minimal svg { filter: saturate(.35); }
+
+/* 🌙 pijama tras el ritual de cierre */
+.pajamas #tr-owl { display: inline; }
+.pajamas:not(.trait-owl) #tr-owl .bag { display: none; }

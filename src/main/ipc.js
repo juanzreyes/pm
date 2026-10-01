@@ -65,6 +65,17 @@ module.exports = function install(M) {
       if (!text) return null;
       M.pushChat('me', text);
       M.store.data.chatSent = (M.store.data.chatSent || 0) + 1;
+      // Modo pato de goma: preguntas, no respuestas.
+      if (M.coach.duckActive()) {
+        const reply = await M.coach.duckReply(text);
+        M.pushChat('pet', reply);
+        M.broadcast();
+        return { text: reply };
+      }
+      if (/^(\/pato|pato de goma|modo pato|rubber duck)\b/i.test(text)) {
+        const intro = M.coach.duckStart('');
+        return { text: intro };
+      }
       // "cada lunes: revisar métricas" → tarea recurrente
       if (M.ex && M.ex.parseRecurring(text)) {
         const msg = M.prod.capture(text);
@@ -190,6 +201,7 @@ module.exports = function install(M) {
       M.pushChat('pet', msg);
       M.say(`¡Plan listo! ${list.length} tareas para hoy 💪`, 'celebrate', 8000);
       M.broadcast();
+      try { M.coach.reviewPlan(); } catch (e) { M.diag.log('main', 'Revisión del plan: ' + e.message); } // ¿cabe en el día? ¿tu mejor hora?
       return true;
     });
 
@@ -271,7 +283,10 @@ module.exports = function install(M) {
     });
 
     M.ipcMain.handle('settings:update', (_e, patch) => {
-      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget', 'claudeParallel', 'claudeReview', 'claudeAutoFixCi', 'claudeAutoFixReview', 'claudeMaxFixes', 'petPerch', 'pcReactions', 'typeAlong', 'weatherCity', 'petStyle'];
+      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget', 'claudeParallel', 'claudeReview', 'claudeAutoFixCi', 'claudeAutoFixReview', 'claudeMaxFixes', 'petPerch', 'pcReactions', 'typeAlong', 'weatherCity', 'petStyle', 'stuckDetector', 'planCheck', 'bestHour', 'closingRitual', 'endOfDay', 'closeApps', 'myName'];
+      if ('endOfDay' in patch && !/^\d{2}:\d{2}$/.test(patch.endOfDay || '')) delete patch.endOfDay;
+      if ('closeApps' in patch) patch.closeApps = (Array.isArray(patch.closeApps) ? patch.closeApps : String(patch.closeApps || '').split(/[,\n]/)).map((x) => String(x).trim().replace(/\.exe$/i, '')).filter((x) => /^[\w .-]{2,40}$/.test(x)).slice(0, 12);
+      if ('myName' in patch) patch.myName = String(patch.myName || '').trim().slice(0, 40);
       if ('petStyle' in patch && !['normal', 'pixel', 'clay', 'minimal'].includes(patch.petStyle)) delete patch.petStyle;
       if ('weatherCity' in patch) patch.weatherCity = String(patch.weatherCity || '').trim().slice(0, 80);
       if ('weatherCity' in patch) setTimeout(() => M.presence.weatherTick(true), 50);
@@ -669,6 +684,13 @@ module.exports = function install(M) {
     M.ipcMain.handle('tickets:claude', (_e, { key, repo }) => M.work.ticketToClaude(String(key), repo ? String(repo) : ''));
     // El alma del pollito: huerta, trucos, linaje, fechas, cartas…
     M.ipcMain.handle('soul:act', async (_e, { action, arg }) => { try { return await M.soul.act(String(action), arg); } catch (e) { return { ok: false, error: e.message }; } });
+    // Productividad 2.0: ¿dónde me quedé?, contextos, logros, notas de reunión
+    M.ipcMain.handle('where:resume', (_e, project) => M.whereami.showResume(String(project)).then((r) => ({ ok: true, lines: r.lines })).catch((e) => ({ ok: false, error: e.message })));
+    M.ipcMain.handle('where:contextSave', (_e, { project, ctx }) => M.whereami.saveContext(String(project), ctx || {}));
+    M.ipcMain.handle('where:contextOpen', (_e, project) => M.whereami.openContext(String(project)));
+    M.ipcMain.handle('where:brag', (_e, which) => M.whereami.brag(['month', 'lastmonth', 'year'].includes(which) ? which : 'month').catch((e) => ({ ok: false, error: e.message })));
+    M.ipcMain.handle('coach:meeting', (_e, text) => M.coach.meetingActions(String(text || '')));
+    M.ipcMain.handle('coach:meetingAdd', (_e, list) => M.coach.addMeetingTasks(Array.isArray(list) ? list : []));
     // Informe de errores opcional al autor
     M.ipcMain.handle('errors:consent', (_e, on) => { M.errreport.setConsent(!!on); return M.snapshot(); });
     M.ipcMain.handle('errors:send', () => M.errreport.sendNow(true));

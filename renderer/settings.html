@@ -53,6 +53,12 @@
           <div class="opt row between"><div><b>Modo foco en bloques de tiempo</b><p class="muted small">Durante tus bloques solo te aviso de lo urgente.</p></div><input type="checkbox" class="switch" id="s-focus-blocks" /></div>
           <div class="opt row between"><div><b>Modo foco en pomodoros</b></div><input type="checkbox" class="switch" id="s-focus-pomo" /></div>
           <div class="opt row between"><div><b>Charlas espontáneas</b><p class="muted small">Comentarios y ánimos de vez en cuando.</p></div><input type="checkbox" class="switch" id="s-chatter" /></div>
+          <div class="opt row between"><div><b>🌙 Ritual de cierre</b><p class="muted small">A esta hora se pone el pijama, te propone cerrar las apps de trabajo y no te molesta hasta el daily de mañana.</p></div><div class="row gap"><input type="time" id="s-endofday" style="width:auto" /><input type="checkbox" class="switch" id="s-ritual" /></div></div>
+          <div class="opt row between"><div><b>Apps que cierro al terminar</b><p class="muted small">Nombres de proceso separados por comas (Teams, Outlook, Code…). Se cierran como con la X: si hay algo sin guardar, la app te pregunta.</p></div><input id="s-closeapps" placeholder="ms-teams, olk, Code" style="width:170px" /></div>
+          <div class="opt row between"><div><b>🧱 Avisarme si me atasco</b><p class="muted small">45 min en el mismo archivo sin commits ni tareas: te ofrezco hablarlo (pato de goma) o pasárselo a Claude.</p></div><input type="checkbox" class="switch" id="s-stuck" /></div>
+          <div class="opt row between"><div><b>😈 Revisar si mi plan cabe en el día</b><p class="muted small">Al guardar el daily: tareas estimadas contra horas libres y reuniones.</p></div><input type="checkbox" class="switch" id="s-plancheck" /></div>
+          <div class="opt row between"><div><b>🕙 Reservar mi mejor hora para lo difícil</b><p class="muted small">Según a qué hora rindes más (últimos 14 días).</p></div><input type="checkbox" class="switch" id="s-besthour" /></div>
+          <div class="opt row between"><div><b>Tu nombre</b><p class="muted small">Para reconocer tus tareas en las notas de reunión.</p></div><input id="s-myname" maxlength="40" style="width:150px" /></div>
           <div class="opt row between"><div><b>Silencio (reuniones)</b><p class="muted small">Solo avisos importantes durante 1 hora.</p></div><button id="mute" class="soft">🔕 Silenciar 1 hora</button></div>
         </div>
 

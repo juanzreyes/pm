@@ -316,6 +316,33 @@ test('2.0 presencia: estilo pixel, respiración guiada y ajustes de apariencia',
   assert.equal(await st.evaluate(() => document.querySelector('#pet-perch').checked), true, 'sentarse en ventanas viene activado');
 });
 
+test('2.0 productividad: mis proyectos, notas de reunión → tareas y modo pato', async () => {
+  const panel = await waitPage('panel');
+  await panel.evaluate(() => pm.command('panel', 'day'));
+  await panel.evaluate(() => { document.querySelector('#pj-section').open = true; });
+  await panel.waitForFunction(() => document.querySelectorAll('#pj-list .pj').length >= 2, null, { timeout: 8000 });
+  // Notas de reunión → tareas.
+  await panel.evaluate(() => pm.command('meeting.notes'));
+  await panel.waitForSelector('#o-meeting:not(.hidden)', { timeout: 5000 });
+  await panel.fill('#mt-text', 'Ana: enviar el presupuesto el viernes\nYo reviso el PR del carrito\nHablamos del clima');
+  await panel.click('#mt-go');
+  await panel.waitForFunction(() => document.querySelectorAll('#mt-list .mt-item').length === 2, null, { timeout: 8000 });
+  assert.deepEqual(await panel.evaluate(() => [...document.querySelectorAll('#mt-list input')].map((c) => c.checked)), [false, true], 'solo la tuya marcada');
+  await panel.click('#mt-add');
+  await panel.waitForFunction(() => [...document.querySelectorAll('#tasks .t')].some((x) => /Yo reviso el PR del carrito/.test(x.textContent)), null, { timeout: 5000 });
+  // Pato de goma desde el chat.
+  await panel.evaluate(() => pm.command('panel', 'chat'));
+  await panel.fill('#chat-input', '/pato');
+  await panel.press('#chat-input', 'Enter');
+  await panel.waitForFunction(() => !document.querySelector('#duck-banner').classList.contains('hidden'), null, { timeout: 5000 });
+  await panel.fill('#chat-input', 'el total no suma el IVA');
+  await panel.press('#chat-input', 'Enter');
+  await panel.waitForFunction(() => /¿Qué esperabas que pasara/.test(document.querySelector('#chat-log, #chat, body').innerText), null, { timeout: 5000 });
+  await panel.fill('#chat-input', 'listo');
+  await panel.press('#chat-input', 'Enter');
+  await panel.waitForFunction(() => document.querySelector('#duck-banner').classList.contains('hidden'), null, { timeout: 5000 });
+});
+
 test('ajustes: diagnóstico sin errores de la app', async () => {
   const panel = await waitPage('panel');
   await panel.evaluate(() => pm.command('diag'));

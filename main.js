@@ -790,7 +790,9 @@ function runCommand(id, arg) {
 
 function paletteCommands() {
   const repos = prod ? require('./src/git').discover(prod.snapshot().git.roots || []) : [];
-  const mem = repos.map((r) => ({ id: 'project.memory', arg: r, icon: '🧠', label: T('Actualizar CLAUDE.md de ') + path.basename(r), kw: 'claude.md memoria proyecto contexto ' + path.basename(r) }));
+  const mem = repos.map((r) => ({ id: 'project.memory', arg: r, icon: '🧠', label: T('Actualizar CLAUDE.md de ') + path.basename(r), kw: 'claude.md memoria proyecto contexto ' + path.basename(r) }))
+    .concat(repos.map((r) => ({ id: 'context.open', arg: path.basename(r), icon: '🎯', label: T('Trabajar en ') + path.basename(r), kw: 'contexto trabajar abrir proyecto cambiar ' + path.basename(r) })))
+    .concat(repos.map((r) => ({ id: 'where.resume', arg: path.basename(r), icon: '📍', label: T('¿Dónde me quedé en ') + path.basename(r) + '?', kw: 'donde me quede retomar resumen ultimo ' + path.basename(r) })));
   const tpl = ex ? ex.templates().map((t) => ({ id: 'template.apply', arg: t.id, icon: t.emoji || '🧩', label: T('Aplicar plantilla: ') + t.name, kw: 'plantilla dia ' + t.name })) : [];
   return M.COMMANDS.filter((c) => !c.hidden && (!c.when || c.when())).map((c) => ({ id: c.id, icon: c.icon, label: T(c.label), kw: c.kw })).concat(tpl).concat(mem).concat(profiles.list().list.filter((p) => p.id !== profiles.active().id).map((p) => ({ id: 'profile', arg: p.id, icon: p.emoji, label: T('Cambiar al perfil ') + p.name, kw: 'perfil cambiar ' + p.name })));
 }
@@ -1152,6 +1154,10 @@ mods.team = require('./src/main/team')(M);
 M.team = mods.team;
 mods.presence = require('./src/main/presence')(M);
 M.presence = mods.presence;
+mods.whereami = require('./src/main/whereami')(M);
+M.whereami = mods.whereami;
+mods.coach = require('./src/main/coach')(M);
+M.coach = mods.coach;
 mods.errreport = require('./src/main/errreport')(M);
 M.errreport = mods.errreport;
 mods.boot = require('./src/main/boot')(M);

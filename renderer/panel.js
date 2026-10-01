@@ -80,7 +80,7 @@ function show(view) {
     if (typeof startTour === 'function') startTour();
     return;
   }
-  if (view === 'prompts' || view === 'blocks' || view === 'whatsnew' || view === 'friday') {
+  if (view === 'prompts' || view === 'blocks' || view === 'whatsnew' || view === 'friday' || view === 'meetingnotes') {
     if (window.openExtra) window.openExtra(view);
     return;
   }

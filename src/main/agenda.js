@@ -310,6 +310,8 @@ module.exports = function install(M) {
       errReport: M.errreport.errState(),
       ...(M.soul ? M.soul.snapshot() : {}),
       presence: M.presence.presenceState(),
+      where: M.whereami.whereState(),
+      coach: M.coach.coachState(),
       audioListen: M.audioState || null,
       integrations: M.integrationsState(),
       profiles: { ...M.profiles.list(), activeId: M.profiles.active().id },

@@ -70,6 +70,7 @@ module.exports = function install(M) {
     if (c.cat === 'distraction' && day.focusAllow && day.focusAllow[c.label]) c = { cat: 'work', label: c.label };
     M.fx.cat = c.cat;
     M.fx.label = c.label;
+    try { M.whereami.onSample(s, c.cat); M.coach.onSample(s, c.cat); } catch (e) { M.diag.log('main', 'Coach: ' + e.message); }
 
     const f = day.focus || (day.focus = { work: 0, distraction: 0, neutral: 0, idle: 0, apps: {} });
     const hoursBefore = Math.floor((f.work || 0) / 3600);

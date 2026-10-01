@@ -929,3 +929,6 @@ pm.onBreathe((b) => {
     else count.textContent = String(left);
   }, 1000);
 });
+
+// Pijama tras el ritual de cierre (hasta la mañana).
+pm.onPajamas((p) => body.classList.toggle('pajamas', !!(p && p.on)));

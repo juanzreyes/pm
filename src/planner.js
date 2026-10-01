@@ -306,6 +306,7 @@ function create(ctx) {
     const x = milestones().find((m) => m.id === id);
     if (!x) return false;
     x.done = !!done;
+    x.doneAt = done ? Date.now() : null; // para el documento de logros
     if (done) { ctx.addXp(25); ctx.say(`🏁 ¡Hito conseguido: "${x.title}"! +25 XP 🎉`, 'celebrate', 10000, { cat: 'achievement' }); }
     ctx.store.save();
     ctx.broadcast();

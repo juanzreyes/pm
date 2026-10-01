@@ -372,7 +372,7 @@ function create(ctx) {
     capture, addReminder, addReminderAt, removeReminder,
     gitRefresh, lastWorkdayCommits, ghRefresh,
     hooksInstall, hooksUninstall,
-    weeklyReport, dailyText, timesheet,
+    weeklyReport, dailyText, timesheet, projectOf,
   };
 }
 
