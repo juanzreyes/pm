@@ -564,6 +564,9 @@ test('pulido 3: avisos apilados, deslizar para descartar, cola que sigue y desha
   const pet = await waitPage('pet');
   const r = await pet.evaluate(async () => {
     const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
+    // Burbuja limpia: los avisos reales de otras pruebas no deben contar.
+    document.querySelector('#bubble').classList.add('hidden');
+    resetStack();
     say({ text: 'Primer aviso', ms: 8000, logged: true });
     await wait(50);
     say({ text: 'Segundo aviso', ms: 8000, logged: true });
