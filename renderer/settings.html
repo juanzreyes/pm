@@ -284,7 +284,13 @@
           <h2>Avisos fuera del PC</h2>
           <div class="opt box small">
             <div class="row between"><b data-icon="megaphone">Canal del equipo</b><span id="team-status" class="pill"></span></div>
-            <p class="muted">Pega el webhook de un canal de <b>Slack</b>, <b>Teams</b> o <b>Discord</b>. En Teams: en el canal → ⋯ → <b>Flujos de trabajo</b> → "Publicar en un canal cuando se recibe una solicitud de webhook", y copia la URL. Se guarda cifrada.</p>
+            <p class="muted">Pega el webhook de un canal de <b>Slack</b>, <b>Teams</b> o <b>Discord</b>. Se guarda cifrado.</p>
+            <details class="small"><summary><b>Cómo sacarlo en Teams</b></summary><ol class="muted" style="padding-left:18px;margin-top:4px">
+              <li>En el canal → <b>⋯</b> → <b>Flujos de trabajo</b> → plantilla <b>"Publicar en un canal cuando se recibe una solicitud de webhook"</b> → elige el equipo y el canal → <b>Agregar flujo de trabajo</b>.</li>
+              <li>Al terminar, Teams muestra la <b>URL del flujo</b>: cópiala entera (es larga, con <code>…/workflows/…/triggers/manual/paths/invoke?…&amp;sig=…</code>). No sirve el enlace del canal ni el de la app.</li>
+              <li>Si la prueba da <b>401/403</b>: en Power Automate abre el flujo → paso "Cuando se recibe una solicitud de webhook de Teams" → <b>¿Quién puede desencadenar el flujo?</b> → <b>Cualquiera</b> → Guardar.</li>
+              <li>Si da <b>404</b>: el flujo está apagado o la URL quedó cortada. Si da <b>502</b>: revisa el historial de ejecuciones del flujo.</li>
+            </ol></details>
             <form id="team-form" class="row"><input id="team-url" type="password" placeholder="https://hooks.slack.com/… o la URL del flujo de Teams" autocomplete="off" /><button class="soft" type="submit">Guardar</button></form>
             <div id="team-opts">
               <div class="opt row between"><div><b>Enviar al canal</b></div><input type="checkbox" class="switch" id="team-on" /></div>

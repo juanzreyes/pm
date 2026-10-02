@@ -153,3 +153,24 @@ test('soltar sobre el pollito o el panel: enlace, texto y archivos', () => {
   assert.deepEqual(tasks.slice(-2), ['📎 Revisar informe.pdf', '📎 Revisar x.png']);
   assert.equal(today.notes, '📎 C:\Users\ana\informe.pdf');
 });
+
+test('Teams: enlaces equivocados y errores del flujo explicados', async () => {
+  const out = require('../src/outbound');
+  const FLOW = 'https://prod-12.westus.logic.azure.com:443/workflows/abc/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers&sv=1.0&sig=XYZ';
+  // Enlaces que no son el webhook.
+  assert.match(out.wrongWebhookLink('https://teams.microsoft.com/l/channel/19%3a123%40thread.tacv2/General?groupId=1&tenantId=2'), /enlace del canal o de la app/);
+  assert.match(out.wrongWebhookLink('https://teams.microsoft.com/l/app/abc'), /Flujos de trabajo/);
+  assert.match(out.wrongWebhookLink('https://make.powerautomate.com/environments/x/flows/y/details'), /editar el flujo/);
+  assert.equal(out.wrongWebhookLink(FLOW), '');
+  assert.equal(out.wrongWebhookLink('https://default1234.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/abc/triggers/manual/paths/invoke?api-version=1&sig=x'), '');
+  assert.equal(out.wrongWebhookLink('https://hooks.slack.com/services/T/B/X'), '');
+  await assert.rejects(out.sendWebhook('https://teams.microsoft.com/l/channel/19%3a1/General', { text: 'x' }, async () => { throw new Error('no debe llamar'); }), /enlace del canal/);
+  // Errores con su explicación.
+  const fake = (status, body) => async () => ({ ok: status < 300, status, text: async () => body });
+  await assert.rejects(out.sendWebhook(FLOW, { text: 'x' }, fake(401, '{"error":{"code":"DirectApiAuthorizationRequired"}}')), /Cualquiera/);
+  await assert.rejects(out.sendWebhook(FLOW, { text: 'x' }, fake(404, '')), /apagado/);
+  await assert.rejects(out.sendWebhook(FLOW, { text: 'x' }, fake(400, 'TriggerInputSchemaMismatch')), /plantilla/);
+  await assert.rejects(out.sendWebhook(FLOW, { text: 'x' }, fake(502, '')), /Historial de ejecuciones/);
+  assert.equal((await out.sendWebhook(FLOW, { text: 'x' }, fake(202, ''))).status, 202, '202 es éxito');
+  assert.match(out.explainWebhookError('slack', 403, 'invalid_token'), /^HTTP 403: invalid_token$/);
+});

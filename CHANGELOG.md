@@ -1,5 +1,9 @@
 # Novedades de PM Pollito
 
+## 2.1.1 — Teams sin adivinar
+- **Canal de Teams**: si pegas el enlace del canal o de la app (en vez de la URL del flujo), PM te lo dice al guardar. Y cuando la prueba falla, explica qué corregir según el error: 401/403 → el flujo pide inicio de sesión ("¿Quién puede desencadenar el flujo?" → Cualquiera), 404 → flujo apagado o URL cortada, 400 → no es la plantilla correcta, 502 → mira el historial de ejecuciones.
+- Pasos para sacar el webhook en Teams, dentro de Ajustes → Avisos fuera del PC.
+
 ## 2.1.0 — Más pulido, más vivo
 **✨ Movimiento**
 - El panel se abre desde el pollito y se cierra hacia él; las pestañas se deslizan con una ficha que las acompaña; las ventanas internas también se van animadas.

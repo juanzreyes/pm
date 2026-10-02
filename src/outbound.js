@@ -44,9 +44,48 @@ async function post(http, url, body, headers = {}) {
   return res;
 }
 
-function sendWebhook(url, msg, http = fetch) {
-  if (!/^https:\/\//i.test(url || '')) return Promise.reject(new Error('La URL del webhook debe empezar por https://'));
-  return post(http, url, webhookPayload(kind(url), msg));
+/**
+ * ¿Es un enlace que NO sirve como webhook? (el del canal, el de la app, el del editor del flujo…)
+ * Devuelve el motivo para mostrarlo, o '' si parece una URL de webhook.
+ */
+function wrongWebhookLink(url) {
+  const u = String(url || '').trim();
+  if (/teams\.(microsoft|live|cloud\.microsoft)\.com\/l\/(channel|team|app|chat|entity|message)\//i.test(u) || /teams\.microsoft\.com\/(v2|_#)/i.test(u)) {
+    return 'Ese es el enlace del canal o de la app de Teams, no el del flujo. En Teams: el canal → ⋯ → Flujos de trabajo → abre tu flujo → en el paso "Cuando se recibe una solicitud de webhook de Teams", copia la "URL de HTTP POST".';
+  }
+  if (/make\.powerautomate\.com|flow\.microsoft\.com|make\.powerapps\.com/i.test(u) && !/\/workflows\/[^/]+\/triggers\//i.test(u)) {
+    return 'Ese es el enlace para editar el flujo en Power Automate, no la URL del disparador. Abre el paso "Cuando se recibe una solicitud de webhook de Teams" y copia la "URL de HTTP POST".';
+  }
+  if (/hooks\.slack\.com\/(apps|services)?$/i.test(u) || /slack\.com\/(app|archives)\//i.test(u)) return 'Ese es el enlace del canal de Slack. Crea un "Incoming Webhook" y copia su URL (empieza por https://hooks.slack.com/services/…).';
+  if (/discord\.com\/channels\//i.test(u)) return 'Ese es el enlace del canal de Discord. En el canal → Editar → Integraciones → Webhooks → Copiar URL del webhook.';
+  return '';
+}
+
+/** Un error del webhook explicado en cristiano (sobre todo los de los flujos de Teams). */
+function explainWebhookError(k, status, body = '') {
+  const b = String(body || '');
+  if (k === 'teams') {
+    if (status === 401 || status === 403 || /DirectApiAuthorizationRequired|AuthorizationFailed|InvalidAuthenticationToken|Unauthorized/i.test(b)) {
+      return `Teams rechazó el mensaje (HTTP ${status}): el flujo pide iniciar sesión. En Power Automate abre el flujo → paso "Cuando se recibe una solicitud de webhook de Teams" → "¿Quién puede desencadenar el flujo?" → "Cualquiera" → Guardar.`;
+    }
+    if (status === 404) return `Teams no encuentra el flujo (HTTP 404): está apagado, se borró o la URL quedó incompleta. Actívalo en Power Automate (Mis flujos → Activar) y vuelve a copiar la "URL de HTTP POST" entera.`;
+    if (status === 400 || /TriggerInputSchemaMismatch|InvalidRequestContent/i.test(b)) {
+      return `Teams no entendió el mensaje (HTTP ${status}): el flujo no usa la plantilla "Publicar en un canal cuando se recibe una solicitud de webhook" o se cambió su esquema. Crea el flujo desde esa plantilla sin modificar el disparador.`;
+    }
+    if (status === 429) return 'Teams pidió esperar (HTTP 429: demasiados mensajes seguidos). Prueba en un minuto.';
+    if (status >= 500) return `El flujo recibió el mensaje pero falló al publicarlo (HTTP ${status}). En Power Automate → el flujo → Historial de ejecuciones verás el paso que falló; suele ser que la cuenta del flujo no es miembro del equipo o del canal.`;
+  }
+  return `HTTP ${status}${b ? ': ' + b.slice(0, 140) : ''}`;
+}
+
+async function sendWebhook(url, msg, http = fetch) {
+  if (!/^https:\/\//i.test(url || '')) throw new Error('La URL del webhook debe empezar por https://');
+  const wrong = wrongWebhookLink(url);
+  if (wrong) throw new Error(wrong);
+  const k = kind(url);
+  const res = await http(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(webhookPayload(k, msg)) });
+  if (!res.ok) throw new Error(explainWebhookError(k, res.status, await res.text().catch(() => '')));
+  return res;
 }
 
 /** ntfy: se publica en JSON para que los emojis del título lleguen bien. */
@@ -114,4 +153,4 @@ function route(cat, raw, s, away) {
   return { team: teamOn, phone: phoneOn };
 }
 
-module.exports = { kind, webhookPayload, sendWebhook, sendNtfy, sendTelegram, telegramUpdates, parseTelegram, route };
+module.exports = { kind, webhookPayload, sendWebhook, wrongWebhookLink, explainWebhookError, sendNtfy, sendTelegram, telegramUpdates, parseTelegram, route };

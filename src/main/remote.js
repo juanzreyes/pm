@@ -198,6 +198,8 @@ module.exports = function install(M) {
     if ('teamWebhook' in patch) {
       const u = String(patch.teamWebhook || '').trim();
       if (u && !/^https:\/\//i.test(u)) return { ok: false, error: 'La URL del webhook debe empezar por https://' };
+      const wrong = u && out.wrongWebhookLink(u);
+      if (wrong) return { ok: false, error: wrong };
       s.teamWebhook = u ? M.encrypt(u) : '';
       s.teamKind = u ? out.kind(u) : '';
       if (u && s.teamOn === undefined) s.teamOn = true;
