@@ -512,6 +512,54 @@ test('pulido 1: pestañas que se deslizan, ficha que se mueve, números que cuen
   assert.deepEqual(leave, { during: { hidden: false, leaving: true }, after: { hidden: true, leaving: false } });
 });
 
+test('pulido 2: menú circular, caricia, pico al hablar y lanzar al pollito', async () => {
+  const pet = await waitPage('pet');
+  const c = await pet.evaluate(() => { const r = document.querySelector('#chick').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+  // Mantener presionado → menú circular con 6 acciones; "Anotar" abre la captura.
+  await pet.mouse.move(c.x, c.y);
+  await pet.mouse.down();
+  await sleep(750);
+  await pet.mouse.up();
+  await pet.waitForFunction(() => document.querySelector('#radial').classList.contains('open') && document.querySelectorAll('#radial .rd').length === 6, null, { timeout: 3000 }).catch(async (e) => { throw new Error(e.message + ' · ' + await pet.evaluate(() => document.body.className + ' | radial=' + document.querySelector('#radial').className + ' | chick=' + getComputedStyle(document.querySelector('#chick')).display)); });
+  await pet.click('#radial .rd[data-i="2"]');
+  const cap = await waitPage('capture');
+  assert.equal(await pet.evaluate(() => document.querySelector('#radial').classList.contains('open')), false);
+  await cap.keyboard.press('Escape');
+  // Eventos de puntero directos en la página: con el PC bloqueado, Chromium entrega el mouse
+  // simulado a ~1 movimiento por segundo y no se podría frotar ni lanzar.
+  const fire = (type, x, y, extra = {}) => pet.evaluate(([t, x, y, e]) => document.querySelector('#chick').dispatchEvent(new PointerEvent(t, { bubbles: true, clientX: x, clientY: y, screenX: e.sx ?? x, screenY: e.sy ?? y, button: 0, pointerId: 7, ...e })), [type, x, y, extra]);
+  // Caricia: frotar de lado a lado cierra los ojitos y suelta corazones.
+  for (let i = 0; i < 10; i++) await fire('pointermove', c.x + (i % 2 ? -30 : 30), c.y);
+  assert.equal(await pet.evaluate(() => document.body.classList.contains('petting')), true);
+  // El pico se abre con las vocales mientras escribe y se cierra al terminar.
+  const lip = await pet.evaluate(async () => {
+    say({ text: 'Hola, ¿qué tal vas con el informe?', ms: 4000 });
+    const during = document.body.classList.contains('lipsync');
+    await new Promise((r) => setTimeout(r, 4000));
+    return { during, after: document.body.classList.contains('lipsync'), text: document.querySelector('#bubble-text').textContent };
+  });
+  assert.deepEqual(lip, { during: true, after: false, text: 'Hola, ¿qué tal vas con el informe?' });
+  // Lanzarlo: arrastre rápido → vuela y aterriza sobre la barra de tareas.
+  const getPos = () => app.evaluate(({ BrowserWindow }) => { const w = BrowserWindow.getAllWindows().find((x) => x.webContents.getURL().includes('pet.html')); return { pos: w.getPosition(), size: w.getSize() }; });
+  const p0 = await getPos();
+  const sx = p0.pos[0] + c.x;
+  const sy = p0.pos[1] + c.y;
+  await fire('pointerdown', c.x, c.y, { sx, sy });
+  await pet.evaluate(async ([cx, cy, sx, sy]) => {
+    for (let i = 1; i <= 8; i++) {
+      document.querySelector('#chick').dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: cx, clientY: cy, screenX: sx - i * 45, screenY: sy - i * 20, pointerId: 7 }));
+      await new Promise((r) => setTimeout(r, 12));
+    }
+    document.querySelector('#chick').dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: cx, clientY: cy, pointerId: 7 }));
+  }, [c.x, c.y, sx, sy]);
+  await pet.waitForFunction(() => document.body.classList.contains('flying'), null, { timeout: 3000 });
+  await pet.waitForFunction(() => !document.body.classList.contains('flying'), null, { timeout: 10000 });
+  const p1 = await getPos();
+  const floor = await app.evaluate(({ screen }, b) => { const wa = screen.getDisplayNearestPoint({ x: b.pos[0] + b.size[0] / 2, y: b.pos[1] + b.size[1] / 2 }).workArea; return wa.y + wa.height - b.size[1]; }, p1);
+  assert.notDeepEqual(p1.pos, p0.pos, 'se movió');
+  assert.equal(p1.pos[1], floor, 'aterrizó sobre la barra de tareas');
+});
+
 test('ajustes: diagnóstico sin errores de la app', async () => {
   const panel = await waitPage('panel');
   await panel.evaluate(() => pm.command('diag'));

@@ -30,21 +30,26 @@ module.exports = function install(M) {
 
     M.ipcMain.on('pet:drag-start', (_e, { screenX, screenY }) => {
       if (!M.petWin) return;
+      if (M.fly.flying()) M.fly.stop(); // lo agarras en el aire
       const [x, y] = M.petWin.getPosition();
       M.drag = { dx: screenX - x, dy: screenY - y };
       M.petWin.setIgnoreMouseEvents(false);
     });
     M.ipcMain.on('pet:drag-move', (_e, { screenX, screenY }) => {
       if (!M.petWin || !M.drag) return;
-      M.petWin.setPosition(Math.round(screenX - M.drag.dx), Math.round(screenY - M.drag.dy));
+      const nx = Math.round(screenX - M.drag.dx);
+      const ny = Math.round(screenY - M.drag.dy);
+      M.petWin.setPosition(nx, ny);
+      M.fly.track(nx, ny);
       if (M.panelWin && M.panelWin.isVisible()) M.placePanel();
     });
     M.ipcMain.on('pet:drag-end', () => {
       if (!M.petWin) return;
       M.drag = null;
+      if (M.presence) M.presence.onDragged(); // lo moviste tú: se queda ahí un rato
+      if (M.fly.release()) return; // lo lanzaste: vuela y guarda su sitio al aterrizar
       const [x, y] = M.petWin.getPosition();
       M.store.data.position = { x, y };
-      if (M.presence) M.presence.onDragged(); // lo moviste tú: se queda ahí un rato
       // En modo discreto se pega al borde más cercano.
       if (M.store.data.settings.discreet) {
         const b = M.petWin.getBounds();
@@ -285,7 +290,7 @@ module.exports = function install(M) {
     });
 
     M.ipcMain.handle('settings:update', (_e, patch) => {
-      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget', 'claudeParallel', 'claudeReview', 'claudeAutoFixCi', 'claudeAutoFixReview', 'claudeMaxFixes', 'petPerch', 'pcReactions', 'typeAlong', 'weatherCity', 'petStyle', 'stuckDetector', 'planCheck', 'bestHour', 'closingRitual', 'endOfDay', 'closeApps', 'myName', 'claudeRespectLimits', 'claudeLimitPct', 'claudeModelAuto', 'teamShare', 'focusBlock', 'summaryWithClaude'];
+      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget', 'claudeParallel', 'claudeReview', 'claudeAutoFixCi', 'claudeAutoFixReview', 'claudeMaxFixes', 'petPerch', 'pcReactions', 'typeAlong', 'weatherCity', 'petStyle', 'stuckDetector', 'planCheck', 'bestHour', 'closingRitual', 'endOfDay', 'closeApps', 'myName', 'claudeRespectLimits', 'claudeLimitPct', 'claudeModelAuto', 'teamShare', 'focusBlock', 'summaryWithClaude', 'petPhysics'];
       if ('claudeLimitPct' in patch) patch.claudeLimitPct = Math.max(50, Math.min(99, Math.round(Number(patch.claudeLimitPct)) || 85));
       if ('endOfDay' in patch && !/^\d{2}:\d{2}$/.test(patch.endOfDay || '')) delete patch.endOfDay;
       if ('closeApps' in patch) patch.closeApps = (Array.isArray(patch.closeApps) ? patch.closeApps : String(patch.closeApps || '').split(/[,\n]/)).map((x) => String(x).trim().replace(/\.exe$/i, '')).filter((x) => /^[\w .-]{2,40}$/.test(x)).slice(0, 12);

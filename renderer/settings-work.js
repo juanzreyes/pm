@@ -47,6 +47,7 @@
     segOn($('#pet-style'), ss.petStyle || 'normal');
     $('#pet-perch').checked = ss.petPerch !== false;
     $('#desktop-widget').checked = !!ss.desktopWidget;
+    $('#pet-physics').checked = ss.petPhysics !== false;
     $('#pc-react').checked = ss.pcReactions !== false;
     $('#type-along').checked = ss.typeAlong !== false;
     if (document.activeElement !== $('#weather-city')) $('#weather-city').value = ss.weatherCity || '';
@@ -174,6 +175,7 @@
   $('#bx-folder').addEventListener('click', () => pm.browserFolder());
   $('#bx-block').addEventListener('change', (e) => pm.updateSettings({ focusBlock: e.target.checked }));
   $('#bx-sites').addEventListener('change', (e) => pm.browserSites(e.target.value));
+  $('#pet-physics').addEventListener('change', (e) => pm.updateSettings({ petPhysics: e.target.checked }));
   $('#desktop-widget').addEventListener('change', () => pm.command('widget.toggle'));
   $('#pet-perch').addEventListener('change', (e) => pm.updateSettings({ petPerch: e.target.checked }));
   $('#pc-react').addEventListener('change', (e) => pm.updateSettings({ pcReactions: e.target.checked }));

@@ -119,7 +119,7 @@
 @keyframes tapWings { to { transform: translateY(2px); } }
 
 /* ---------- 🫁 respiración guiada ---------- */
-#breath { display: none; position: absolute; left: 50%; top: 60px; transform: translateX(-50%); background: #fffdf6; border: 2px solid #3b2f2f; border-radius: 99px; padding: 4px 12px; font: 800 13px "Segoe UI", system-ui, sans-serif; color: #3b2f2f; white-space: nowrap; }
+#breath { display: none; position: absolute; left: 50%; top: 60px; transform: translateX(-50%); background: #fffdf6; border: 2px solid #3b2f2f; border-radius: 99px; padding: 4px 12px; font: 800 13px "Segoe UI", system-ui, sans-serif; color: #3b2f2f; white-space: nowrap; pointer-events: none; }
 .breathing #breath { display: block; }
 .breathing svg { transition-property: transform; transition-timing-function: ease-in-out; transform-origin: 50% 80%; }
 .breathing.breathe-in svg { transform: scale(1.18); }
@@ -150,3 +150,34 @@
 @keyframes visitBob { 0%, 100% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-3px) rotate(-5deg); } 75% { transform: translateY(-3px) rotate(5deg); } }
 .reduced #visitor, .reduced #visitor-pet svg { animation: none !important; }
 .on-vacation #visitor { display: none !important; }
+
+/* ---------- Pulido 2/6: menú circular, caricias y vuelo ---------- */
+#radial { display: none; position: fixed; inset: 0; z-index: 30; }
+#radial.open { display: block; }
+#radial .rd {
+  position: absolute; width: 40px; height: 40px; margin: -20px 0 0 -20px; display: grid; place-items: center;
+  border-radius: 50%; border: 2.5px solid #3b2f2f; background: #fffdf6; box-shadow: 0 3px 0 #3b2f2f;
+  font-size: 19px; cursor: pointer; padding: 0;
+  animation: rd-in 280ms cubic-bezier(.3, 1.45, .5, 1) both; animation-delay: calc(var(--i) * 28ms);
+  transition: transform 120ms ease-out, background 120ms ease-out;
+}
+#radial .rd:hover, #radial .rd:focus-visible { background: #ffd84a; transform: scale(1.14); outline: none; }
+#radial .rd:active { transform: scale(.94); }
+#radial .rd-label {
+  position: absolute; left: 50%; top: 100px; transform: translateX(-50%); white-space: nowrap; pointer-events: none;
+  font: 800 12px "Segoe UI", system-ui, sans-serif; color: #3b2f2f; background: #fffdf6; border: 2px solid #3b2f2f;
+  border-radius: 10px; padding: 2px 8px; opacity: 0; transition: opacity 120ms;
+}
+#radial .rd-label:not(:empty) { opacity: 1; }
+@keyframes rd-in { from { opacity: 0; transform: scale(.25); } }
+.reduced #radial .rd { animation: none; }
+
+/* Caricia: cierra los ojitos y se sonroja */
+.petting .eye { transform: scaleY(.15); transition: transform 90ms; }
+.petting #cheeks { opacity: 1; filter: saturate(1.7) brightness(1.05); }
+.flying #chick { cursor: grabbing; }
+
+/* Pico al ritmo del texto (vocal = abierto), en vez de abrir y cerrar sin parar */
+.lipsync #beakBottom, .lipsync #sp-duck .bill { animation: none !important; }
+.lipsync.beak-open #beakBottom { transform: scaleY(1.05); }
+.lipsync.beak-open #sp-duck .bill { transform: scaleY(1.12); transform-origin: 50% 20%; }

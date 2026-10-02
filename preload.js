@@ -234,6 +234,8 @@ contextBridge.exposeInMainWorld('pm', {
   onTyping: on('pet:typing'),
   onBreathe: on('pet:breathe'),
   onPajamas: on('pet:pajamas'),
+  onFly: on('pet:fly'),
+  onImpact: on('pet:impact'),
   whereResume: (project) => ipcRenderer.invoke('where:resume', project),
   contextSave: (project, ctx) => ipcRenderer.invoke('where:contextSave', { project, ctx }),
   contextOpen: (project) => ipcRenderer.invoke('where:contextOpen', project),

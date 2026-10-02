@@ -246,7 +246,8 @@ function say(payload) {
   bubble.title = bubbleTarget ? (payload.lang === 'en' ? 'Click to see it' : 'Clic para ir a verlo') : '';
   if (!text) return;
   wake();
-  clearInterval(typeTimer);
+  clearTimeout(typeTimer);
+  body.classList.remove('lipsync', 'beak-open'); // si interrumpe a otra burbuja, el pico no se queda abierto
   clearTimeout(hideTimer);
   bubble.classList.remove('hidden', 'out');
   bubble.style.animation = 'none';
@@ -276,13 +277,19 @@ function say(payload) {
     bubbleText.textContent = text; // sin efecto máquina de escribir
     body.classList.remove('talking');
   } else {
-    typeTimer = setInterval(() => {
-      bubbleText.textContent += chars[i++] || '';
+    // Escribe al ritmo del habla: el pico se abre con las vocales y hace pausas en comas y puntos.
+    body.classList.add('lipsync');
+    const tick = () => {
+      const ch = chars[i++] || '';
+      bubbleText.textContent += ch;
+      body.classList.toggle('beak-open', /[aeiouáéíóúAEIOUÁÉÍÓÚ]/.test(ch));
       if (i >= chars.length) {
-        clearInterval(typeTimer);
-        body.classList.remove('talking');
+        body.classList.remove('talking', 'lipsync', 'beak-open');
+        return;
       }
-    }, 26);
+      typeTimer = setTimeout(tick, /[.!?…]/.test(ch) ? 230 : /[,;:]/.test(ch) ? 120 : 26);
+    };
+    typeTimer = setTimeout(tick, 26);
   }
   if (anim) act(anim, !!quiet);
   else if (!quiet) chirp('pio');
@@ -330,37 +337,87 @@ function updateTail() {
   bubble.style.setProperty('--tail-x', Math.max(22, Math.min(200, center - 8)) + 'px');
 }
 
-// ---------- Arrastrar / clic / caricias ----------
+// ---------- Arrastrar / clic / caricias / mantener presionado ----------
+// Al arrastrarlo se estira según la velocidad; si lo lanzas, vuela (src/main/petfly.js) y se
+// aplasta en cada golpe. Frotarlo es una caricia; mantenerlo presionado abre el menú circular.
 let down = null;
 let rubDist = 0;
 let rubStart = 0;
+let lastMove = null; // { t, x, y } para la velocidad del arrastre
+let holdTimer = null;
+const reducedNow = () => body.classList.contains('reduced');
+
+/** Estirar/aplastar sin pisar los transform de las animaciones (propiedades scale/rotate). */
+function stretch(vx, vy) {
+  if (reducedNow()) return;
+  const v = Math.min(1, Math.hypot(vx, vy) / 2200);
+  const horiz = Math.abs(vx) >= Math.abs(vy);
+  const k = 1 + v * 0.16;
+  chick.style.scale = horiz ? `${k.toFixed(3)} ${(1 / k).toFixed(3)}` : `${(1 / k).toFixed(3)} ${k.toFixed(3)}`;
+  chick.style.rotate = `${Math.max(-14, Math.min(14, vx / 160)).toFixed(1)}deg`;
+}
+function unstretch() {
+  chick.style.scale = '';
+  chick.style.rotate = '';
+}
+/** Golpe: se aplasta según la fuerza y vuelve con rebote. */
+function squash(speed = 800, kind = 'floor') {
+  if (reducedNow()) return;
+  const f = Math.min(1, speed / 2200);
+  const a = (1 + 0.32 * f).toFixed(3);
+  const b = (1 - 0.3 * f).toFixed(3);
+  const frames = kind === 'wall'
+    ? [{ scale: `${b} ${a}` }, { scale: '1.06 0.95' }, { scale: '1 1' }]
+    : [{ scale: `${a} ${b}`, translate: `0 ${(6 * f).toFixed(1)}px` }, { scale: '0.94 1.07', translate: '0 -2px' }, { scale: '1 1', translate: '0 0' }];
+  chick.animate(frames, { duration: 380, easing: 'cubic-bezier(.3,1.45,.5,1)' });
+  if (kind === 'floor' && f > 0.35) for (let i = 0; i < 3; i++) particle('💨', 60 + rand(-25, 25), 118, { dx: rand(-40, 40), dy: -rand(6, 16), d: 0.7, size: 14, delay: i * 0.04 });
+}
 
 chick.addEventListener('pointerdown', (e) => {
   if (e.button !== 0) return;
-  down = { x: e.screenX, y: e.screenY, moved: false };
-  chick.setPointerCapture(e.pointerId);
+  down = { x: e.screenX, y: e.screenY, moved: false, t: Date.now() };
+  lastMove = { t: performance.now(), x: e.screenX, y: e.screenY, vx: 0, vy: 0 };
+  try { chick.setPointerCapture(e.pointerId); } catch { /* puntero sintético (tests) */ }
+  // Mantener presionado (sin moverlo) abre el menú circular.
+  clearTimeout(holdTimer);
+  holdTimer = setTimeout(() => { if (down && !down.moved) { down.held = true; openRadial(); } }, 520);
 });
 
 chick.addEventListener('pointermove', (e) => {
   if (!down) return rub(e);
   if (!down.moved && Math.hypot(e.screenX - down.x, e.screenY - down.y) > 4) {
+    if (down.held) return; // con el menú abierto no se arrastra
+    clearTimeout(holdTimer);
     down.moved = true;
     dragging = true;
     pm.dragStart({ screenX: down.x, screenY: down.y });
     body.classList.add('dragged');
     wake();
   }
-  if (down.moved) pm.dragMove({ screenX: e.screenX, screenY: e.screenY });
+  if (down.moved) {
+    pm.dragMove({ screenX: e.screenX, screenY: e.screenY });
+    const now = performance.now();
+    const dt = Math.max(8, now - lastMove.t) / 1000;
+    // Velocidad suavizada: el estiramiento no tiembla.
+    const vx = 0.6 * ((e.screenX - lastMove.x) / dt) + 0.4 * lastMove.vx;
+    const vy = 0.6 * ((e.screenY - lastMove.y) / dt) + 0.4 * lastMove.vy;
+    lastMove = { t: now, x: e.screenX, y: e.screenY, vx, vy };
+    stretch(vx, vy);
+  }
 });
 
 chick.addEventListener('pointerup', (e) => {
+  clearTimeout(holdTimer);
   if (!down) return;
   const wasDrag = down.moved;
+  const held = down.held;
   down = null;
   try { chick.releasePointerCapture(e.pointerId); } catch { /* ya liberado */ }
+  if (held) return; // soltar tras abrir el menú: el menú se queda abierto
   if (wasDrag) {
     dragging = false;
     body.classList.remove('dragged');
+    unstretch();
     pm.dragEnd();
     if (!chick.matches(':hover')) hovered.delete(chick);
     syncIgnore();
@@ -378,17 +435,102 @@ chick.addEventListener('contextmenu', (e) => {
   pm.context();
 });
 
-// Frotar el ratón encima = caricia 💛
+// Vuelo: mientras vuela da vueltas; en cada golpe se aplasta; al aterrizar, polvo y alivio.
+pm.onFly(({ on, vx, landed }) => {
+  body.classList.toggle('flying', !!on);
+  if (on && !reducedNow()) chick.animate([{ rotate: '0deg' }, { rotate: `${vx > 0 ? 360 : -360}deg` }], { duration: 700, easing: 'cubic-bezier(.2,.8,.2,1)' });
+  if (!on && landed) { unstretch(); setTimeout(() => act('wobble'), 120); }
+});
+pm.onImpact(({ kind, speed }) => squash(speed, kind));
+
+// Frotar el ratón encima = caricia 💛: cierra los ojitos, se sonroja y suelta corazones.
+let pettingTimer = null;
+let heartAt = 0;
+let rubLast = null;
 function rub(e) {
   const now = Date.now();
-  if (now - rubStart > 1800) { rubStart = now; rubDist = 0; }
-  rubDist += Math.hypot(e.movementX || 0, e.movementY || 0);
+  if (now - rubStart > 1800) { rubStart = now; rubDist = 0; heartAt = 0; }
+  // Distancia desde el último punto (movementX no siempre viene informado).
+  if (rubLast && now - rubLast.t < 250) rubDist += Math.hypot(e.clientX - rubLast.x, e.clientY - rubLast.y);
+  rubLast = { t: now, x: e.clientX, y: e.clientY };
+  if (rubDist > 140) {
+    body.classList.add('petting');
+    clearTimeout(pettingTimer);
+    pettingTimer = setTimeout(() => body.classList.remove('petting'), 650);
+    if (rubDist - heartAt > 160) { heartAt = rubDist; particle(pick(['💛', '💕', '💖']), rand(70, 120), rand(55, 80), { dx: rand(-20, 20), d: 1.2, size: rand(12, 16) }); }
+  }
   if (rubDist > 450) {
     rubDist = 0;
+    heartAt = 0;
     rubStart = now;
     wake();
     pm.petted();
   }
+}
+
+// ---------- Menú circular (mantener presionado) ----------
+const RADIAL = [
+  { icon: '📋', label: 'Mi día', cmd: 'panel', arg: 'day' },
+  { icon: '🍅', label: 'Pomodoro', cmd: 'pomo.toggle' },
+  { icon: '✍️', label: 'Anotar', cmd: 'capture' },
+  { icon: '🎯', label: 'Foco 25 min', cmd: 'focus.start25' },
+  { icon: '🌽', label: 'Dar de comer', cmd: 'feed' },
+  { icon: '🔕', label: 'Silenciar 1 h', cmd: 'mute' },
+];
+const radial = $('#radial');
+function openRadial() {
+  if (!radial) return;
+  wake();
+  const r = chick.getBoundingClientRect();
+  const cx = r.left + r.width / 2;
+  const cy = r.top + r.height * 0.55;
+  const R = 84;
+  radial.innerHTML = RADIAL.map((it, i) => {
+    // Arco superior (de 195° a 345°): el de abajo quedaría fuera de la ventana.
+    const a = ((195 + (150 / (RADIAL.length - 1)) * i) * Math.PI) / 180;
+    const x = cx + Math.cos(a) * R;
+    const y = cy + Math.sin(a) * R;
+    return `<button class="rd" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px;--i:${i}" data-i="${i}" title="${it.label}" aria-label="${it.label}"><span>${it.icon}</span></button>`;
+  }).join('') + '<div class="rd-label" aria-hidden="true"></div>';
+  radial.classList.add('open');
+  hovered.add(radial);
+  syncIgnore();
+  chick.animate([{ scale: '1 1' }, { scale: '1.08 0.94' }, { scale: '1 1' }], { duration: 260 });
+  const first = radial.querySelector('.rd');
+  if (first) first.focus({ preventScroll: true });
+}
+function closeRadial() {
+  if (!radial || !radial.classList.contains('open')) return;
+  radial.classList.remove('open');
+  hovered.delete(radial);
+  syncIgnore();
+}
+if (radial) {
+  radial.addEventListener('click', (e) => {
+    const b = e.target.closest('.rd');
+    if (!b) return closeRadial();
+    const it = RADIAL[Number(b.dataset.i)];
+    closeRadial();
+    pm.command(it.cmd, it.arg);
+  });
+  radial.addEventListener('mouseover', (e) => {
+    const b = e.target.closest('.rd');
+    radial.querySelector('.rd-label').textContent = b ? RADIAL[Number(b.dataset.i)].label : '';
+  });
+  radial.addEventListener('focusin', (e) => {
+    const b = e.target.closest('.rd');
+    if (b) radial.querySelector('.rd-label').textContent = RADIAL[Number(b.dataset.i)].label;
+  });
+  radial.addEventListener('mouseleave', () => setTimeout(closeRadial, 350));
+  document.addEventListener('keydown', (e) => {
+    if (!radial.classList.contains('open')) return;
+    if (e.key === 'Escape') closeRadial();
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      const bs = [...radial.querySelectorAll('.rd')];
+      const i = bs.indexOf(document.activeElement);
+      bs[(i + (e.key === 'ArrowRight' ? 1 : -1) + bs.length) % bs.length].focus();
+    }
+  });
 }
 
 // ---------- Ojos que siguen el cursor ----------
@@ -535,8 +677,13 @@ function updateMood() {
   if (angry) m = 'angry';
   else if ((state && state.pet && (state.pet.napUntil || 0) > Date.now()) || (isNight() && Date.now() - lastInteract > 60000 && Date.now() - lastCursorMove > 60000)) m = 'sleep';
 
+  const before = [...body.classList].find((c) => c.startsWith('mood-'));
   for (const c of [...body.classList]) if (c.startsWith('mood-')) body.classList.remove(c);
   body.classList.add('mood-' + m);
+  // Cambio de ánimo: un pequeño "reacomodo" en vez de un salto seco de una cara a otra.
+  if (before && before !== 'mood-' + m && !body.classList.contains('reduced') && !dragging) {
+    chick.animate([{ scale: '1 1' }, { scale: '1.04 0.96' }, { scale: '1 1' }], { duration: 320, easing: 'ease-out' });
+  }
   body.classList.toggle('hungry', !!(state && state.pet.fullness < 25));
   if (state && state.pet.fullness < 25) body.classList.add('mood-hungry');
 }
