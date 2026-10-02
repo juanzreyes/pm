@@ -142,7 +142,7 @@
     if (!summary || Date.now() - summaryAt > 30 * 60e3) loadSummary();
     else paintSummary();
   }
-  $('#journal-ai').addEventListener('click', () => loadSummary(true));
+  $('#journal-ai').addEventListener('click', (e) => MOTION.busy(e.currentTarget, () => loadSummary(true)));
 
   $('#btn-blocks').addEventListener('click', () => show('blocks'));
   $('#btn-monthly').addEventListener('click', () => pm.monthlyPdf('current'));

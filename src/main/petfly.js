@@ -19,7 +19,7 @@ module.exports = function install(M) {
     const v = phys.velocityFrom(samples, Date.now());
     samples = [];
     const s = M.store.data.settings;
-    if (!M.petWin || M.petWin.isDestroyed() || !phys.isThrow(v) || s.reducedMotion || s.discreet || s.petPhysics === false) return false;
+    if (!M.petWin || M.petWin.isDestroyed() || !phys.isThrow(v) || !Number.isFinite(v.vx + v.vy) || s.reducedMotion || s.discreet || s.petPhysics === false) return false;
     const [x, y] = M.petWin.getPosition();
     const [w, h] = M.petWin.getSize();
     const b = phys.boundsFor(M.screen.getDisplayNearestPoint({ x: Math.round(x + w / 2), y: Math.round(y + h / 2) }).workArea, w, h);
@@ -35,7 +35,13 @@ module.exports = function install(M) {
       last = now;
       const r = phys.step(st, dt, b);
       st = r.s;
-      M.petWin.setPosition(Math.round(st.x), Math.round(st.y));
+      if (![st.x, st.y, st.vx, st.vy].every(Number.isFinite)) return stop(true);
+      try {
+        M.petWin.setPosition(Math.round(st.x), Math.round(st.y));
+      } catch (e) {
+        M.diag.log('info', 'Vuelo del pollito: ' + e.message);
+        return stop(true);
+      }
       if (M.panelWin && M.panelWin.isVisible()) M.placePanel();
       for (const hit of r.hits) M.sendPet('pet:impact', hit);
       if (r.rest || now - t0 > 5000) stop(true);

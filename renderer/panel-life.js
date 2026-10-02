@@ -25,9 +25,8 @@
   function renderQueue() {
     const q = state.claudeQueue || [];
     $('#queue-next').classList.toggle('hidden', !q.length);
-    $('#claude-queue').innerHTML = q.length
-      ? q.map((x, i) => `<div class="qi" data-id="${x.id}"><span class="qn">${i + 1}</span><span class="qt">${esc(x.text.length > 140 ? x.text.slice(0, 139) + '…' : x.text)}${x.project ? ` <span class="pill">${esc(x.project)}</span>` : ''}${x.model ? ` <span class="pill" title="Modelo elegido">🧠 ${esc(x.model)}</span>` : ''}</span>${x.project ? '<button class="icon mini q-run" title="Que Claude la haga ya (en una copia aparte del repo)" aria-label="Ejecutar con Claude">▶</button>' : ''}<button class="icon mini q-del" title="Quitar" aria-label="Quitar">✕</button></div>`).join('')
-      : '<span class="muted">Apunta aquí lo que quieres pedirle a Claude mientras trabaja en otra cosa. Cuando termine, te lo recuerdo. También: <b>para claude: …</b> en la captura rápida o <b>Ctrl+Alt+Q</b> en VS Code.</span>';
+    MOTION.keyedList($('#claude-queue'), q.map((x, i) => ({ key: x.id, html: `<div class="qi" data-id="${x.id}"><span class="qn">${i + 1}</span><span class="qt">${esc(x.text.length > 140 ? x.text.slice(0, 139) + '…' : x.text)}${x.project ? ` <span class="pill">${esc(x.project)}</span>` : ''}${x.model ? ` <span class="pill" title="Modelo elegido">🧠 ${esc(x.model)}</span>` : ''}</span>${x.project ? '<button class="icon mini q-run" title="Que Claude la haga ya (en una copia aparte del repo)" aria-label="Ejecutar con Claude">▶</button>' : ''}<button class="icon mini q-del" title="Quitar" aria-label="Quitar">✕</button></div>` })),
+      { emptyHtml: '<span class="muted">Apunta aquí lo que quieres pedirle a Claude mientras trabaja en otra cosa. Cuando termine, te lo recuerdo. También: <b>para claude: …</b> en la captura rápida o <b>Ctrl+Alt+Q</b> en VS Code.</span>' });
     tr($('#claude-queue'));
   }
   $('#claude-queue').addEventListener('click', (e) => {

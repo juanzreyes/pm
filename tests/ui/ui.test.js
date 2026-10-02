@@ -548,7 +548,7 @@ test('pulido 2: menú circular, caricia, pico al hablar y lanzar al pollito', as
   await pet.evaluate(async ([cx, cy, sx, sy]) => {
     for (let i = 1; i <= 8; i++) {
       document.querySelector('#chick').dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: cx, clientY: cy, screenX: sx - i * 45, screenY: sy - i * 20, pointerId: 7 }));
-      await new Promise((r) => setTimeout(r, 12));
+      // Sin pausas: con la ventana sin pintar, Chromium las estira y el lanzamiento saldría lento.
     }
     document.querySelector('#chick').dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: cx, clientY: cy, pointerId: 7 }));
   }, [c.x, c.y, sx, sy]);
@@ -592,6 +592,51 @@ test('pulido 3: avisos apilados, deslizar para descartar, cola que sigue y desha
     return { anims, undo, hiddenAfterUndo: document.querySelector('#toast').classList.contains('hidden') };
   });
   assert.deepEqual(t, { anims: 1, undo: true, hiddenAfterUndo: true });
+});
+
+test('pulido 4: lista viva, completar con confeti y botones con estado', async () => {
+  const panel = await waitPage('panel');
+  await panel.evaluate(() => pm.command('panel', 'day'));
+  await panel.evaluate(() => pm.addTask('Fila A pulido'));
+  await panel.waitForFunction(() => [...document.querySelectorAll('#tasks > li')].some((l) => /Fila A pulido/.test(l.textContent)), null, { timeout: 5000 });
+  await panel.evaluate(() => { window.__rowA = [...document.querySelectorAll('#tasks > li')].find((l) => /Fila A pulido/.test(l.textContent)); });
+  await panel.evaluate(() => pm.addTask('Fila B pulido'));
+  await panel.waitForFunction(() => [...document.querySelectorAll('#tasks > li')].some((l) => /Fila B pulido/.test(l.textContent)), null, { timeout: 5000 });
+  const r = await panel.evaluate(() => {
+    const rows = [...document.querySelectorAll('#tasks > li')];
+    const a = rows.find((l) => /Fila A pulido/.test(l.textContent));
+    const b = rows.find((l) => /Fila B pulido/.test(l.textContent));
+    return { same: a === window.__rowA, bEnter: b.classList.contains('enter') };
+  });
+  assert.deepEqual(r, { same: true, bEnter: true }, 'la fila A no se rehízo; la B entró animada');
+  // Completar: tachado animado + confeti.
+  const done = await panel.evaluate(async () => {
+    const b = [...document.querySelectorAll('#tasks > li')].find((l) => /Fila B pulido/.test(l.textContent));
+    b.querySelector('input[type=checkbox]').click();
+    const conf = document.querySelectorAll('#fx-layer i').length;
+    await new Promise((ok) => setTimeout(ok, 120));
+    const b2 = [...document.querySelectorAll('#tasks > li')].find((l) => /Fila B pulido/.test(l.textContent));
+    return { conf, justDone: b2.classList.contains('just-done'), done: b2.classList.contains('done') };
+  });
+  assert.ok(done.conf >= 8, 'confeti: ' + done.conf);
+  assert.deepEqual({ j: done.justDone, d: done.done }, { j: true, d: true });
+  // Botón con estado: girando y luego ✓ (o ✗ si falla).
+  const btn = await panel.evaluate(async () => {
+    const b = document.createElement('button');
+    b.textContent = 'Guardar';
+    document.body.append(b);
+    let release;
+    const p = MOTION.busy(b, () => new Promise((ok) => { release = ok; }));
+    const during = b.classList.contains('is-busy');
+    release({ ok: true });
+    await p;
+    const ok = b.classList.contains('is-ok');
+    await MOTION.busy(b, async () => ({ ok: false, error: 'x' }));
+    const err = b.classList.contains('is-err');
+    b.remove();
+    return { during, ok, err };
+  });
+  assert.deepEqual(btn, { during: true, ok: true, err: true });
 });
 
 test('ajustes: diagnóstico sin errores de la app', async () => {

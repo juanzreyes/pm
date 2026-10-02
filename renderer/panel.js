@@ -178,6 +178,7 @@ function render() {
   }
   document.documentElement.classList.toggle('dark', !!state.dark); document.documentElement.classList.toggle('contrast', !!state.contrast);
   document.documentElement.classList.toggle('reduced', !!(state.settings && state.settings.reducedMotion));
+  MOTION.setSounds(!!(state.settings && state.settings.uiSounds));
   if (state.lang && state.lang !== 'es') I18N.translateDom(document.getElementById('card'), state.lang);
 }
 
@@ -294,16 +295,21 @@ function renderDay() {
   // No repintar mientras editas una tarea o la arrastras.
   if (!$('#tasks input.edit, #tasks input.tedit') && !dragFrom) {
     const PRIO_T = { h: 'Prioridad alta', m: 'Prioridad media', l: 'Prioridad baja' };
-    $('#tasks').innerHTML = tasks.length
-      ? tasks.map((t, i) => `<li class="${t.done ? 'done' : ''}" draggable="true" data-i="${i}">
+    // Lista con memoria: no se rehace entera, así las filas entran, salen y se mueven animadas.
+    const seen = {};
+    MOTION.keyedList($('#tasks'), tasks.map((t, i) => {
+      const k = t.text + '#' + (seen[t.text] = (seen[t.text] || 0) + 1);
+      const jd = justDone.get(k);
+      const since = jd && Date.now() - jd < 700 ? Date.now() - jd : -1;
+      return { key: k, html: `<li class="${t.done ? 'done' : ''}${since >= 0 ? ' just-done' : ''}" ${since >= 0 ? `style="--since:-${since}ms"` : ''} draggable="true" data-i="${i}">
           <span class="grip" title="Arrastra para ordenar">${ICON('grip', 14)}</span>
           <button class="prio ${t.priority || ''}" data-prio="${i}" title="${t.priority ? PRIO_T[t.priority] : 'Sin prioridad'} (clic para cambiar)" aria-label="Prioridad"></button>
           <input type="checkbox" data-i="${i}" ${t.done ? 'checked' : ''} aria-label="Hecha"/>
           <span class="t" data-edit="${i}" title="Doble clic para editar">${esc(t.text)}</span>${!t.done && (state.taskAges || [])[i] >= 2 ? `<span class="age ${(state.taskAges[i] >= 4) ? 'hot' : ''}" title="Lleva ${state.taskAges[i]} días laborables posponiéndose">🔥${state.taskAges[i]}d</span>` : ''}
           <span class="ttime ${t.time ? '' : 'empty'}" data-time="${i}" title="Hora (crea un recordatorio)">${t.time ? '🕒 ' + esc(t.time) : '🕒'}</span>
           <span class="timer ${t.startedAt ? 'on' : ''} ${t.spent || t.est || t.startedAt ? '' : 'empty'}" data-timer="${i}" title="Clic: iniciar / pausar cronómetro · Doble clic: estimar minutos">${timerText(t)}</span>
-          ${!t.done && !/^↳/.test(t.text) ? `<button class="split" data-split="${i}" title="Dividir en pasos" aria-label="Dividir en pasos">🪜</button>` : ''}<button data-del="${i}" title="Quitar" aria-label="Quitar">✕</button></li>`).join('')
-      : '<li class="empty">Aún no hay tareas. Haz el daily o añade una 👇</li>';
+          ${!t.done && !/^↳/.test(t.text) ? `<button class="split" data-split="${i}" title="Dividir en pasos" aria-label="Dividir en pasos">🪜</button>` : ''}<button data-del="${i}" title="Quitar" aria-label="Quitar">✕</button></li>` };
+    }), { emptyHtml: '<li class="empty">Aún no hay tareas. Haz el daily o añade una 👇</li>' });
   }
 
   // Qué tan bien estimas (con al menos 3 tareas cronometradas y estimadas).
@@ -710,9 +716,24 @@ let dragFrom = null;
 const tasksEl = document.getElementById('tasks');
 const PRIO_NEXT = { undefined: 'h', '': 'h', h: 'm', m: 'l', l: '' };
 
+// Completar una tarea: tachado que se dibuja, casilla que rebota y confeti (grande si era la última).
+const justDone = new Map();
 tasksEl.addEventListener('change', (e) => {
   const cb = e.target.closest('input[type=checkbox][data-i]');
-  if (cb) pm.toggleTask(state.todayKey, Number(cb.dataset.i));
+  if (!cb) return;
+  const li = cb.closest('li');
+  if (cb.checked && li) {
+    justDone.set(li.dataset.key, Date.now());
+    setTimeout(() => justDone.delete(li.dataset.key), 900);
+    li.classList.add('done', 'just-done');
+    li.style.setProperty('--since', '0ms');
+    const r = cb.getBoundingClientRect();
+    const all = [...tasksEl.querySelectorAll('input[type=checkbox][data-i]')].every((x) => x.checked);
+    MOTION.burst(r.left + r.width / 2, r.top + r.height / 2, { n: 10 });
+    MOTION.sfx(all ? 'celebrate' : 'done');
+    if (all) setTimeout(() => { const c = $('#card').getBoundingClientRect(); MOTION.burst(c.left + c.width / 2, c.top + c.height * 0.4, { big: true }); }, 180);
+  }
+  pm.toggleTask(state.todayKey, Number(cb.dataset.i));
 });
 tasksEl.addEventListener('click', async (e) => {
   const del = e.target.closest('[data-del]');
@@ -857,6 +878,7 @@ let toastUndo = null;
 // Aviso temporal; con "Deshacer", una barrita muestra cuánto tiempo queda (se pausa con el ratón encima).
 let toastAnim = null;
 function toast(text, undo) {
+  if (/^😿/u.test(text)) MOTION.sfx('error');
   $('#toast-text').textContent = state ? I18N.tr(text, state.lang) : text;
   $('#toast-undo').classList.toggle('hidden', !undo);
   toastUndo = undo || null;

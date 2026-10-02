@@ -701,3 +701,17 @@ nav button:not(.active):hover { color: var(--ink); }
 .toast { overflow: hidden; animation: toast-in var(--d-med) var(--spring); }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 14px) scale(.96); } }
 #toast-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--yellow); transform-origin: left; opacity: .85; }
+
+/* ---------- Pulido 4/6: microinteracciones ---------- */
+/* Filas que entran */
+#tasks > li.enter, .qi.enter, .mate.enter { animation: row-in var(--d-med) var(--ease-out); }
+@keyframes row-in { from { opacity: 0; transform: translateY(-6px) scale(.98); } }
+/* El tachado se dibuja de izquierda a derecha */
+#tasks li.done .t { text-decoration: none; background: linear-gradient(currentColor, currentColor) 0 58% / 100% 1.6px no-repeat; }
+#tasks li.just-done .t { animation: strike 380ms var(--ease-out) var(--since, 0ms) both; }
+@keyframes strike { from { background-size: 0 1.6px; color: var(--ink); } }
+#tasks li.just-done input[type=checkbox] { animation: check-pop 420ms var(--spring) var(--since, 0ms) both; }
+@keyframes check-pop { 0% { transform: scale(.6); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
+/* Confeti */
+#fx-layer { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
+#fx-layer i { position: absolute; border-radius: 2px; }

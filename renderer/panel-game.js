@@ -19,8 +19,8 @@
   $('#game-missions').addEventListener('click', async (e) => {
     const b = e.target.closest('.m-claim');
     if (!b) return;
-    b.disabled = true;
-    const r = await pm.missionClaim(b.dataset.id);
+    const r = await MOTION.busy(b, () => pm.missionClaim(b.dataset.id));
+    if (r.ok) { const rc = b.getBoundingClientRect(); MOTION.burst(rc.left + rc.width / 2, rc.top, { n: 14 }); MOTION.sfx(r.bonus ? 'celebrate' : 'done'); }
     if (!r.ok) { b.disabled = false; toast('😿 ' + r.error); }
   });
 
@@ -145,8 +145,8 @@
   }
   $('#game-wrapped').addEventListener('click', openWrapped);
   $('#wr-close').addEventListener('click', () => $('#o-wrapped').classList.add('hidden'));
-  $('#wr-save').addEventListener('click', async () => {
-    const r = await pm.wrappedSave($('#wr-canvas').toDataURL('image/png'));
+  $('#wr-save').addEventListener('click', async (e) => {
+    const r = await MOTION.busy(e.currentTarget, () => pm.wrappedSave($('#wr-canvas').toDataURL('image/png')));
     if (r.ok) toast('💾 Imagen guardada'); else if (!r.canceled) toast('😿 ' + r.error);
   });
   $('#wr-copy').addEventListener('click', async () => {

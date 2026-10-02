@@ -87,7 +87,9 @@
   $('#farm-list').addEventListener('submit', async (e) => {
     e.preventDefault();
     const card = e.target.closest('.mate');
-    const r = await pm.farmKudo(card.dataset.id, card.querySelector('.kudo-msg').value);
+    const send = card.querySelector('.kudo-form button');
+    const r = await MOTION.busy(send, () => pm.farmKudo(card.dataset.id, card.querySelector('.kudo-msg').value));
+    if (r.ok) { const rc = send.getBoundingClientRect(); MOTION.burst(rc.left + rc.width / 2, rc.top, { n: 12 }); }
     kudoFor = '';
     if (!r.ok) toast('😿 ' + r.error);
     render();

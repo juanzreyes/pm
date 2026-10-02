@@ -104,3 +104,17 @@ html.dark .skeleton span { background-image: linear-gradient(90deg, rgba(255,255
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* ---------- Pulido 4/6: botones que responden ---------- */
+button { transition: transform var(--d-fast) var(--ease-out), box-shadow var(--d-fast) var(--ease-out), background-color var(--d-fast) ease, opacity var(--d-fast) ease; }
+button:not(:disabled):not(.no-press):active { transform: translateY(1px) scale(.97); }
+/* Estado de un botón mientras trabaja: girando → ✓ / ✗ */
+button.is-busy, button.is-ok, button.is-err { position: relative; color: transparent !important; pointer-events: none; }
+button.is-busy > *, button.is-ok > *, button.is-err > * { visibility: hidden; }
+button.is-busy::after, button.is-ok::after, button.is-err::after { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink); font-weight: 900; }
+button.primary.is-busy::after, button.primary.is-ok::after, button.primary.is-err::after { color: #fff; }
+button.is-busy::after { content: ""; width: 14px; height: 14px; inset: auto; left: calc(50% - 9px); top: calc(50% - 9px); border: 2.5px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: btn-spin .7s linear infinite; }
+button.is-ok::after { content: "✓"; animation: check-in var(--d-med) var(--spring); }
+button.is-err::after { content: "✕"; }
+@keyframes btn-spin { to { transform: rotate(360deg); } }
+@keyframes check-in { from { transform: scale(.4); opacity: 0; } }

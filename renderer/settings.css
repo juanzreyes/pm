@@ -35,7 +35,7 @@ html.dark .pause-box.paused { background: #3a2f1c; border-color: #6a5428; }
 
 /* Interruptor tipo iOS para los checkbox */
 input.switch { appearance: none; -webkit-appearance: none; width: 42px; height: 24px; border-radius: 99px; background: #d9ccae; position: relative; cursor: pointer; flex: none; border: 2px solid var(--ink); transition: background .15s; }
-input.switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 0 rgba(0,0,0,.2); }
+input.switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left var(--d-med, 220ms) var(--spring, ease), width var(--d-fast, 120ms) ease; box-shadow: 0 1px 0 rgba(0,0,0,.2); }
 input.switch:checked { background: var(--orange); }
 input.switch:checked::after { left: 20px; }
 html.dark input.switch { background: #4a4038; border-color: #0f0d0b; }
@@ -95,3 +95,6 @@ details.tk.on summary b::after { content: ' ✅'; }
 .donate { background: #ffc439; color: #253b80; border: 2px solid var(--ink); border-radius: 14px; padding: 9px 16px; font-weight: 800; box-shadow: 0 3px 0 var(--ink); cursor: pointer; }
 .donate:hover { filter: brightness(1.05); }
 .donate:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+/* Al presionar, la bolita se estira (como en iOS) y vuelve con rebote */
+input.switch:active::after { width: 21px; }
+input.switch:checked:active::after { left: 15px; }

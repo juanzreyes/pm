@@ -43,7 +43,7 @@ test('vuelo de la ventana: se mueve, avisa de los golpes y guarda dónde aterriz
     store: { data: { settings: {} }, save() {} },
     petWin: { isDestroyed: () => false, getPosition: () => pos, getSize: () => [240, 300], setPosition: (x, y) => { pos = [x, y]; } },
     screen: { getDisplayNearestPoint: () => ({ workArea: WA }) },
-    panelWin: null, placePanel() {}, sendPet: (ch, v) => sent.push([ch, v]),
+    panelWin: null, placePanel() {}, diag: { log() {} }, sendPet: (ch, v) => sent.push([ch, v]),
   };
   const fly = require('../src/main/petfly')(M);
   // Soltarlo despacio: no vuela.
