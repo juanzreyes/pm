@@ -1,6 +1,6 @@
 {
   "name": "pm-pollito",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "PM, tu pollito project manager: widget flotante que vigila tus límites de Claude y te acompaña en tu día.",
   "main": "main.js",
   "scripts": {

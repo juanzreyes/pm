@@ -1,5 +1,32 @@
 # Novedades de PM Pollito
 
+## 2.1.0 — Más pulido, más vivo
+**✨ Movimiento**
+- El panel se abre desde el pollito y se cierra hacia él; las pestañas se deslizan con una ficha que las acompaña; las ventanas internas también se van animadas.
+- Los porcentajes y el maíz cuentan hasta su valor, las barras crecen desde donde estaban y hay esqueletos de carga en vez de "Cargando…".
+
+**🐣 El pollito**
+- Física: se estira al arrastrarlo y, si lo lanzas, vuela, rebota en los bordes y cae a la barra de tareas aplastándose en cada golpe.
+- Caricias con ojitos cerrados y corazones, menú circular al mantenerlo presionado y un pico que se mueve al ritmo de lo que dice.
+
+**💬 Avisos**
+- La burbuja sigue al pollito, se descarta deslizándola, y si llegan varios avisos seguidos aparece "+N más". El "Deshacer" muestra su cuenta atrás.
+
+**👆 Microinteracciones**
+- Completar una tarea dibuja el tachado, hace rebotar la casilla y lanza confeti (fiesta grande con la última). Las listas reutilizan sus filas y se reordenan deslizándose.
+- Botones que trabajan muestran girando → ✓ o ✗; todo se hunde al presionarlo. Sonidos de interfaz opcionales.
+
+**⌨️ Interacción**
+- Tooltips con su atajo y hoja de atajos con "?". Flechas, Espacio y Supr en la lista de tareas.
+- Clic derecho en una tarea: cronómetro, a la cola de Claude, pasar a mañana, prioridad, editar o quitar.
+- Arrastra una tarea al pollito del panel (cronómetro) o a la cola (Claude). Suelta enlaces, textos o archivos sobre el panel o el pollito para crear tareas.
+
+**🪟 Acabado**
+- Íconos coherentes en la parte de trabajo, cambio de tema suave y fondo translúcido de Windows 11 (opcional, experimental).
+
+**🔧 Arreglos**
+- En la bienvenida, elegir especie fallaba. Tras marcar una casilla, los atajos dejaban de responder. El cartel de la respiración tapaba al pollito.
+
 ## 2.0.1 — Tu día, bien contado
 - **✍️ Resumen redactado por proyecto**: el "¿Qué hiciste ayer?" del daily, el texto del daily para el canal y la caja "En qué trabajé hoy" ya no copian lo que le escribiste a Claude: muestran, por cada proyecto, el tiempo y una o dos frases sobre en qué trabajaste, redactadas por Claude (Haiku, unos centavos de tu plan) a partir de tu tiempo, tus commits y tus peticiones. Si no hay Claude disponible (o lo apagas en Ajustes → General), un resumen automático más simple sin salir de tu PC.
 - **🔎 PM encuentra el Claude Code de la app de escritorio de Claude** (pestaña Code): ya no hace falta instalarlo aparte para la cola ni para el resumen.
