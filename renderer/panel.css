@@ -670,3 +670,29 @@ html.reduced .run.running .run-progress { animation: none; }
 #claude-journal .cj:last-of-type p { margin-bottom: 4px; }
 /* El resumen por proyecto ocupa varias líneas: más alto, y crece con la ventana. */
 #su-yesterday { min-height: 150px; resize: vertical; line-height: 1.4; }
+
+/* ---------- Movimiento del panel (2.0.2) ---------- */
+/* Se abre "desde" el pollito y se cierra hacia él (--ox/--oy: dónde está el pollito). */
+#card.opening { animation: card-open var(--d-slow) var(--spring) both; transform-origin: var(--ox, 90%) var(--oy, 100%); }
+#card.closing { animation: card-close 150ms var(--ease-in) both; transform-origin: var(--ox, 90%) var(--oy, 100%); }
+@keyframes card-open { from { opacity: 0; transform: scale(.55); } 60% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes card-close { to { opacity: 0; transform: scale(.6); } }
+
+/* La pestaña activa es una "ficha" que se desliza de una a otra. */
+nav { position: relative; }
+#tab-ink {
+  position: absolute; top: 8px; bottom: 0; left: 0; width: 0; z-index: 0; pointer-events: none;
+  background: var(--card); border: 2px solid var(--ink); border-bottom-color: var(--card); border-radius: 12px 12px 0 0;
+  transition: transform var(--d-med) var(--spring), width var(--d-med) var(--spring);
+}
+nav.has-ink button { position: relative; z-index: 1; transition: color var(--d-fast) ease; }
+nav.has-ink button.active { background: transparent; border-color: transparent; }
+nav button:not(.active):hover { color: var(--ink); }
+
+/* Las vistas entran desde el lado hacia el que vas. */
+.view.active.from-right { animation: view-r var(--d-med) var(--ease-out); }
+.view.active.from-left { animation: view-l var(--d-med) var(--ease-out); }
+@keyframes view-r { from { opacity: 0; transform: translateX(18px); } }
+@keyframes view-l { from { opacity: 0; transform: translateX(-18px); } }
+.overlay { animation: m-in var(--d-med) var(--ease-out); }
+.bar i { transition: width .7s var(--spring); }

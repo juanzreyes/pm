@@ -1112,6 +1112,7 @@ const M = {
   get placePanel() { return mods.windows.placePanel; },
   get openPanel() { return mods.windows.openPanel; },
   get togglePanel() { return mods.windows.togglePanel; },
+  get hidePanel() { return mods.windows.hidePanel; },
   get trayIcon() { return mods.tray.trayIcon; },
   get trayBase() { return mods.tray.trayBase; },
   set trayBase(v) { mods.tray.trayBase = v; },

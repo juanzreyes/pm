@@ -461,6 +461,57 @@ test('2.0 plataforma: plugin en utilityProcess, widget de escritorio y extensió
   assert.equal((await panel.evaluate(() => pm.getState())).settings.desktopWidget, false);
 });
 
+test('pulido 1: pestañas que se deslizan, ficha que se mueve, números que cuentan y salidas animadas', async () => {
+  const panel = await waitPage('panel');
+  await panel.evaluate(() => pm.command('panel', 'chat'));
+  await sleep(700);
+  const r = await panel.evaluate(async () => {
+    const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
+    const ink0 = document.querySelector('#tab-ink').style.transform;
+    document.querySelector('[data-view="day"]').click();
+    await wait(60);
+    const v = document.querySelector('#v-day');
+    const mid = { cls: v.className, op: Number(getComputedStyle(v).opacity), tf: getComputedStyle(v).transform };
+    await wait(400);
+    const end = { op: Number(getComputedStyle(v).opacity), tf: getComputedStyle(v).transform, ink: document.querySelector('#tab-ink').style.transform };
+    // Volver hacia la izquierda entra desde la izquierda.
+    document.querySelector('[data-view="chat"]').click();
+    const back = document.querySelector('#v-chat').className;
+    return { ink0, mid, end, back };
+  });
+  assert.match(r.mid.cls, /from-right/);
+  assert.ok(r.mid.op < 1 || r.mid.tf !== 'none', 'a mitad de camino todavía se mueve: ' + JSON.stringify(r.mid));
+  assert.deepEqual({ op: r.end.op, tf: r.end.tf }, { op: 1, tf: 'none' });
+  assert.notEqual(r.end.ink, r.ink0, 'la ficha se movió a la pestaña nueva');
+  assert.match(r.back, /from-left/);
+  // Números que cuentan.
+  const nums = await panel.evaluate(async () => {
+    const el = document.createElement('span');
+    document.body.append(el);
+    MOTION.countTo(el, 100, String);
+    MOTION.countTo(el, 600, String);
+    await new Promise((ok) => setTimeout(ok, 120));
+    const mid = Number(el.textContent);
+    await new Promise((ok) => setTimeout(ok, 600));
+    el.remove();
+    return { mid, end: Number(el.textContent) };
+  });
+  assert.ok(nums.mid > 100 && nums.mid < 600, 'cuenta de a poco: ' + nums.mid);
+  assert.equal(nums.end, 600);
+  // Una ventana interna se va con animación (y al final queda oculta).
+  await panel.evaluate(() => pm.command('whatsnew'));
+  await panel.waitForSelector('#o-whatsnew:not(.hidden)', { timeout: 5000 });
+  const leave = await panel.evaluate(async () => {
+    const o = document.querySelector('#o-whatsnew');
+    o.classList.add('hidden');
+    await Promise.resolve(); // el observador reacciona en la siguiente microtarea
+    const during = { hidden: o.classList.contains('hidden'), leaving: o.classList.contains('leaving') };
+    await new Promise((ok) => setTimeout(ok, 1200)); // holgado: con el PC bloqueado, Chromium frena los temporizadores
+    return { during, after: { hidden: o.classList.contains('hidden'), leaving: o.classList.contains('leaving') } };
+  });
+  assert.deepEqual(leave, { during: { hidden: false, leaving: true }, after: { hidden: true, leaving: false } });
+});
+
 test('ajustes: diagnóstico sin errores de la app', async () => {
   const panel = await waitPage('panel');
   await panel.evaluate(() => pm.command('diag'));

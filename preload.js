@@ -32,6 +32,7 @@ contextBridge.exposeInMainWorld('pm', {
 
   // Panel
   onView: on('panel:view'),
+  onPanelAnim: on('panel:anim'),
   hidePanel: () => ipcRenderer.send('panel:hide'),
   openPanel: (view) => ipcRenderer.send('panel:open', view),
   chat: (text) => ipcRenderer.invoke('chat:send', text),

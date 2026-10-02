@@ -101,7 +101,7 @@ module.exports = function install(M) {
   }
 
   function openSettings(section) {
-    if (M.panelWin) M.panelWin.hide();
+    hidePanel();
     if (!M.settingsWin || M.settingsWin.isDestroyed()) {
       const d = M.screen.getDisplayNearestPoint(M.screen.getCursorScreenPoint()).workArea;
       M.settingsWin = new M.BrowserWindow(baseWinOpts({
@@ -276,18 +276,43 @@ module.exports = function install(M) {
     M.panelWin.setBounds({ x: Math.round(x), y: Math.round(y), width: M.PANEL_W, height: M.PANEL_H });
   }
 
+  /** Dónde está el pollito, en coordenadas del panel (para abrir/cerrar "desde" él). */
+  function panelOrigin() {
+    if (!M.panelWin || !M.petWin || M.panelWin.isDestroyed()) return {};
+    const pb = M.petWin.getBounds();
+    const qb = M.panelWin.getBounds();
+    return { ox: Math.round(pb.x + pb.width / 2 - qb.x), oy: Math.round(pb.y + pb.height * 0.75 - qb.y) };
+  }
+  let closing = null;
+  /** Oculta el panel con su animación (150 ms). instant: sin animar (presentaciones, etc.). */
+  function hidePanel(instant = false) {
+    if (!M.panelWin || M.panelWin.isDestroyed() || !M.panelWin.isVisible()) return;
+    if (instant) { clearTimeout(closing); closing = null; M.panelWin.hide(); return; }
+    if (closing) return;
+    M.panelSend('panel:anim', { type: 'close', ...panelOrigin() });
+    closing = setTimeout(() => { closing = null; if (M.panelWin && !M.panelWin.isDestroyed()) M.panelWin.hide(); }, 150);
+  }
+
   function openPanel(view) {
     const fresh = !M.panelWin || M.panelWin.isDestroyed();
     if (fresh) M.createPanel();
     placePanel();
     if (view) M.panelSend('panel:view', view);
-    const reveal = () => { if (M.panelWin && !M.panelWin.isDestroyed()) { M.panelWin.show(); M.panelWin.focus(); } };
+    const reveal = () => {
+      if (!M.panelWin || M.panelWin.isDestroyed()) return;
+      const wasHidden = !M.panelWin.isVisible() || !!closing;
+      clearTimeout(closing);
+      closing = null;
+      if (wasHidden) M.panelSend('panel:anim', { type: 'open', ...panelOrigin() });
+      M.panelWin.show();
+      M.panelWin.focus();
+    };
     if (fresh) M.panelWin.once('ready-to-show', reveal); else reveal();
   }
 
   function togglePanel() {
     if (!M.panelWin || M.panelWin.isDestroyed()) return openPanel();
-    if (M.panelWin.isVisible()) M.panelWin.hide();
+    if (M.panelWin.isVisible() && !closing) hidePanel();
     else openPanel();
   }
 
@@ -319,5 +344,6 @@ module.exports = function install(M) {
     placePanel,
     openPanel,
     togglePanel,
+    hidePanel,
   };
 };

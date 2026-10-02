@@ -140,7 +140,7 @@
   // ================= REVISIÓN DEL VIERNES =================
   async function openFriday() {
     $('#o-friday').classList.remove('hidden');
-    $('#fr-report').textContent = 'Cargando…';
+    $('#fr-report').innerHTML = MOTION.skeleton(6, 'Preparando tu semana');
     const d = await pm.fridayData();
     $('#fr-report').textContent = d.report;
     $('#fr-goals').innerHTML = (d.goals || []).map((g) => `<div class="goal" data-id="${g.id}"><div class="row between"><span class="gt">${esc(g.text)}</span><span class="small muted g-pct">${g.progress || 0}%</span></div>

@@ -91,6 +91,9 @@ function show(view) {
     if (view === 'onboarding') openOnboarding();
     return;
   }
+  const tabsNow = $$('nav button');
+  const fromIdx = tabsNow.findIndex((b) => b.classList.contains('active'));
+  const toIdx = tabsNow.findIndex((b) => b.dataset.view === view);
   $$('nav button').forEach((b) => {
     const on = b.dataset.view === view;
     b.classList.toggle('active', on);
@@ -100,11 +103,42 @@ function show(view) {
     b.tabIndex = on ? 0 : -1;
   });
   $$('.view').forEach((v) => v.setAttribute('role', 'tabpanel'));
-  $$('.view').forEach((v) => v.classList.toggle('active', v.id === 'v-' + view));
+  $$('.view').forEach((v) => {
+    const on = v.id === 'v-' + view;
+    const entering = on && !v.classList.contains('active');
+    v.classList.toggle('active', on);
+    v.classList.remove('from-left', 'from-right');
+    if (entering && fromIdx >= 0 && toIdx >= 0 && fromIdx !== toIdx) { void v.offsetWidth; v.classList.add(toIdx > fromIdx ? 'from-right' : 'from-left'); }
+  });
+  moveTabInk();
   pm.viewChanged(view);
   if (view === 'chat') setTimeout(() => $('#chat-input').focus(), 50);
 }
 $$('nav button').forEach((b) => b.addEventListener('click', () => show(b.dataset.view)));
+/** La ficha de la pestaña activa se desliza hasta su sitio (la primera vez, sin animación). */
+function moveTabInk() {
+  const ink = $('#tab-ink');
+  const a = document.querySelector('nav button.active');
+  if (!ink || !a) return;
+  const first = !ink.style.width;
+  if (first) ink.style.transition = 'none';
+  ink.style.width = a.offsetWidth + 'px';
+  ink.style.transform = `translateX(${a.offsetLeft}px)`;
+  if (first) { void ink.offsetWidth; ink.style.transition = ''; }
+}
+window.addEventListener('resize', moveTabInk);
+requestAnimationFrame(moveTabInk);
+// El panel se abre desde el pollito y se cierra hacia él (lo pide el proceso principal).
+pm.onPanelAnim(({ type, ox, oy }) => {
+  const card = $('#card');
+  if (typeof ox === 'number') { card.style.setProperty('--ox', ox + 'px'); card.style.setProperty('--oy', oy + 'px'); }
+  card.classList.remove('opening', 'closing');
+  if (MOTION.reduced()) return;
+  void card.offsetWidth;
+  card.classList.add(type === 'close' ? 'closing' : 'opening');
+});
+$('#card').addEventListener('animationend', (e) => { if (e.target === $('#card')) $('#card').classList.remove('opening'); });
+MOTION.watchOverlays();
 // Pestañas con flechas (← →), como en cualquier app accesible.
 document.querySelector('nav').addEventListener('keydown', (e) => {
   if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
@@ -220,13 +254,14 @@ function renderUsage() {
     .map((l) => {
       const p = Math.round(l.utilization);
       return `<div class="limit">
-        <div class="top"><b>${esc(l.label)}</b><span class="pct">${p}%</span></div>
-        <div class="bar"><i class="${level(p)}" style="width:${Math.min(100, p)}%"></i></div>
+        <div class="top"><b>${esc(l.label)}</b><span class="pct" data-num="${p}" data-suffix="%" data-key="pct-${esc(l.key)}">${p}%</span></div>
+        <div class="bar"><i class="${level(p)}" data-bar="${Math.min(100, p)}" data-key="bar-${esc(l.key)}" style="width:${Math.min(100, p)}%"></i></div>
         <div class="reset">${l.resetsAt ? `⏳ Se reinicia en <b>${fmtUntil(l.resetsAt)}</b> · ${fmtClock(l.resetsAt)}` : ''}</div>
         ${forecastHtml((u.forecast || {})[l.key], l)}
       </div>`;
     })
     .join('');
+  MOTION.afterRender($('#limits'));
 
   const lo = u.local;
   if (!lo || !lo.available) {
@@ -522,7 +557,7 @@ function renderGami() {
   seenAch = Math.max(seenAch || 0, newest);
 
   // Tienda
-  $('#coins').textContent = `🌽 ${state.coins || 0}`;
+  MOTION.countTo($('#coins'), state.coins || 0, (n) => `🌽 ${n}`);
   $('#shop').innerHTML = (state.shop || []).map((x) => {
     let btn;
     if (x.equipped) btn = `<button class="wear" data-unequip="${x.slot}">Quitarse</button>`;

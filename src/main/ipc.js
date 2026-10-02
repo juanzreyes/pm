@@ -57,7 +57,7 @@ module.exports = function install(M) {
 
     M.ipcMain.on('pet:click', () => M.togglePanel());
     M.ipcMain.on('pet:petted', () => M.petPet());
-    M.ipcMain.on('panel:hide', () => M.panelWin && M.panelWin.hide());
+    M.ipcMain.on('panel:hide', () => M.hidePanel());
     M.ipcMain.on('panel:open', (_e, view) => M.openPanel(view));
 
     M.ipcMain.handle('chat:send', async (_e, text) => {
@@ -342,7 +342,7 @@ module.exports = function install(M) {
     M.ipcMain.handle('web:login', async () => {
       M.say('Te abrí la página de Claude 🌐 Entra con tu CORREO (Google a veces no deja dentro de apps). Yo espero aquí 🐣', 'peck', 15000);
       M.pushChat('pet', 'Para conectarme: en la ventana de Claude escribe tu correo → te llega un código o enlace → ponlo ahí. Es solo una vez: después me acuerdo 💛');
-      if (M.panelWin) M.panelWin.hide();
+      M.hidePanel();
       const org = await M.claudeWeb.login();
       M.openPanel('usage');
       if (!org) M.say('Cerraste la ventana sin entrar 😿 Cuando quieras, vuelve a pulsar "Conectar".', 'sad', 9000);

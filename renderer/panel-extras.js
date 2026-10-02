@@ -117,7 +117,7 @@
   function paintSummary() {
     const box = $('#claude-journal');
     if (!summary || !summary.text) {
-      box.innerHTML = loading ? '<span class="muted">✨ Redactando en qué trabajaste…</span>'
+      box.innerHTML = loading ? MOTION.skeleton(4, 'Redactando en qué trabajaste')
         : '<span class="muted">Aún no hay trabajo de hoy que resumir. Cuando trabajes en tus proyectos (commits, Claude Code o tiempo en el editor) lo verás aquí, ya redactado, y en tu daily de mañana.</span>';
       return;
     }
@@ -164,7 +164,7 @@
   $('#onb-species').addEventListener('click', (e) => {
     const b = e.target.closest('[data-sp]');
     if (!b) return;
-    $('#onb-species .sp').forEach((x) => x.classList.toggle('on', x === b));
+    $$('#onb-species .sp').forEach((x) => x.classList.toggle('on', x === b));
   });
   $('#play-corn').addEventListener('click', () => pm.play('corn'));
   $('#play-ball').addEventListener('click', () => pm.play('ball'));
