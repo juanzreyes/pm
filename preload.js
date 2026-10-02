@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 const on = (ch) => (cb) => {
   const fn = (_e, data) => cb(data);
@@ -235,6 +235,10 @@ contextBridge.exposeInMainWorld('pm', {
   onBreathe: on('pet:breathe'),
   onPajamas: on('pet:pajamas'),
   onFly: on('pet:fly'),
+  hitbox: (r) => ipcRenderer.send('pet:hitbox', r),
+  petDrop: (d) => ipcRenderer.invoke('pet:drop', d),
+  pathForFile: (f) => { try { return webUtils.getPathForFile(f); } catch { return ''; } },
+  taskLater: (index) => ipcRenderer.invoke('task:later', index),
   onImpact: on('pet:impact'),
   whereResume: (project) => ipcRenderer.invoke('where:resume', project),
   contextSave: (project, ctx) => ipcRenderer.invoke('where:contextSave', { project, ctx }),

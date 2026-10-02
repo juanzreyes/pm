@@ -132,3 +132,24 @@ test('Linux: la salida de xdotool se convierte en una muestra de foco', () => {
   assert.equal(focus.parseLinux('\n\n0\n'), null);
   assert.equal(focus.parseLinux(''), null);
 });
+
+test('soltar sobre el pollito o el panel: enlace, texto y archivos', () => {
+  const tasks = [];
+  const said = [];
+  const today = {};
+  const M = {
+    store: { data: { settings: {}, days: {} }, save() {} }, broadcast() {}, say: (t) => said.push(t), today: () => today, app: { getVersion: () => '2' }, APP_DIR: 'C:/pm', path,
+    prod: { capture: (t) => { tasks.push(t); return '📌 ok'; } }, addTask: (t) => tasks.push(t), extStatus: () => ({}), focusMode: () => null,
+  };
+  const b = require('../src/main/browserext')(M);
+  assert.equal(b.drop({ url: 'https://www.example.com/docs/guia/' }).ok, true);
+  assert.equal(b.drop({ text: 'https://x.dev/a', url: '' }).ok, true, 'un enlace como texto también');
+  assert.equal(b.drop({ url: 'https://ex.com/p', text: 'Guía de estilo' }).ok, true);
+  assert.equal(b.drop({ text: 'Llamar a soporte' }).ok, true);
+  assert.equal(b.drop({ url: 'javascript:alert(1)' }).ok, false, 'nada raro');
+  assert.deepEqual(tasks, ['Revisar example.com/docs/guia https://www.example.com/docs/guia/', 'Revisar x.dev/a https://x.dev/a', 'Guía de estilo https://ex.com/p', 'Llamar a soporte']);
+  const r = b.drop({ files: [{ name: 'informe.pdf', path: 'C:\Users\ana\informe.pdf' }, { name: 'x.png', path: '' }] });
+  assert.deepEqual(r, { ok: true, kind: 'files', n: 2 });
+  assert.deepEqual(tasks.slice(-2), ['📎 Revisar informe.pdf', '📎 Revisar x.png']);
+  assert.equal(today.notes, '📎 C:\Users\ana\informe.pdf');
+});

@@ -975,6 +975,8 @@ function openStandup() {
     for (const t of state.recurringToday || []) if (!suTasks.includes(t)) suTasks.push(t);
     // El lunes, lo que planeaste en la revisión del viernes 📆
     for (const t of state.mondayPlan || []) if (!suTasks.includes(t)) suTasks.push(t);
+    // Las que pasaste a mañana 📅
+    for (const t of state.postponed || []) if (!suTasks.includes(t)) suTasks.push(t);
     $('#su-help').value = '';
     $('#su-intro').textContent = prev ? `Te dejé lo que planeaste el ${dayLabel(prev.date)} para que lo ajustes.` : 'Cuéntame para organizar el día.';
     // El resumen lo redacta Claude con tu tiempo por proyecto, tus commits y lo que le pediste ese día.

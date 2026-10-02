@@ -715,3 +715,37 @@ nav button:not(.active):hover { color: var(--ink); }
 /* Confeti */
 #fx-layer { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
 #fx-layer i { position: absolute; border-radius: 2px; }
+
+/* ---------- Pulido 5/6: interacción ---------- */
+#tip {
+  position: fixed; z-index: 80; pointer-events: none; max-width: 240px; padding: 5px 9px; border-radius: 9px;
+  background: #3b2f2f; color: #fff; font-size: 11.5px; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,.25);
+  opacity: 0; transform: translateY(3px); transition: opacity var(--d-fast) ease, transform var(--d-fast) var(--ease-out);
+}
+#tip.on { opacity: 1; transform: none; }
+kbd {
+  display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 5px; font: 800 10.5px/17px "Segoe UI", system-ui, sans-serif;
+  text-align: center; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35); box-shadow: 0 1px 0 rgba(0,0,0,.25);
+}
+.keys { display: flex; flex-direction: column; gap: 4px; }
+.keys > div { display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; border-radius: 9px; background: var(--card); border: 1.5px solid var(--line); }
+.keys kbd, #ctx kbd { background: var(--bg); border-color: var(--line); color: var(--ink); }
+#ctx {
+  position: fixed; z-index: 70; min-width: 210px; padding: 5px; border-radius: 12px; background: var(--card);
+  border: 2px solid var(--ink); box-shadow: 0 3px 0 var(--ink), 0 10px 24px rgba(0,0,0,.18);
+  display: flex; flex-direction: column; gap: 1px; animation: ctx-in var(--d-fast) var(--ease-out); transform-origin: top left;
+}
+#ctx.hidden { display: none; }
+@keyframes ctx-in { from { opacity: 0; transform: scale(.94); } }
+#ctx > button { text-align: left; background: none; border: none; border-radius: 8px; padding: 6px 9px; font: inherit; font-weight: 700; color: var(--ink); display: flex; justify-content: space-between; align-items: center; }
+#ctx > button:hover, #ctx > button:focus-visible { background: var(--bg); outline: none; }
+#ctx > button.danger { color: var(--red); }
+#ctx .ctx-prio { display: flex; gap: 3px; padding: 4px 6px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 2px 0; }
+#ctx .ctx-prio button { flex: 1; font-size: 11px; font-weight: 800; border-radius: 7px; border: 1.5px solid var(--line); background: var(--bg); padding: 3px 0; color: var(--ink); width: auto; height: auto; }
+#ctx .ctx-prio button[aria-checked="true"] { border-color: var(--ink); background: var(--yellow); }
+/* Zonas para soltar una tarea */
+.dragging-task header .avatar, .dragging-task #claude-queue { outline: 2.5px dashed var(--orange); outline-offset: 3px; border-radius: 14px; transition: outline-color var(--d-fast); }
+.dragging-task #claude-queue { position: relative; }
+.dragging-task #claude-queue::after { content: attr(data-drop-label); position: absolute; right: 8px; top: -11px; font-size: 11px; font-weight: 800; background: var(--orange); color: #fff; border-radius: 99px; padding: 1px 8px; }
+.drop-hot { outline-style: solid !important; transform: scale(1.04); transition: transform var(--d-fast) var(--spring); }
+.drop-ext #card::after { content: "📌 Suelta para anotarlo en tus tareas"; position: absolute; inset: 8px; z-index: 50; display: grid; place-items: center; border: 3px dashed var(--orange); border-radius: 18px; background: rgba(255, 216, 74, .25); font-weight: 900; font-size: 15px; color: var(--ink); pointer-events: none; }

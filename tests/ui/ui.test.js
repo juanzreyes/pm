@@ -639,6 +639,71 @@ test('pulido 4: lista viva, completar con confeti y botones con estado', async (
   assert.deepEqual(btn, { during: true, ok: true, err: true });
 });
 
+test('pulido 5: atajos visibles, menú de tarea, teclado, arrastrar a la cola y soltar enlaces', async () => {
+  const panel = await waitPage('panel');
+  await panel.evaluate(() => pm.command('panel', 'day'));
+  // Tooltip con su atajo (en vez del del sistema).
+  const tipR = await panel.evaluate(async () => {
+    const tab = document.querySelector('nav [data-view="day"]');
+    tab.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    await new Promise((ok) => setTimeout(ok, 1200));
+    return { title: tab.getAttribute('title'), tip: document.querySelector('#tip').textContent, on: document.querySelector('#tip').classList.contains('on') };
+  });
+  assert.deepEqual(tipR, { title: null, tip: 'Día 3', on: true });
+  // "?" abre la hoja de atajos.
+  await panel.evaluate(() => { document.activeElement.blur(); document.dispatchEvent(new KeyboardEvent('keydown', { key: '?', bubbles: true })); });
+  await panel.waitForSelector('#o-keys:not(.hidden)', { timeout: 3000 });
+  await panel.evaluate(() => document.querySelector('#keys-close').click());
+  // Tres tareas para jugar.
+  for (const t of ['Menú uno', 'Menú dos', 'Menú tres']) await panel.evaluate((x) => pm.addTask(x), t);
+  await panel.waitForFunction(() => /Menú tres/.test(document.querySelector('#tasks').textContent), null, { timeout: 5000 });
+  const row = (txt) => `[...document.querySelectorAll('#tasks > li[data-i]')].find((l) => l.textContent.includes('${txt}'))`;
+  // Menú contextual → Pasar a mañana.
+  await panel.evaluate((sel) => { const li = eval(sel); li.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 60, clientY: 200 })); }, row('Menú uno'));
+  await panel.waitForSelector('#ctx:not(.hidden)', { timeout: 3000 });
+  const items = await panel.evaluate(() => [...document.querySelectorAll('#ctx > button')].map((b) => b.dataset.a));
+  assert.deepEqual(items, ['timer', 'claude', 'later', 'edit', 'del']);
+  await panel.click('#ctx button[data-a="later"]');
+  await panel.waitForFunction(() => !/Menú uno/.test(document.querySelector('#tasks').textContent), null, { timeout: 5000 });
+  // Flechas y Supr.
+  const kb = await panel.evaluate(async (sel) => {
+    const dos = eval(sel);
+    dos.querySelector('input[type=checkbox]').focus();
+    document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    const moved = document.activeElement.closest('li').textContent.includes('Menú tres');
+    document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
+    await new Promise((ok) => setTimeout(ok, 800));
+    return { moved, gone: !document.querySelector('#tasks').textContent.includes('Menú tres') };
+  }, row('Menú dos'));
+  assert.deepEqual(kb, { moved: true, gone: true });
+  // Arrastrar "Menú dos" a la cola de Claude.
+  await panel.evaluate((sel) => {
+    const li = eval(sel);
+    const dt = new DataTransfer();
+    li.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: dt }));
+    const q = document.querySelector('#claude-queue');
+    q.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt }));
+    q.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }));
+    li.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer: dt }));
+  }, row('Menú dos'));
+  await panel.waitForFunction(() => (state.claudeQueue || []).some((q) => q.text === 'Menú dos'), null, { timeout: 5000 });
+  // Soltar un enlace sobre el panel → tarea.
+  await panel.evaluate(() => {
+    const dt = new DataTransfer();
+    dt.setData('text/uri-list', 'https://example.com/docs/guia');
+    document.querySelector('#card').dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }));
+  });
+  await panel.waitForFunction(() => /Revisar example\.com\/docs\/guia https:\/\/example\.com\/docs\/guia/.test(document.querySelector('#tasks').textContent), null, { timeout: 5000 });
+  // …y un texto sobre el pollito.
+  const pet = await waitPage('pet');
+  await pet.evaluate(() => {
+    const dt = new DataTransfer();
+    dt.setData('text/plain', 'Llamar a soporte');
+    document.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }));
+  });
+  await panel.waitForFunction(() => /Llamar a soporte/.test(document.querySelector('#tasks').textContent), null, { timeout: 5000 });
+});
+
 test('ajustes: diagnóstico sin errores de la app', async () => {
   const panel = await waitPage('panel');
   await panel.evaluate(() => pm.command('diag'));

@@ -80,6 +80,33 @@ module.exports = function install(M) {
   function browserState() {
     return { token: token(), lastSeen, connected: Date.now() - lastSeen < 5 * 60e3, sites: sites(), block: set().focusBlock !== false, folder: M.path.join(M.APP_DIR, 'extensions', 'browser').replace(/app\.asar([\\/])/, 'app.asar.unpacked$1') };
   }
+  /**
+   * Algo soltado sobre el pollito o el panel (arrastrado desde el navegador, el Explorador…):
+   * un enlace o un texto → tarea; archivos → una tarea por archivo y su ruta en las notas de hoy.
+   * @param {{ text?: string, url?: string, files?: Array<{ name: string, path: string }> }} d
+   */
+  function drop({ text = '', url = '', files = [] } = {}) {
+    const fl = (Array.isArray(files) ? files : []).filter((f) => f && f.name).slice(0, 5);
+    if (fl.length) {
+      const d = M.today();
+      for (const f of fl) {
+        M.addTask(`📎 Revisar ${String(f.name).slice(0, 120)}`);
+        if (f.path) d.notes = (d.notes ? d.notes.replace(/\s*$/, '\n') : '') + `📎 ${String(f.path).slice(0, 400)}`;
+      }
+      M.store.save();
+      M.broadcast();
+      M.say(fl.length === 1 ? `📎 Anoté "${fl[0].name}" en tus tareas (la ruta, en tus notas de hoy).` : `📎 Anoté ${fl.length} archivos en tus tareas.`, 'peck', 6000, { log: false });
+      return { ok: true, kind: 'files', n: fl.length };
+    }
+    url = /^https?:\/\//i.test(String(url).trim()) ? String(url).trim() : /^https?:\/\/\S+$/i.test(String(text).trim()) ? String(text).trim() : '';
+    if (!url) return capture({ text, kind: 'task' });
+    // Un enlace solo: la tarea dice a dónde lleva (dominio y ruta) y el enlace va detrás.
+    let short = url;
+    try { const u = new URL(url); short = (u.hostname.replace(/^www\./, '') + u.pathname).replace(/\/$/, '').slice(0, 70); } catch { /* se queda la URL */ }
+    const title = text.trim() && text.trim() !== url ? text : `Revisar ${short}`;
+    return capture({ title, url, kind: 'task' });
+  }
+
   const api = { token, seen: () => { lastSeen = Date.now(); }, status, capture, focus, blocked };
-  return { api, regenerate, saveSites, browserState, DEFAULT_SITES };
+  return { api, drop, regenerate, saveSites, browserState, DEFAULT_SITES };
 };

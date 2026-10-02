@@ -384,6 +384,17 @@ function create(ctx) {
     ctx.say(`📆 ¡Semana cerrada! El lunes te propongo ${plan.length} tarea${plan.length === 1 ? '' : 's'} para empezar. ¡Buen finde! 🎉 +10 XP`, 'celebrate', 9000, { log: false });
     return true;
   }
+  // ---------- pasar a mañana ----------
+  const nextWorkday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); do d.setDate(d.getDate() + 1); while (d.getDay() === 0 || d.getDay() === 6); return keyOf(d); };
+  function postpone(text) {
+    const list = (S().postponed = S().postponed || []);
+    list.push({ text: String(text).slice(0, 300), for: nextWorkday(), at: Date.now() });
+    S().postponed = list.slice(-50);
+  }
+  /** Las que tocan hoy (o antes y aún no se usaron). */
+  const postponedToday = () => (S().postponed || []).filter((p) => p.for <= keyOf(new Date())).map((p) => p.text);
+  /** Al guardar el daily: las que ya tocaban dejan la lista. */
+  function consumePostponed() { S().postponed = (S().postponed || []).filter((p) => p.for > keyOf(new Date())); }
   /** Plan del lunes (lo añade el daily). */
   function mondayPlan() {
     const p = S().nextWeekPlan;
@@ -398,6 +409,7 @@ function create(ctx) {
       milestones: milestonesView(),
       taskAges: tasks().map((t) => ageOf(t.text)),
       mondayPlan: mondayPlan(),
+      postponed: postponedToday(),
       nextWeekPlan: S().nextWeekPlan || null,
     };
   }
@@ -413,7 +425,7 @@ function create(ctx) {
     budgetState, prioritize, splitTask, heuristicOrder,
     ageOf, taskCommit, taskDelegate, taskDrop,
     milestoneSave, milestoneDone, milestoneDelete, milestonesView,
-    fridaySave, mondayPlan,
+    fridaySave, mondayPlan, postpone, postponedToday, consumePostponed,
   };
 }
 

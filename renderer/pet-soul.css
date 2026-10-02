@@ -191,3 +191,7 @@
 #bubble-stack.hidden { display: none; }
 @keyframes stack-pop { from { transform: scale(.4); opacity: 0; } }
 #bubble { touch-action: none; }
+
+/* Algo arrastrado encima: abre el pico, listo para "comérselo" */
+.drop-ready #beakBottom { transform: scaleY(1.2) !important; }
+.drop-ready #chick { scale: 1.08; transition: scale 160ms cubic-bezier(.3, 1.45, .5, 1); }

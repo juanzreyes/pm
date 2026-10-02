@@ -24,9 +24,14 @@ module.exports = function install(M) {
     M.ipcMain.handle('get-state', () => M.snapshot());
 
     M.ipcMain.on('pet:ignore', (_e, ignore) => {
-      if (!M.petWin || M.drag) return;
+      M.petIgnore = !!ignore; // lo que pide la página (ratón encima de algo o no)
+      if (!M.petWin || M.drag || M.petForcedHit) return;
       M.petWin.setIgnoreMouseEvents(!!ignore, { forward: true });
     });
+    // Silueta del pollito (coordenadas de la página): para poder soltarle cosas desde otras apps.
+    M.ipcMain.on('pet:hitbox', (_e, r) => { if (r && [r.x, r.y, r.w, r.h].every(Number.isFinite)) M.petHitbox = r; });
+    // Soltar un enlace, texto o archivo sobre el pollito → tarea (o nota).
+    M.ipcMain.handle('pet:drop', (_e, d) => M.browser.drop(d || {}));
 
     M.ipcMain.on('pet:drag-start', (_e, { screenX, screenY }) => {
       if (!M.petWin) return;
@@ -196,6 +201,7 @@ module.exports = function install(M) {
       const wasDone = new Set(((day.standup && day.standup.today) || []).filter((t) => t.done).map((t) => t.text));
       day.standup = { yesterday: String(yesterday || '').trim(), today: list.map((text) => ({ text, done: wasDone.has(text) })), help: String(help || '').trim(), at: Date.now() };
       delete day.snoozeStandup;
+      if (M.plan) M.plan.consumePostponed();
       if (M.plugins) M.plugins.emit('day:start', { tasks: list });
       const p = M.store.data.pet;
       p.happiness = M.clamp(p.happiness + 10);
@@ -662,6 +668,17 @@ module.exports = function install(M) {
     M.ipcMain.handle('queue:next', (_e, project) => !!M.plan.queueNext(project));
     // Cola de Claude que se ejecuta sola (worktree aparte + claude -p)
     M.ipcMain.handle('runs:start', (_e, a) => (a && typeof a === 'object' ? M.work.startRun(String(a.id || ''), { force: !!a.force }) : M.work.startRun(String(a || ''))));
+    // Tareas: pasar a mañana
+    M.ipcMain.handle('task:later', (_e, index) => {
+      const day = M.today();
+      const t = day.standup && day.standup.today[index];
+      if (!t) return { ok: false };
+      day.standup.today.splice(index, 1);
+      M.plan.postpone(t.text);
+      M.store.save();
+      M.broadcast();
+      return { ok: true, text: t.text };
+    });
     // Plugins (2.0 · 7/7)
     M.ipcMain.handle('plugins:enable', (_e, id, on) => M.plugins.setEnabled(String(id || ''), !!on));
     M.ipcMain.handle('plugins:scan', () => { M.plugins.scan(); M.broadcast(); return M.plugins.pluginsState(); });

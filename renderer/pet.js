@@ -1178,3 +1178,41 @@ pm.onVisitor((v) => {
 });
 // Pijama tras el ritual de cierre (hasta la mañana).
 pm.onPajamas((p) => body.classList.toggle('pajamas', !!(p && p.on)));
+
+// ---------- Soltarle cosas al pollito (enlaces, textos, archivos) ----------
+// Su silueta se informa al proceso principal: así su ventana acepta lo que arrastras desde otra
+// app aunque normalmente deje pasar los clics (src/main/boot.js → followCursor).
+let lastHitbox = '';
+function sendHitbox() {
+  const r = chick.getBoundingClientRect();
+  if (!r.width) return;
+  const k = [r.left, r.top, r.width, r.height].map(Math.round).join(',');
+  if (k === lastHitbox) return;
+  lastHitbox = k;
+  pm.hitbox({ x: r.left, y: r.top, w: r.width, h: r.height });
+}
+setInterval(sendHitbox, 700);
+window.addEventListener('resize', sendHitbox);
+sendHitbox();
+
+let dropLeave = null;
+document.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+  body.classList.add('drop-ready');
+  clearTimeout(dropLeave);
+  dropLeave = setTimeout(() => body.classList.remove('drop-ready'), 300);
+});
+document.addEventListener('drop', async (e) => {
+  e.preventDefault();
+  body.classList.remove('drop-ready');
+  const dt = e.dataTransfer;
+  const files = [...(dt.files || [])].map((f) => ({ name: f.name, path: pm.pathForFile(f) }));
+  const url = (dt.getData('text/uri-list') || '').split('\n').map((l) => l.trim()).find((l) => l && !l.startsWith('#')) || '';
+  const text = dt.getData('text/plain') || '';
+  if (!files.length && !url && !text.trim()) return;
+  wake();
+  act('eat');
+  const r = await pm.petDrop({ files, url, text });
+  if (r && r.ok === false) act('sad');
+});

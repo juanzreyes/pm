@@ -105,6 +105,17 @@ module.exports = function install(M) {
       const c = M.screen.getCursorScreenPoint();
       const b = petWin.getBounds();
       const k = `${c.x - b.x},${c.y - b.y}`;
+      // Con el cursor sobre la silueta del pollito, su ventana se vuelve "tocable" desde aquí (no
+      // solo desde la página): así funciona también al arrastrar algo desde otra app para soltárselo.
+      const hb = M.petHitbox;
+      if (hb && !M.drag) {
+        const f = b.width / M.PET_W;
+        const px = (c.x - b.x) / f;
+        const py = (c.y - b.y) / f;
+        const inside = px >= hb.x && px <= hb.x + hb.w && py >= hb.y && py <= hb.y + hb.h;
+        if (inside && !M.petForcedHit) { M.petForcedHit = true; petWin.setIgnoreMouseEvents(false); }
+        else if (!inside && M.petForcedHit) { M.petForcedHit = false; petWin.setIgnoreMouseEvents(M.petIgnore !== false, { forward: true }); }
+      }
       if (k !== lastCursor) {
         lastCursor = k;
         const f = b.width / M.PET_W; // con zoom, las coordenadas de la página son más pequeñas
