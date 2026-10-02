@@ -181,3 +181,13 @@
 .lipsync #beakBottom, .lipsync #sp-duck .bill { animation: none !important; }
 .lipsync.beak-open #beakBottom { transform: scaleY(1.05); }
 .lipsync.beak-open #sp-duck .bill { transform: scaleY(1.12); transform-origin: 50% 20%; }
+
+/* ---------- Pulido 3/6: "+N avisos" en la burbuja ---------- */
+#bubble-stack {
+  position: absolute; top: 5px; right: 6px; border: 2px solid #3b2f2f; background: #ff9f1c; color: #fff;
+  font: 800 11px "Segoe UI", system-ui, sans-serif; border-radius: 99px; padding: 1px 8px; cursor: pointer;
+  box-shadow: 0 2px 0 #3b2f2f; animation: stack-pop 260ms cubic-bezier(.3, 1.45, .5, 1);
+}
+#bubble-stack.hidden { display: none; }
+@keyframes stack-pop { from { transform: scale(.4); opacity: 0; } }
+#bubble { touch-action: none; }

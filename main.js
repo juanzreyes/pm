@@ -495,7 +495,7 @@ function say(text, anim, ms, opts = {}) {
     ((cat === 'meeting' || cat === 'reminder' || cat === 'monitor') && !/^(🟢)/.test(raw)) ||
     (cat === 'claude' && /(necesita|esperando)/.test(raw)) ||
     (cat === 'usage' && /(Alerta|100%|🔮)/.test(raw)));
-  petWin.webContents.send('pet:say', { text, anim, ms: actions.length ? Math.max(ms || 0, 20000) : ms, quiet: !!opts.quiet, actions, speak, lang: lang(), target });
+  petWin.webContents.send('pet:say', { text, anim, ms: actions.length ? Math.max(ms || 0, 20000) : ms, quiet: !!opts.quiet, actions, speak, lang: lang(), target, logged: opts.log !== false });
   M.broadcast();
   // Si el pollito está oculto, avisa con una notificación de Windows.
   if (!petWin.isVisible() && Notification.isSupported()) {

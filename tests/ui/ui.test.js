@@ -560,6 +560,40 @@ test('pulido 2: menú circular, caricia, pico al hablar y lanzar al pollito', as
   assert.equal(p1.pos[1], floor, 'aterrizó sobre la barra de tareas');
 });
 
+test('pulido 3: avisos apilados, deslizar para descartar, cola que sigue y deshacer con cuenta atrás', async () => {
+  const pet = await waitPage('pet');
+  const r = await pet.evaluate(async () => {
+    const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
+    say({ text: 'Primer aviso', ms: 8000, logged: true });
+    await wait(50);
+    say({ text: 'Segundo aviso', ms: 8000, logged: true });
+    say({ text: 'Tercero', ms: 8000, logged: true });
+    const stack = document.querySelector('#bubble-stack');
+    const stackText = stack.classList.contains('hidden') ? '' : stack.textContent;
+    // La cola apunta al centro real del pollito.
+    const c = document.querySelector('#chick').getBoundingClientRect();
+    const tail = parseFloat(getComputedStyle(document.querySelector('#bubble')).getPropertyValue('--tail-x'));
+    // Deslizar a la derecha la descarta.
+    const b = document.querySelector('#bubble');
+    const ev = (t, x) => b.dispatchEvent(new PointerEvent(t, { bubbles: true, clientX: x, clientY: 60, button: 0, pointerId: 9 }));
+    ev('pointerdown', 50); ev('pointermove', 90); ev('pointermove', 150); ev('pointerup', 150);
+    await wait(1200);
+    return { stackText, tailOk: Math.abs(tail - (c.left + c.width / 2 - 8)) < 2, hidden: b.classList.contains('hidden'), stackAfter: document.querySelector('#bubble-stack').classList.contains('hidden') };
+  });
+  assert.deepEqual(r, { stackText: '+2 más', tailOk: true, hidden: true, stackAfter: true });
+  // Deshacer con cuenta atrás en el panel.
+  const panel = await waitPage('panel');
+  const t = await panel.evaluate(async () => {
+    toast('Tarea borrada', () => {});
+    const anims = document.querySelector('#toast-bar').getAnimations().length;
+    const undo = !document.querySelector('#toast-undo').classList.contains('hidden');
+    document.querySelector('#toast-undo').click();
+    await new Promise((ok) => setTimeout(ok, 50));
+    return { anims, undo, hiddenAfterUndo: document.querySelector('#toast').classList.contains('hidden') };
+  });
+  assert.deepEqual(t, { anims: 1, undo: true, hiddenAfterUndo: true });
+});
+
 test('ajustes: diagnóstico sin errores de la app', async () => {
   const panel = await waitPage('panel');
   await panel.evaluate(() => pm.command('diag'));

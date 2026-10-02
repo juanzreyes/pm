@@ -854,14 +854,25 @@ tasksEl.addEventListener('dblclick', (e) => {
 // ---------- aviso con "Deshacer" ----------
 let toastTimer = null;
 let toastUndo = null;
+// Aviso temporal; con "Deshacer", una barrita muestra cuánto tiempo queda (se pausa con el ratón encima).
+let toastAnim = null;
 function toast(text, undo) {
   $('#toast-text').textContent = state ? I18N.tr(text, state.lang) : text;
   $('#toast-undo').classList.toggle('hidden', !undo);
   toastUndo = undo || null;
-  $('#toast').classList.remove('hidden');
+  const t = $('#toast');
+  t.classList.remove('hidden');
+  t.classList.toggle('with-undo', !!undo);
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => $('#toast').classList.add('hidden'), 6000);
+  if (toastAnim) toastAnim.cancel();
+  const ms = undo ? 8000 : 4500;
+  toastAnim = $('#toast-bar').animate([{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)' }], { duration: ms, fill: 'forwards' });
+  toastAnim.onfinish = () => t.classList.add('hidden');
+  // Respaldo por si la animación no corre (ventana oculta).
+  toastTimer = setTimeout(() => t.classList.add('hidden'), ms + 4000);
 }
+$('#toast').addEventListener('mouseenter', () => { if (toastAnim) toastAnim.pause(); clearTimeout(toastTimer); });
+$('#toast').addEventListener('mouseleave', () => { if (toastAnim && toastAnim.playState === 'paused') toastAnim.play(); });
 $('#toast-undo').addEventListener('click', () => {
   if (toastUndo) toastUndo();
   toastUndo = null;

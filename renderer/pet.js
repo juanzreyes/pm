@@ -249,11 +249,22 @@ function say(payload) {
   clearTimeout(typeTimer);
   body.classList.remove('lipsync', 'beak-open'); // si interrumpe a otra burbuja, el pico no se queda abierto
   clearTimeout(hideTimer);
+  // ¿Tapa a otro aviso que apenas se vio (y que quedó en el centro de avisos)? Suma al "+N".
+  const visible = !bubble.classList.contains('hidden') && !bubble.classList.contains('out');
+  if (visible && lastLogged && Date.now() - shownAt < 4000) stacked++;
+  else if (!visible) stacked = 0;
+  lastLogged = payload.logged !== false;
+  shownAt = Date.now();
+  const stackBtn = $('#bubble-stack');
+  stackBtn.classList.toggle('hidden', !stacked);
+  if (stacked) stackBtn.textContent = (payload.lang === 'en' ? `+${stacked} more` : `+${stacked} más`);
+  bubble.style.translate = '';
+  bubble.style.opacity = '';
   bubble.classList.remove('hidden', 'out');
   bubble.style.animation = 'none';
   void bubble.offsetWidth;
   bubble.style.animation = '';
-  updateTail();
+  followTail();
   bubbleText.textContent = '';
   // Botones de acción dentro del bocadillo (Unirme, Posponer, Es trabajo…).
   bubbleActions.innerHTML = '';
@@ -308,6 +319,7 @@ function hideBubble() {
   setTimeout(() => {
     bubble.classList.add('hidden');
     bubble.classList.remove('out');
+    resetStack();
     hovered.delete(bubble);
     syncIgnore();
   }, 250);
@@ -318,6 +330,7 @@ bubble.addEventListener('mouseleave', () => scheduleHide(3000));
 // Clic en el bocadillo (fuera de los botones) → ir a ver el aviso.
 let bubbleTarget = null;
 bubble.addEventListener('click', (e) => {
+  if (bubble.dataset.swiped) { delete bubble.dataset.swiped; return; }
   if (e.target.closest('button')) return;
   if (bubbleTarget) pm.petAction(bubbleTarget.cmd, bubbleTarget.arg);
   else pm.openPanel('chat');
@@ -333,9 +346,78 @@ pm.onDock((d) => {
 });
 
 function updateTail() {
-  const center = 120 + posX; // centro del pollito en la ventana
-  bubble.style.setProperty('--tail-x', Math.max(22, Math.min(200, center - 8)) + 'px');
+  // Centro real del pollito (también a mitad de un paseo), no el destino.
+  const r = chick.getBoundingClientRect();
+  const center = r.width ? r.left + r.width / 2 : 120 + posX;
+  bubble.style.setProperty('--tail-x', Math.max(22, Math.min(200, center - 8)).toFixed(1) + 'px');
 }
+let tailRaf = 0;
+function followTail() {
+  cancelAnimationFrame(tailRaf);
+  const loop = () => {
+    if (bubble.classList.contains('hidden')) return;
+    updateTail();
+    tailRaf = requestAnimationFrame(loop);
+  };
+  loop();
+}
+
+// Deslizar la burbuja a un lado la descarta (como una notificación del móvil).
+let swipe = null;
+bubble.addEventListener('pointerdown', (e) => {
+  if (e.button !== 0 || e.target.closest('button')) return;
+  swipe = { x: e.clientX, dx: 0, moved: false };
+  try { bubble.setPointerCapture(e.pointerId); } catch { /* sintético */ }
+});
+bubble.addEventListener('pointermove', (e) => {
+  if (!swipe) return;
+  swipe.dx = e.clientX - swipe.x;
+  if (Math.abs(swipe.dx) > 6) swipe.moved = true;
+  if (!swipe.moved) return;
+  clearTimeout(hideTimer);
+  bubble.style.translate = swipe.dx + 'px 0';
+  bubble.style.opacity = String(Math.max(0.2, 1 - Math.abs(swipe.dx) / 160));
+});
+bubble.addEventListener('pointerup', () => {
+  if (!swipe) return;
+  const { dx, moved } = swipe;
+  swipe = null;
+  if (!moved) return;
+  bubble.dataset.swiped = '1'; // el "click" que llega después no abre nada
+  if (Math.abs(dx) > 60) {
+    const out = bubble.animate([{ translate: dx + 'px 0', opacity: bubble.style.opacity }, { translate: Math.sign(dx) * 260 + 'px 0', opacity: 0 }], { duration: 180, easing: 'cubic-bezier(.4,0,1,1)' });
+    let gone = false;
+    const finish = () => {
+      if (gone) return;
+      gone = true;
+      clearTimeout(hideTimer);
+      bubble.classList.add('hidden');
+      bubble.style.translate = '';
+      bubble.style.opacity = '';
+      resetStack();
+      hovered.delete(bubble);
+      syncIgnore();
+    };
+    out.onfinish = finish;
+    setTimeout(finish, 400); // por si la animación no corre (ventana sin pintar)
+  } else {
+    bubble.animate([{ translate: dx + 'px 0' }, { translate: '0 0' }], { duration: 260, easing: 'cubic-bezier(.3,1.45,.5,1)' });
+    bubble.style.translate = '';
+    bubble.style.opacity = '';
+    scheduleHide(3000);
+  }
+});
+
+// Avisos que llegan seguidos: el nuevo reemplaza al anterior y un "+N" lleva a verlos todos.
+let stacked = 0;
+let shownAt = 0;
+let lastLogged = false;
+function resetStack() { stacked = 0; $('#bubble-stack').classList.add('hidden'); }
+$('#bubble-stack').addEventListener('click', (e) => {
+  e.stopPropagation();
+  pm.command('inbox');
+  hideBubble();
+});
 
 // ---------- Arrastrar / clic / caricias / mantener presionado ----------
 // Al arrastrarlo se estira según la velocidad; si lo lanzas, vuela (src/main/petfly.js) y se

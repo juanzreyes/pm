@@ -696,3 +696,8 @@ nav button:not(.active):hover { color: var(--ink); }
 @keyframes view-l { from { opacity: 0; transform: translateX(-18px); } }
 .overlay { animation: m-in var(--d-med) var(--ease-out); }
 .bar i { transition: width .7s var(--spring); }
+
+/* ---------- Pulido 3/6: aviso temporal con cuenta atrás ---------- */
+.toast { overflow: hidden; animation: toast-in var(--d-med) var(--spring); }
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 14px) scale(.96); } }
+#toast-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--yellow); transform-origin: left; opacity: .85; }
