@@ -49,6 +49,9 @@
     $('#desktop-widget').checked = !!ss.desktopWidget;
     $('#pet-physics').checked = ss.petPhysics !== false;
     $('#ui-sounds').checked = !!ss.uiSounds;
+    $('#win-material').checked = !!ss.winMaterial;
+    $('#win-material').disabled = !st.winMaterialOk;
+    $('#win-material-row').title = st.winMaterialOk ? '' : 'Solo en Windows 11 22H2 o más nuevo';
     $('#pc-react').checked = ss.pcReactions !== false;
     $('#type-along').checked = ss.typeAlong !== false;
     if (document.activeElement !== $('#weather-city')) $('#weather-city').value = ss.weatherCity || '';
@@ -176,6 +179,7 @@
   $('#bx-folder').addEventListener('click', () => pm.browserFolder());
   $('#bx-block').addEventListener('change', (e) => pm.updateSettings({ focusBlock: e.target.checked }));
   $('#bx-sites').addEventListener('change', (e) => pm.browserSites(e.target.value));
+  $('#win-material').addEventListener('change', (e) => pm.updateSettings({ winMaterial: e.target.checked }));
   $('#ui-sounds').addEventListener('change', (e) => { pm.updateSettings({ uiSounds: e.target.checked }); MOTION.setSounds(e.target.checked); MOTION.sfx('done'); });
   $('#pet-physics').addEventListener('change', (e) => pm.updateSettings({ petPhysics: e.target.checked }));
   $('#desktop-widget').addEventListener('change', () => pm.command('widget.toggle'));

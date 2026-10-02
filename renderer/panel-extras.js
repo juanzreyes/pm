@@ -315,7 +315,7 @@
     $('#focus-stop').classList.toggle('hidden', !on);
     $('#focus-time').classList.toggle('hidden', !state.focusUntil);
     const why = { manual: 'Solo lo urgente; lo demás te espera en avisos.', block: 'Activado por tu bloque de tiempo.', pomodoro: 'Activado por el pomodoro.' };
-    $('#focus-title').textContent = on ? '🎯 Modo foco activo' : '🎯 Modo foco';
+    $('#focus-title').innerHTML = ICON('target') + (on ? 'Modo foco activo' : 'Modo foco');
     $('#focus-sub').textContent = on ? why[state.focusMode] || '' : 'Solo te molesto con lo urgente; lo demás te espera en avisos.';
     clearInterval(focusTimer);
     if (state.focusUntil) {

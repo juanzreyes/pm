@@ -38,7 +38,10 @@
     if (!el) { tip.classList.remove('on'); return; }
     tipTimer = setTimeout(() => showTip(el), 380);
   });
-  document.addEventListener('focusin', (e) => { const el = e.target.closest('[data-tip]'); if (el && el.matches(':focus-visible')) showTip(el); });
+  // Con el teclado (Tab), el tooltip también aparece al enfocar; no cuando la app enfoca un campo sola.
+  let lastTab = 0;
+  document.addEventListener('keydown', (e) => { if (e.key === 'Tab') lastTab = Date.now(); }, true);
+  document.addEventListener('focusin', (e) => { const el = e.target.closest('[data-tip]'); if (el && Date.now() - lastTab < 600 && !/^(INPUT|TEXTAREA)$/.test(el.tagName)) showTip(el); });
   document.addEventListener('focusout', () => tip.classList.remove('on'));
   document.addEventListener('mousedown', () => { clearTimeout(tipTimer); tip.classList.remove('on'); });
 
@@ -60,7 +63,7 @@
   MOTION.watchOverlays('#o-keys');
   $('#keys-close').addEventListener('click', () => sheet.classList.add('hidden'));
   document.addEventListener('keydown', (e) => {
-    const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+    const typing = document.activeElement.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]), textarea, select, [contenteditable="true"]');
     if (!typing && e.key === '?') { sheet.classList.toggle('hidden'); e.preventDefault(); }
     else if (e.key === 'Escape' && !sheet.classList.contains('hidden')) { sheet.classList.add('hidden'); e.stopImmediatePropagation(); }
   }, true);

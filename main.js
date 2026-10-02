@@ -601,6 +601,7 @@ function createPanel() {
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, spellcheck: false },
   });
   panelWin.setAlwaysOnTop(true, 'screen-saver');
+  if (mods.windows) mods.windows.applyMaterial(panelWin);
   panelWin.loadFile(path.join(__dirname, 'renderer', 'panel.html'));
   const win = panelWin;
   win.webContents.once('did-finish-load', () => {
@@ -1113,6 +1114,8 @@ const M = {
   get openPanel() { return mods.windows.openPanel; },
   get togglePanel() { return mods.windows.togglePanel; },
   get hidePanel() { return mods.windows.hidePanel; },
+  get applyMaterial() { return mods.windows.applyMaterial; },
+  get materialSupported() { return mods.windows.materialSupported; },
   get trayIcon() { return mods.tray.trayIcon; },
   get trayBase() { return mods.tray.trayBase; },
   set trayBase(v) { mods.tray.trayBase = v; },

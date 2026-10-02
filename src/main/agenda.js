@@ -311,6 +311,7 @@ module.exports = function install(M) {
       game: M.gz ? M.gz.gameState() : null,
       browserExt: M.browser ? M.browser.browserState() : null,
       plugins: M.plugins ? M.plugins.pluginsState() : null,
+      winMaterialOk: M.materialSupported ? M.materialSupported() : false,
       errReport: M.errreport.errState(),
       ...(M.soul ? M.soul.snapshot() : {}),
       presence: M.presence.presenceState(),

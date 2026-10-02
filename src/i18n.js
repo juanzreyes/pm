@@ -439,6 +439,18 @@
   ];
 
   const EXTRA = typeof module !== 'undefined' && module.exports ? require('./i18n-extra') : root.I18N_EXTRA;
+  // Muchos títulos llevaban un emoji delante ("⏰ Recordatorios") y ahora llevan un ícono SVG
+  // ("Recordatorios"): cada traducción vale también sin su emoji.
+  const LEAD = /^(?:\p{Extended_Pictographic}️?|[▶⏸⏱⏰⌨]️?)\s+/u;
+  function addBare(dict) {
+    if (!dict) return;
+    for (const [k, v] of Object.entries(dict)) {
+      const bare = k.replace(LEAD, '');
+      if (bare !== k && bare && dict[bare] === undefined && typeof v === 'string') dict[bare] = v.replace(LEAD, '');
+    }
+  }
+  addBare(EXACT);
+  if (EXTRA) for (const l of ['en', 'pt', 'fr']) addBare(EXTRA[l]);
   function tr(text, lang) {
     if (!lang || lang === 'es' || text == null) return text;
     const s = String(text);

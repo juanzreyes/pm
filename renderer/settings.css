@@ -98,3 +98,5 @@ details.tk.on summary b::after { content: ' ✅'; }
 /* Al presionar, la bolita se estira (como en iOS) y vuelve con rebote */
 input.switch:active::after { width: 21px; }
 input.switch:checked:active::after { left: 15px; }
+/* Cada sección entra con un deslizamiento corto */
+.sec:not(.hidden) { animation: m-in var(--d-med, 220ms) var(--ease-out, ease-out); }

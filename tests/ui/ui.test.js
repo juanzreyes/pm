@@ -704,6 +704,38 @@ test('pulido 5: atajos visibles, menú de tarea, teclado, arrastrar a la cola y 
   await panel.waitForFunction(() => /Llamar a soporte/.test(document.querySelector('#tasks').textContent), null, { timeout: 5000 });
 });
 
+test('pulido 6: íconos coherentes, traducción sin emojis, tema suave y fondo translúcido', async () => {
+  const panel = await waitPage('panel');
+  const r = await panel.evaluate(async () => {
+    const lead = /^\s*\p{Extended_Pictographic}/u;
+    const heads = [...document.querySelectorAll('#v-usage h3, #v-day h3, #v-agenda h3, #v-day summary b, #v-agenda summary, #v-day summary')];
+    const withEmoji = heads.filter((h) => lead.test(h.textContent)).map((h) => h.textContent.trim().slice(0, 30));
+    const rem = [...document.querySelectorAll('#v-day h3')].find((h) => /Recordatorios/.test(h.textContent));
+    // Tema: al cambiarlo, un fundido corto.
+    const html = document.documentElement;
+    const was = html.classList.contains('dark');
+    html.classList.toggle('dark');
+    await Promise.resolve();
+    const anim = html.classList.contains('theme-anim');
+    html.classList.toggle('dark', was);
+    await new Promise((ok) => setTimeout(ok, 1500));
+    return { withEmoji, remIcon: !!(rem && rem.querySelector('svg.ico')), en: I18N.tr('Recordatorios', 'en'), anim, after: html.classList.contains('theme-anim') };
+  });
+  assert.deepEqual(r, { withEmoji: [], remIcon: true, en: 'Reminders', anim: true, after: false });
+  // Fondo translúcido: interruptor en Apariencia (experimental).
+  await panel.evaluate(() => pm.openSettings('appearance'));
+  const st = await waitPage('settings');
+  await st.waitForFunction(() => !!document.querySelector('#win-material'), null, { timeout: 8000 });
+  const okWin = await st.evaluate(async () => (await pm.getState()).winMaterialOk);
+  assert.equal(await st.evaluate(() => document.querySelector('#win-material').disabled), !okWin);
+  if (okWin) {
+    await st.evaluate(() => pm.updateSettings({ winMaterial: true }));
+    await st.waitForFunction(() => document.documentElement.classList.contains('acrylic'), null, { timeout: 5000 });
+    await st.evaluate(() => pm.updateSettings({ winMaterial: false }));
+    await st.waitForFunction(() => !document.documentElement.classList.contains('acrylic'), null, { timeout: 5000 });
+  }
+});
+
 test('ajustes: diagnóstico sin errores de la app', async () => {
   const panel = await waitPage('panel');
   await panel.evaluate(() => pm.command('diag'));

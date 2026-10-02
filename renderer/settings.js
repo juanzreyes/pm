@@ -64,6 +64,7 @@ function render() {
   if (!state) return;
   const s = state.settings;
   document.documentElement.classList.toggle('dark', !!state.dark); document.documentElement.classList.toggle('contrast', !!state.contrast);
+  document.documentElement.classList.toggle('acrylic', !!(state.winMaterialOk && state.settings && state.settings.winMaterial));
   document.documentElement.classList.toggle('reduced', !!s.reducedMotion);
 
   // General

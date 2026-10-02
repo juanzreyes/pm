@@ -118,3 +118,15 @@ button.is-ok::after { content: "✓"; animation: check-in var(--d-med) var(--spr
 button.is-err::after { content: "✕"; }
 @keyframes btn-spin { to { transform: rotate(360deg); } }
 @keyframes check-in { from { transform: scale(.4); opacity: 0; } }
+
+/* ---------- Pulido 6/6: acabado de Windows 11 ---------- */
+/* Cambio de tema claro/oscuro: un fundido corto en vez de un parpadeo (lo activa motion.js) */
+html.theme-anim, html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after {
+  transition: background-color .35s ease, color .35s ease, border-color .35s ease, fill .35s ease, box-shadow .35s ease !important;
+}
+/* Fondo translúcido (acrílico de Windows 11, opcional): las superficies dejan pasar el desenfoque */
+html.acrylic body { background: transparent !important; }
+html.acrylic #card, html.acrylic .win { background: color-mix(in srgb, var(--bg) 74%, transparent) !important; }
+html.acrylic main, html.acrylic aside, html.acrylic .content { background: color-mix(in srgb, var(--card) 68%, transparent) !important; }
+/* Títulos con ícono: el ícono separado del texto */
+h2 > .ico:first-child, h3 > .ico:first-child, b > .ico:first-child, summary > .ico:first-child { margin-right: 6px; vertical-align: -2px; }

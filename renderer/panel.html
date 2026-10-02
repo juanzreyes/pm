@@ -78,7 +78,7 @@
         </div>
         <div id="focus-box" class="box focus-box">
           <div class="row between">
-            <div><b id="focus-title">🎯 Modo foco</b><div class="small muted" id="focus-sub">Solo te molesto con lo urgente; lo demás te espera en avisos.</div></div>
+            <div><b id="focus-title" data-icon="target">Modo foco</b><div class="small muted" id="focus-sub">Solo te molesto con lo urgente; lo demás te espera en avisos.</div></div>
             <span id="focus-time" class="pomo-time hidden"></span>
           </div>
           <div class="row gap" id="focus-start">
@@ -102,7 +102,7 @@
         <div id="day-notes"></div>
 
         <details id="pj-section" class="recurring">
-          <summary><b>🎯 Mis proyectos</b> <span class="muted small">retomar y cambiar de contexto</span></summary>
+          <summary><b data-icon="target">Mis proyectos</b> <span class="muted small">retomar y cambiar de contexto</span></summary>
           <div id="pj-resume" class="box small hidden"></div>
           <div id="pj-list" class="pj-list"></div>
           <button type="button" id="pj-more" class="link hidden"></button>
@@ -115,13 +115,13 @@
         </details>
 
         <details id="tickets" class="recurring hidden">
-          <summary><b>🎫 Mis tickets</b> <span id="tk-count" class="pill"></span></summary>
+          <summary><b data-icon="ticket">Mis tickets</b> <span id="tk-count" class="pill"></span></summary>
           <div id="tk-list" class="tk-list"></div>
           <div class="row gap"><button id="tk-all" class="soft mini">📥 Traer todos a mi día</button><button id="tk-refresh" class="ghost mini" title="Actualizar">🔄</button><span id="tk-when" class="small muted"></span></div>
         </details>
 
         <details id="recurring" class="recurring">
-          <summary><b>🔁 Tareas recurrentes</b> <span id="rec-count" class="pill"></span></summary>
+          <summary><b data-icon="repeat">Tareas recurrentes</b> <span id="rec-count" class="pill"></span></summary>
           <ul id="rec-list" class="editlist"></ul>
           <form id="rec-form" class="row">
             <input id="rec-text" placeholder="Revisar métricas…" maxlength="200" autocomplete="off" />
@@ -137,13 +137,13 @@
         </details>
 
         <div class="row between">
-          <h3>🗓️ Bloques de tiempo</h3>
+          <h3 data-icon="calendar">Bloques de tiempo</h3>
           <button id="btn-blocks" class="ghost mini">Planificar</button>
         </div>
         <div id="blocks-next" class="box small"></div>
 
         <div class="row between">
-          <h3>🎯 Objetivos de la semana</h3>
+          <h3 data-icon="target">Objetivos de la semana</h3>
           <span id="goals-week" class="pill"></span>
         </div>
         <ul id="goals" class="goals"></ul>
@@ -153,7 +153,7 @@
         </form>
 
         <div class="row between">
-          <h3>💧 Hábitos</h3>
+          <h3 data-icon="droplet">Hábitos</h3>
           <button id="habit-add" class="ghost mini" title="Nuevo hábito">＋</button>
         </div>
         <div id="habits" class="habits"></div>
@@ -165,7 +165,7 @@
         </form>
 
         <div class="row between">
-          <h3>🗒️ Notas del día</h3>
+          <h3 data-icon="note">Notas del día</h3>
           <span id="notes-saved" class="muted small"></span>
         </div>
         <textarea id="notes" rows="4" placeholder="Apuntes rápidos: ideas, enlaces, decisiones… se guardan solos."></textarea>
@@ -173,13 +173,13 @@
         <div id="notes-results" class="notes-results"></div>
 
         <div class="row between">
-          <h3>🛠️ En qué trabajé hoy</h3>
+          <h3 data-icon="wrench">En qué trabajé hoy</h3>
           <button id="journal-ai" class="ghost mini" title="Volver a redactar el resumen">↻ Actualizar</button>
         </div>
         <div id="claude-journal" class="box small"></div>
 
         <div class="row between">
-          <h3>🤖 Cola para Claude</h3>
+          <h3 data-icon="bot">Cola para Claude</h3>
           <button id="queue-next" class="ghost mini hidden">📋 Copiar siguiente</button>
         </div>
         <div id="claude-queue" class="box small"></div>
@@ -192,7 +192,7 @@
         <div id="queue-pause" class="box small hidden"></div>
         <div id="claude-runs" class="runs"></div>
         <details id="claude-recurring" class="recurring">
-          <summary><b>🔁 Peticiones recurrentes para Claude</b> <span id="crec-count" class="pill"></span></summary>
+          <summary><b data-icon="repeat">Peticiones recurrentes para Claude</b> <span id="crec-count" class="pill"></span></summary>
           <div id="crec-list"></div>
           <form id="crec-form" class="col">
             <textarea id="crec-text" rows="2" maxlength="4000" placeholder="Actualiza las dependencias, corre los tests y abre un PR si todo pasa"></textarea>
@@ -206,11 +206,11 @@
           </form>
         </details>
         <details id="claude-stats" class="recurring">
-          <summary><b>📈 Qué te funciona con Claude</b> <span id="cstats-count" class="pill"></span></summary>
+          <summary><b data-icon="trend">Qué te funciona con Claude</b> <span id="cstats-count" class="pill"></span></summary>
           <div id="cstats"></div>
         </details>
 
-        <h3>⏰ Recordatorios</h3>
+        <h3 data-icon="clock">Recordatorios</h3>
         <ul id="reminders" class="editlist"></ul>
         <form id="rem-form" class="row">
           <input id="rem-input" placeholder="a las 3 revisar el informe · en 20 min llamar a Ana" maxlength="200" autocomplete="off" />
@@ -228,22 +228,22 @@
         </div>
         <button id="btn-monthly" class="ghost">📄 Informe mensual en PDF</button>
 
-        <h3>👀 Productividad de hoy</h3>
+        <h3 data-icon="eye">Productividad de hoy</h3>
         <div id="focus" class="box"></div>
 
         <div class="row between">
-          <h3>⏱️ Tiempo por proyecto</h3>
+          <h3 data-icon="timer">Tiempo por proyecto</h3>
           <button id="btn-csv" class="ghost mini" title="Exportar últimos 30 días a Excel">⬇ CSV</button>
         </div>
         <div id="projects" class="box"></div>
 
         <div class="row between">
-          <h3>💻 Git hoy</h3>
+          <h3 data-icon="code">Git hoy</h3>
           <button id="git-refresh" class="ghost mini" title="Actualizar">↻</button>
         </div>
         <div id="gitbox" class="box"></div>
         <div id="devbox" class="box small"></div>
-        <details id="branches" class="recurring"><summary><b>🌿 Tiempo por rama</b></summary><div id="branches-list"></div></details>
+        <details id="branches" class="recurring"><summary><b data-icon="branch">Tiempo por rama</b></summary><div id="branches-list"></div></details>
         <h3>Últimos días</h3>
         <div id="history"></div>
       </section>
@@ -275,19 +275,19 @@
         </div>
 
         <div class="row between">
-          <h3>📅 Reuniones de hoy</h3>
+          <h3 data-icon="calendar">Reuniones de hoy</h3>
           <button id="cal-refresh" class="ghost mini" title="Actualizar">↻</button>
         </div>
         <div id="meetings"></div>
 
         <div class="row between">
-          <h3>🐙 GitHub</h3>
+          <h3 data-icon="github">GitHub</h3>
           <button id="gh-refresh" class="ghost mini" title="Actualizar">↻</button>
         </div>
         <div id="ghbox"></div>
 
         <div class="row between">
-          <h3>🌐 Mis sitios</h3>
+          <h3 data-icon="globe">Mis sitios</h3>
           <button id="mon-refresh" class="ghost mini" title="Actualizar">↻</button>
         </div>
         <div id="monitors"></div>
@@ -297,16 +297,16 @@
         </form>
 
         <div class="row between">
-          <h3>📧 Correo</h3>
+          <h3 data-icon="mail">Correo</h3>
           <button id="mail-refresh" class="ghost mini" title="Actualizar">↻</button>
         </div>
         <div id="mailbox"></div>
 
         <!-- Mientras el inicio de sesión web esté desactivado, estas son las formas de conectar. -->
         <div id="advanced" class="small">
-          <h3>🔗 Conectar</h3>
+          <h3 data-icon="link">Conectar</h3>
         <details id="cal-setup" class="box small">
-          <summary>🔗 Calendario por enlace ICS</summary>
+          <summary data-icon="link">Calendario por enlace ICS</summary>
           <p><b>Outlook / Microsoft 365</b> (tus reuniones de Teams):</p>
           <ol>
             <li>Abre tu calendario en Outlook web:
@@ -326,7 +326,7 @@
         </details>
 
         <details id="mail-setup" class="box small">
-          <summary>🔗 Correo por IMAP (contraseña de aplicación)</summary>
+          <summary data-icon="link">Correo por IMAP (contraseña de aplicación)</summary>
           <form id="mail-form">
             <label>Proveedor
               <select id="mail-provider"></select>
@@ -346,7 +346,7 @@
         </details>
         </div>
         <div class="row between">
-          <h3>🏁 Hitos</h3>
+          <h3 data-icon="flag">Hitos</h3>
           <span id="ms-count" class="pill"></span>
         </div>
         <div id="milestones" class="ms-list"></div>

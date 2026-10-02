@@ -225,5 +225,21 @@
     } catch { /* sin audio */ }
   }
 
+  // ---------- Cambio de tema suave ----------
+  // Al pasar de claro a oscuro (o al revés), un fundido de 350 ms en vez de un parpadeo.
+  // La primera vez (al cargar) no se anima.
+  let themeKnown = null;
+  const t0 = performance.now(); // el tema inicial llega con el primer pintado: ese no se anima
+  new MutationObserver(() => {
+    const html = document.documentElement;
+    const dark = html.classList.contains('dark');
+    if (themeKnown !== null && dark !== themeKnown && !reduced() && performance.now() - t0 > 1500) {
+      html.classList.add('theme-anim');
+      clearTimeout(html._themeT);
+      html._themeT = setTimeout(() => html.classList.remove('theme-anim'), 400);
+    }
+    themeKnown = dark;
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
   root.MOTION = { countTo, afterRender, skeleton, watchOverlays, reduced, keyedList, burst, busy, sfx, setSounds };
 })(typeof window !== 'undefined' ? window : globalThis);

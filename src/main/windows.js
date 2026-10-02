@@ -87,6 +87,18 @@ module.exports = function install(M) {
   }
 
   // ---------- ventanas nuevas: ajustes, paleta de comandos y "acerca de" ----------
+  /** ¿Windows 11 22H2 o más nuevo? (el efecto acrílico necesita el compositor nuevo) */
+  function materialSupported() {
+    if (process.platform !== 'win32') return false;
+    const build = Number(String(M.os.release()).split('.')[2]) || 0;
+    return build >= 22621;
+  }
+  /** Fondo translúcido de Windows 11 en una ventana (si lo activaste). */
+  function applyMaterial(win) {
+    if (!win || win.isDestroyed() || !materialSupported() || typeof win.setBackgroundMaterial !== 'function') return;
+    try { win.setBackgroundMaterial(M.store.data.settings.winMaterial ? 'acrylic' : 'none'); } catch (e) { M.diag.log('info', 'Fondo translúcido: ' + e.message); }
+  }
+
   function baseWinOpts(extra) {
     return {
       show: false,
@@ -110,6 +122,7 @@ module.exports = function install(M) {
         icon: M.path.join(M.APP_DIR, 'build', 'icon.png'),
       }));
       M.settingsWin.setAlwaysOnTop(true, 'floating');
+      applyMaterial(M.settingsWin);
       M.settingsWin.loadFile(M.path.join(M.APP_DIR, 'renderer', 'settings.html'), { query: section ? { section } : {} });
       M.settingsWin.once('ready-to-show', () => { M.settingsWin.show(); M.settingsWin.focus(); });
       M.settingsWin.on('closed', () => (M.settingsWin = null));
@@ -345,5 +358,7 @@ module.exports = function install(M) {
     openPanel,
     togglePanel,
     hidePanel,
+    applyMaterial,
+    materialSupported,
   };
 };

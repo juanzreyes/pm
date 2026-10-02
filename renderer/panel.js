@@ -179,6 +179,7 @@ function render() {
   document.documentElement.classList.toggle('dark', !!state.dark); document.documentElement.classList.toggle('contrast', !!state.contrast);
   document.documentElement.classList.toggle('reduced', !!(state.settings && state.settings.reducedMotion));
   MOTION.setSounds(!!(state.settings && state.settings.uiSounds));
+  document.documentElement.classList.toggle('acrylic', !!(state.winMaterialOk && state.settings && state.settings.winMaterial));
   if (state.lang && state.lang !== 'es') I18N.translateDom(document.getElementById('card'), state.lang);
 }
 
@@ -672,7 +673,8 @@ $('#hb-settings').addEventListener('click', () => pm.openSettings());
 
 // ---------- atajos de teclado en el panel ----------
 document.addEventListener('keydown', (e) => {
-  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+  // Solo cuentan los campos de texto: una casilla o un botón enfocados no bloquean los atajos.
+  const typing = document.activeElement.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]), textarea, select, [contenteditable="true"]');
   if (e.ctrlKey && e.key.toLowerCase() === 'k') { e.preventDefault(); pm.openPalette(); return; }
   if (e.ctrlKey && e.key === ',') { e.preventDefault(); pm.openSettings(); return; }
   if (!$('#tour-card').classList.contains('hidden')) {
