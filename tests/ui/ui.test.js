@@ -739,6 +739,41 @@ test('pulido 6: íconos coherentes, traducción sin emojis, tema suave y fondo t
   }
 });
 
+test('el menú rápido y el globo de "pensando" caben en la ventana del pollito, esté donde esté', async () => {
+  const pet = await waitPage('pet');
+  const r = await pet.evaluate(() => {
+    const walker = document.querySelector('#walker');
+    const out = [];
+    for (const x of [-55, 0, 55]) {
+      walker.style.transition = 'none';
+      walker.style.transform = `translateX(${x}px)`;
+      posX = x;
+      void walker.offsetWidth;
+      // Menú rápido: los 6 botones (centro ± medio botón) dentro de la ventana.
+      openRadial();
+      // Posición donde se DIBUJA cada botón (el error era que se dibujaban corridos y cortados).
+      const btns = [...document.querySelectorAll('#radial .rd')].map((b) => {
+        const q = b.getBoundingClientRect();
+        const s = (q.left + q.right) / 2;
+        const t = (q.top + q.bottom) / 2;
+        return s - 20 >= 0 && s + 20 <= innerWidth && t - 20 >= 0 && t + 20 <= innerHeight;
+      });
+      closeRadial();
+      // Globo de "pensando" (como si Claude estuviera trabajando).
+      document.body.classList.add('claude-working');
+      keepThinkingInside();
+      const th = document.querySelector('#thinking').getBoundingClientRect();
+      document.body.classList.remove('claude-working');
+      out.push({ x, botones: btns.length, dentro: btns.every(Boolean), globo: th.left >= 0 && th.right <= innerWidth });
+    }
+    walker.style.transform = 'translateX(0px)';
+    posX = 0;
+    walker.style.transition = '';
+    return out;
+  });
+  assert.deepEqual(r, [-55, 0, 55].map((x) => ({ x, botones: 6, dentro: true, globo: true })));
+});
+
 test('ajustes: diagnóstico sin errores de la app', async () => {
   const panel = await waitPage('panel');
   await panel.evaluate(() => pm.command('diag'));

@@ -1,5 +1,9 @@
 # Novedades de PM Pollito
 
+## 2.1.2 — Nada se corta
+- **Menú rápido del pollito** (mantenerlo presionado): después de que el pollito paseaba, se dibujaba corrido hacia abajo y la ventana lo cortaba (se veían 2 de 6 botones o ninguno). Ahora se ven los 6 siempre, aunque el pollito esté en un borde.
+- **Globo de "pensando"** (Claude trabajando): ya no se sale por la derecha cuando el pollito camina hacia ese lado.
+
 ## 2.1.1 — Teams sin adivinar
 - **Canal de Teams**: si pegas el enlace del canal o de la app (en vez de la URL del flujo), PM te lo dice al guardar. Y cuando la prueba falla, explica qué corregir según el error: 401/403 → el flujo pide inicio de sesión ("¿Quién puede desencadenar el flujo?" → Cualquiera), 404 → flujo apagado o URL cortada, 400 → no es la plantilla correcta, 502 → mira el historial de ejecuciones.
 - Pasos para sacar el webhook en Teams, dentro de Ajustes → Avisos fuera del PC.

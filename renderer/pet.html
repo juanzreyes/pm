@@ -317,10 +317,11 @@
     <div id="away" class="hit" aria-live="polite"><div id="away-emoji">🏖️</div><div id="away-sign">De vacaciones</div></div>
     <!-- De visita: el pollito de un compañero (granja del equipo) -->
     <div id="visitor" aria-live="polite"><div id="visitor-tag"></div><div id="visitor-pet"></div></div>
-    <!-- Menú circular: mantener presionado el pollito -->
-    <div id="radial" class="hit" role="menu" aria-label="Acciones rápidas"></div>
     <div id="meter" class="hit"><span id="meter-dot"></span><span id="meter-text">…</span><span id="unread" class="hidden"></span></div>
   </div>
+  <!-- Menú circular (mantener presionado el pollito). Fuera de #walker a propósito: #walker se mueve
+       con transform y eso haría que el menú se dibujara desplazado y cortado por la ventana. -->
+  <div id="radial" class="hit" role="menu" aria-label="Acciones rápidas"></div>
 
   <script src="../src/i18n-extra.js"></script>
 

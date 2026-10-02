@@ -564,9 +564,11 @@ function openRadial() {
   if (!radial) return;
   wake();
   const r = chick.getBoundingClientRect();
-  const cx = r.left + r.width / 2;
-  const cy = r.top + r.height * 0.55;
   const R = 84;
+  const M = 24; // medio botón + margen: nada se sale de la ventana
+  // Centro en el pollito, pero corrido lo justo para que el arco entero quepa en la ventana.
+  const cx = Math.max(R + M, Math.min(innerWidth - R - M, r.left + r.width / 2));
+  const cy = Math.max(R + M, Math.min(innerHeight - M, r.top + r.height * 0.55));
   radial.innerHTML = RADIAL.map((it, i) => {
     // Arco superior (de 195° a 345°): el de abajo quedaría fuera de la ventana.
     const a = ((195 + (150 / (RADIAL.length - 1)) * i) * Math.PI) / 180;
@@ -887,7 +889,29 @@ pm.onPomo((p) => {
 setInterval(() => { if (pomo) updateMeter(); }, 1000);
 
 // Claude Code trabajando: burbuja de "pensando".
-pm.onClaude((c) => body.classList.toggle('claude-working', !!(c && c.working)));
+pm.onClaude((c) => {
+  body.classList.toggle('claude-working', !!(c && c.working));
+  keepThinkingInside();
+});
+// El globo de "pensando" va a la derecha del pollito; si al pasear se saldría de la ventana,
+// se corre lo justo hacia dentro (se revisa en cada cuadro mientras está visible).
+let thinkRaf = 0;
+function keepThinkingInside() {
+  cancelAnimationFrame(thinkRaf);
+  const el = $('#thinking');
+  const loop = () => {
+    if (!body.classList.contains('claude-working')) { el.style.translate = ''; return; }
+    el.style.translate = '';
+    const r = el.getBoundingClientRect();
+    const pad = 4;
+    let dx = 0;
+    if (r.right > innerWidth - pad) dx = innerWidth - pad - r.right;
+    if (r.left + dx < pad) dx = pad - r.left;
+    if (dx) el.style.translate = `${Math.round(dx)}px 0`;
+    thinkRaf = requestAnimationFrame(loop);
+  };
+  loop();
+}
 
 pm.onMeeting((m) => {
   body.classList.toggle('meeting', !!m);
