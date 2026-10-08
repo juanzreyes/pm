@@ -1,3 +1,3 @@
-4577b09e7e668b73333a8bc03282a464a6af19613f6daeb657f872c156bd520f  PM-Pollito-Setup-2.1.2.exe
-709aeff25730ce26b335c7ba5dd2e8ebfdd703c32d523e6cb2ebb647ca9e8b39  pm-pollito-vscode-1.1.0.vsix
+b598a29f7af789b24f0430139e211e16c796b85605b37d457bca7865079fb1a9  PM-Pollito-Setup-2.1.3.exe
+d990a612839b37b081a2b17a265f1a8296549896f97b2002d3b3c0a7105ebade  pm-pollito-vscode-1.1.0.vsix
 9974f7fd1aeaf6e55420c699553fdc59e0b39ed41bbf42e2c14df0f2f1c5dcd4  pm-pollito-navegador-2.0.0.zip
