@@ -189,6 +189,8 @@ function create(ctx) {
 
   // ================= GIT =================
   let gitState = { repos: 0, today: [], warnings: [], at: 0 };
+  const statusCache = new Map(); // repo → último estado (para no preguntar a git por los repos quietos)
+  let lastFullStatus = Date.now(); // la primera revisión completa, una hora después de abrir (no al arrancar)
   const gitWarned = {};
   const roots = () => {
     const r = S().settings.gitRoots;
@@ -211,7 +213,17 @@ function create(ctx) {
     }
     const now = Date.now();
     const warnings = [];
-    const statuses = await Promise.all(repos.map((r) => git.status(r)));
+    // Estado (archivos sin commit) solo de los repos "calientes": con cambios la última vez, con
+    // movimiento en las últimas 6 h o en los que trabajaste hoy. Todos, una vez por hora.
+    const full = now - lastFullStatus >= 60 * 60e3;
+    if (full) lastFullStatus = now;
+    const todayProjects = new Set(Object.keys(ctx.today().projects || {}).map((p) => p.toLowerCase()));
+    const hot = repos.filter((r) => full || (statusCache.get(r) || {}).changed > 0
+      || git.refActivity(r) > now - 6 * 3600e3 || todayProjects.has(path.basename(r).toLowerCase()));
+    const fresh = await Promise.all(hot.map((r) => git.status(r)));
+    hot.forEach((r, i) => statusCache.set(r, fresh[i]));
+    for (const k of statusCache.keys()) if (!repos.includes(k)) statusCache.delete(k);
+    const statuses = repos.map((r) => statusCache.get(r));
     if (ctx.onGitStatuses) ctx.onGitStatuses(statuses.filter(Boolean), repos);
     for (const st of statuses) {
       if (!st || !st.changed) continue;

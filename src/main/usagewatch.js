@@ -10,8 +10,8 @@ module.exports = function install(M) {
     if (refreshing) return M.usage;
     refreshing = true;
     try {
-      let local = null;
-      try { local = M.usageApi.localStats(); } catch (e) { console.error('Stats locales:', e.message); }
+      // El consumo local sale del hilo aparte (src/main/claudescan.js), en paralelo con los límites.
+      const localP = (M.scan ? M.scan.stats() : Promise.resolve(M.usageApi.localStats())).catch((e) => { M.diag.log('info', 'Stats locales: ' + e.message); return null; });
 
       // Fuentes por orden de preferencia: cuenta web (navegador) → token manual → Claude Code.
       const sources = [];
@@ -62,6 +62,7 @@ module.exports = function install(M) {
       // Conserva los últimos límites conocidos si solo fue un fallo de red.
       if (connection.status === 'error' && M.usage.limits) limits = M.usage.limits;
 
+      const local = await localP;
       M.usage = { limits, local, connection, fetchedAt: Date.now() };
       if (connection.status === 'ok') updateForecasts();
       processThresholds();

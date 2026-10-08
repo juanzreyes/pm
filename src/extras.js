@@ -59,24 +59,33 @@ function create(ctx) {
     const e = new Date(d); e.setDate(e.getDate() + 1);
     return [d.getTime(), e.getTime()];
   }
-  function claudeJournal(force = false) {
-    if (!force && Date.now() - journalCache.at < 5 * 60e3) return journalCache;
+  // El historial de Claude se lee en un hilo aparte (ctx.prompts): pedir el diario no congela nada.
+  // claudeJournal() devuelve lo último que hay y, si toca, lo actualiza en segundo plano.
+  let journalBusy = null;
+  const promptsBetween = (from, to) => (ctx.prompts ? ctx.prompts(from, to) : Promise.resolve(journal.prompts(from, to)));
+  function refreshJournal() {
+    if (journalBusy) return journalBusy;
     const start = new Date(); start.setHours(0, 0, 0, 0);
     const [pf, pt] = lastWorkdayRange();
-    try {
-      journalCache = {
-        at: Date.now(),
-        today: journal.summarize(journal.prompts(start.getTime(), Date.now())),
-        prev: journal.summarize(journal.prompts(pf, pt)),
-      };
-    } catch { /* sin registros */ }
+    journalBusy = Promise.all([promptsBetween(start.getTime(), Date.now()), promptsBetween(pf, pt)])
+      .then(([today, prev]) => {
+        journalCache = { at: Date.now(), today: journal.summarize(today), prev: journal.summarize(prev) };
+        if (ctx.broadcast) ctx.broadcast();
+        return journalCache;
+      })
+      .catch(() => journalCache)
+      .finally(() => { journalBusy = null; });
+    return journalBusy;
+  }
+  function claudeJournal(force = false) {
+    if (force || Date.now() - journalCache.at >= 5 * 60e3) refreshJournal();
     return journalCache;
   }
   function journalText(list, prefix = '🤖') {
     return list.map((p) => `${prefix} [${p.project}] ${p.items.join(' · ')}${p.count > p.items.length ? ` (+${p.count - p.items.length})` : ''}`);
   }
   async function aiJournal(which) {
-    const j = claudeJournal(true);
+    const j = await refreshJournal();
     const list = which === 'prev' ? j.prev : j.today;
     if (!list.length) return null;
     const raw = list.map((p) => `Proyecto ${p.project} (${p.count} peticiones): ${p.items.join(' | ')}`).join('\n');
@@ -662,7 +671,7 @@ function create(ctx) {
 
   return {
     start, snapshot, weekKey,
-    claudeJournal, journalText, aiJournal,
+    claudeJournal, refreshJournal, journalText, aiJournal,
     modelAdvice, onSessionReset,
     promptsList, copyPrompt, savePrompt, deletePrompt,
     clipPrompt, clipTask, clipAsk,

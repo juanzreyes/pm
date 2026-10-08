@@ -9,9 +9,13 @@ const { spawn, execFile } = require('child_process');
 
 const WIN = process.platform === 'win32';
 
+// En la app, git se lanza desde un hilo aparte (src/main/proc.js): no congela la ventana.
+let execImpl = (file, args, opts, cb) => execFile(file, args, opts, cb);
+function setExec(fn) { execImpl = fn; }
+
 function git(cwd, args) {
   return new Promise((resolve, reject) => {
-    execFile('git', args, { cwd, windowsHide: true, maxBuffer: 20 * 1024 * 1024 }, (err, stdout, stderr) => {
+    execImpl('git', args, { cwd, windowsHide: true, maxBuffer: 20 * 1024 * 1024 }, (err, stdout, stderr) => {
       if (err) reject(new Error((stderr || err.message).trim().split('\n').slice(-1)[0]));
       else resolve(String(stdout).trim());
     });
@@ -322,4 +326,4 @@ async function openPR({ owner, repo, token, head, base, title, body }, http = fe
   return j.html_url;
 }
 
-module.exports = { describeTool, stagedDiff, review, prepareOn, commitAndPush, findClaude, bundledByDesktop, prepare, launch, changes, accept, discard, git, slug, linkDeps, unlinkDeps, detectTests, runTests, githubRepoOf, pushBranch, openPR };
+module.exports = { setExec, describeTool, stagedDiff, review, prepareOn, commitAndPush, findClaude, bundledByDesktop, prepare, launch, changes, accept, discard, git, slug, linkDeps, unlinkDeps, detectTests, runTests, githubRepoOf, pushBranch, openPR };

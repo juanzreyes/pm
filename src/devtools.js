@@ -176,8 +176,16 @@ function create(ctx) {
     });
     return result;
   }
+  // Commits sin subir solo aparecen tras un commit, fetch o push: si los reflogs del repo no se
+  // movieron desde la última revisión, no hace falta preguntarle nada a git.
+  const lastActivity = {};
   async function prePushAll(repos) {
     for (const r of repos) {
+      const act = git.refActivity(r);
+      if (act !== Infinity && lastActivity[r] === act) continue;
+      // Al arrancar, los repos sin movimiento en 3 días no se revisan (nada nuevo que avisar).
+      if (!(r in lastActivity) && act !== Infinity && act < Date.now() - 3 * 864e5) { lastActivity[r] = act; continue; }
+      lastActivity[r] = act;
       try { await prePushScan(r, true); } catch { /* repo raro */ }
     }
   }

@@ -38,6 +38,12 @@ module.exports = function install(M) {
     startTimers();
     registerShortcuts();
 
+    // Procesos (git, PowerShell del vigilante) desde un hilo aparte: abrirlos no congela la app.
+    if (!M.TEST) {
+      require('../git').setExec(M.proc.execFile);
+      require('../claudeRunner').setExec(M.proc.execFile);
+      M.focus.setSpawn(M.proc.spawn);
+    }
     if (!M.SAFE) M.stopFocus = M.focus.start(M.onFocusSample, (why) => M.diag.log('main', 'Vigilante de foco (Linux): ' + why));
 
     // En la versión instalada, el inicio con Windows debe apuntar al .exe instalado (no al de desarrollo).
@@ -213,6 +219,7 @@ module.exports = function install(M) {
     });
 
     M.ex = M.extrasMod.create({
+      prompts: (from, to) => M.scan.prompts(from, to), // historial de Claude leído en un hilo aparte
       store, say: M.say, broadcast: M.broadcast, animate: M.animate, sendPet: M.sendPet, today: M.today, addTask: M.addTask, addXp: M.addXp,
       isMuted: M.isMuted, trackingPaused: M.trackingPaused, aiAvailable: M.aiAvailable, lang: M.lang,
       clipboard: M.clipboard, screen: M.screen, dialog: M.dialog, shell: M.shell, app, BrowserWindow: M.BrowserWindow,

@@ -88,7 +88,7 @@
     '¿Qué anoto? Tarea o “recuérdame a las 3 …”': 'What should I note? A task or “remind me at 3pm …”',
     // Acerca de
     'Hecho con': 'Made with', 'por': 'by', 'Tu pollito Project Manager 🐣📋': 'Your Project Manager chick 🐣📋',
-    '© 2026 Juan Ramon Reyes Linares · Todos los derechos reservados': '© 2026 Juan Ramon Reyes Linares · All rights reserved',
+    '© 2026 PM Pollito · Todos los derechos reservados': '© 2026 PM Pollito · All rights reserved',
     // Cabecera, pestañas, avisos
     'Chat': 'Chat', 'Uso': 'Usage', 'Día': 'Day', 'Agenda': 'Agenda', 'Perfil': 'Profile',
     '🔔 Centro de avisos': '🔔 Notification center', 'Marcar todo como leído': 'Mark all as read', 'Vaciar': 'Clear',

@@ -54,50 +54,39 @@ function textOf(content) {
   return '';
 }
 
-// Caché por archivo: solo se vuelve a leer lo que cambió (menos CPU y memoria).
-// Guarda únicamente las peticiones del usuario (texto recortado), no el archivo entero.
-const fileCache = new Map(); // ruta -> { mtimeMs, size, items: [{ at, text, key, cwd }] }
-function promptsOf(f) {
-  let st;
-  try { st = fs.statSync(f); } catch { return []; }
-  const c = fileCache.get(f);
-  if (c && c.mtimeMs === st.mtimeMs && c.size === st.size) return c.items;
-  let raw;
-  try { raw = fs.readFileSync(f, 'utf8'); } catch { return []; }
-  const items = [];
-  for (const line of raw.split('\n')) {
-    if (!line.includes('"type":"user"')) continue;
-    let j;
-    try { j = JSON.parse(line); } catch { continue; }
-    if (j.type !== 'user' || j.isMeta || j.isSidechain || !j.message) continue;
-    const at = Date.parse(j.timestamp);
-    if (!at) continue;
-    const text = stripContext(textOf(j.message.content)).replace(/\s+/g, ' ').trim();
-    if (text.length < 4 || NOISE.test(text)) continue;
-    items.push({ at, text: text.slice(0, 400), key: j.uuid || `${at}|${text.slice(0, 40)}`, cwd: j.cwd });
-  }
-  fileCache.set(f, { mtimeMs: st.mtimeMs, size: st.size, items });
-  return items;
+/** Una línea del registro de Claude Code → una petición tuya { at, text, key, cwd }, o null. */
+function promptFromLine(line) {
+  if (!line.includes('"type":"user"')) return null;
+  let j;
+  try { j = JSON.parse(line); } catch { return null; }
+  if (j.type !== 'user' || j.isMeta || j.isSidechain || !j.message) return null;
+  const at = Date.parse(j.timestamp);
+  if (!at) return null;
+  const text = stripContext(textOf(j.message.content)).replace(/\s+/g, ' ').trim();
+  if (text.length < 4 || NOISE.test(text)) return null;
+  return { at, text: text.slice(0, 400), key: j.uuid || `${at}|${text.slice(0, 40)}`, cwd: j.cwd };
 }
 
-/** Peticiones del usuario entre dos fechas, agrupadas por proyecto: { proyecto: [{ at, text }] } */
-function prompts(fromMs, toMs) {
-  const files = [];
-  walk(path.join(claudeDir(), 'projects'), files, fromMs - 864e5);
-  const live = new Set(files);
-  for (const k of fileCache.keys()) if (!live.has(k)) fileCache.delete(k); // archivos viejos fuera de la caché
+/** Peticiones [{ at, text, key, cwd }] entre dos fechas, agrupadas por proyecto (sin repetidas). */
+function groupPrompts(items, fromMs, toMs) {
   const byProject = {};
   const seen = new Set();
-  for (const f of files) {
-    for (const it of promptsOf(f)) {
-      if (it.at < fromMs || it.at >= toMs || seen.has(it.key)) continue;
-      seen.add(it.key);
-      const proj = projectName(it.cwd);
-      (byProject[proj] = byProject[proj] || []).push({ at: it.at, text: it.text });
-    }
+  for (const it of items) {
+    if (it.at < fromMs || it.at >= toMs || seen.has(it.key)) continue;
+    seen.add(it.key);
+    const proj = projectName(it.cwd);
+    (byProject[proj] = byProject[proj] || []).push({ at: it.at, text: it.text });
   }
   for (const k of Object.keys(byProject)) byProject[k].sort((a, b) => a.at - b.at);
   return byProject;
+}
+
+/**
+ * Peticiones del usuario entre dos fechas, agrupadas por proyecto: { proyecto: [{ at, text }] }.
+ * Las lee src/claudescan.js: solo lo nuevo de cada archivo (no el archivo entero cada vez).
+ */
+function prompts(fromMs, toMs) {
+  return require('./claudescan').shared().prompts(fromMs, toMs);
 }
 
 /** Resumen corto sin IA: 2-3 peticiones por proyecto, recortadas. */
@@ -112,4 +101,4 @@ function summarize(byProject, perProject = 3, maxLen = 70) {
   return lines;
 }
 
-module.exports = { prompts, summarize };
+module.exports = { prompts, summarize, promptFromLine, groupPrompts, claudeDir };

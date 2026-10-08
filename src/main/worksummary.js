@@ -20,7 +20,7 @@ module.exports = function install(M) {
   async function groupsFor(which) {
     const { from, to } = range(which);
     let prompts = {};
-    try { prompts = journal.prompts(from, to); } catch { /* sin registros de Claude Code */ }
+    try { prompts = M.scan ? await M.scan.prompts(from, to) : journal.prompts(from, to); } catch { /* sin registros de Claude Code */ }
     let commits = [];
     try { commits = await M.prod.commitsBetween(from, to); } catch { /* sin git */ }
     const day = S().days[M.dayKey(new Date(from))] || {};

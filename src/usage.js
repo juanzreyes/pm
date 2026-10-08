@@ -130,33 +130,35 @@ function projectName(cwd) {
   return name;
 }
 
+/** Una línea del registro de Claude Code → consumo de esa respuesta, o null si no es una. */
+function entryFromLine(line, p) {
+  if (!line.includes('"usage"')) return null;
+  try {
+    const j = JSON.parse(line);
+    const m = j.message;
+    if (j.type !== 'assistant' || !m || !m.usage || String(m.model || '').startsWith('<')) return null; // sin mensajes internos (<synthetic>)
+    const u = m.usage;
+    const cc = u.cache_creation || {};
+    const write5m = cc.ephemeral_5m_input_tokens ?? (u.cache_creation_input_tokens || 0);
+    const write1h = cc.ephemeral_1h_input_tokens || 0;
+    const e = {
+      id: (m.id || '') + '|' + (j.requestId || ''),
+      ts: Date.parse(j.timestamp),
+      model: m.model || 'desconocido',
+      input: (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0),
+      cacheRead: u.cache_read_input_tokens || 0,
+      output: u.output_tokens || 0,
+      project: j.cwd ? projectName(j.cwd) : path.basename(path.dirname(p)),
+    };
+    e.cost = costOf(e.model, u.input_tokens || 0, write5m, write1h, e.cacheRead, e.output);
+    return e;
+  } catch { return null; } // línea incompleta
+}
 function parseFile(p) {
   const entries = [];
   let raw;
   try { raw = fs.readFileSync(p, 'utf8'); } catch { return entries; }
-  for (const line of raw.split('\n')) {
-    if (!line.includes('"usage"')) continue;
-    try {
-      const j = JSON.parse(line);
-      const m = j.message;
-      if (j.type !== 'assistant' || !m || !m.usage || String(m.model || '').startsWith('<')) continue; // sin mensajes internos (<synthetic>)
-      const u = m.usage;
-      const cc = u.cache_creation || {};
-      const write5m = cc.ephemeral_5m_input_tokens ?? (u.cache_creation_input_tokens || 0);
-      const write1h = cc.ephemeral_1h_input_tokens || 0;
-      const e = {
-        id: (m.id || '') + '|' + (j.requestId || ''),
-        ts: Date.parse(j.timestamp),
-        model: m.model || 'desconocido',
-        input: (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0),
-        cacheRead: u.cache_read_input_tokens || 0,
-        output: u.output_tokens || 0,
-        project: j.cwd ? projectName(j.cwd) : path.basename(path.dirname(p)),
-      };
-      e.cost = costOf(e.model, u.input_tokens || 0, write5m, write1h, e.cacheRead, e.output);
-      entries.push(e);
-    } catch { /* línea incompleta */ }
-  }
+  for (const line of raw.split('\n')) { const e = entryFromLine(line, p); if (e) entries.push(e); }
   return entries;
 }
 
@@ -200,7 +202,50 @@ function add(b, e) {
   pr.messages += 1;
 }
 
+/**
+ * Suma el consumo por día (30 días), semana, ayer, hoy y últimas 5 h. entries: [{ id, ts, … }]
+ * (las repetidas, mismo id en varios archivos, se cuentan una vez).
+ */
+function statsFrom(entries, root = path.join(claudeDir(), 'projects'), now = Date.now()) {
+  const weekAgo = now - 7 * 864e5;
+  const monthAgo = now - 30 * 864e5;
+  const byDay = {};
+  const dayKeyOf = (ts) => {
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const seen = new Set();
+  const startToday = new Date(now); startToday.setHours(0, 0, 0, 0);
+  const startYesterday = startToday.getTime() - 864e5;
+  const buckets = { today: emptyBucket(), yesterday: emptyBucket(), last5h: emptyBucket(), week: emptyBucket() };
+  let lastActivity = 0;
+  for (const e of entries) {
+    if (!e.ts || e.ts < monthAgo || seen.has(e.id)) continue;
+    seen.add(e.id);
+    const dk = dayKeyOf(e.ts);
+    const bd = byDay[dk] || (byDay[dk] = { tokens: 0, messages: 0, cost: 0 });
+    bd.tokens += e.input + e.output;
+    bd.messages += 1;
+    bd.cost += e.cost || 0;
+    if (e.ts < weekAgo) continue;
+    add(buckets.week, e);
+    if (e.ts >= startToday.getTime()) add(buckets.today, e);
+    else if (e.ts >= startYesterday) add(buckets.yesterday, e);
+    if (e.ts >= now - 5 * 3600e3) add(buckets.last5h, e);
+    if (e.ts > lastActivity) lastActivity = e.ts;
+  }
+  return { ...buckets, byDay, lastActivity: lastActivity || null, available: fs.existsSync(root) };
+}
+
+/**
+ * Consumo local (síncrono, para la CLI y los tests). La app usa src/main/claudescan.js, que lee
+ * en segundo plano, solo lo nuevo de cada archivo, y guarda lo leído entre reinicios.
+ */
 function localStats() {
+  return require('./claudescan').shared().stats();
+}
+
+function localStatsOld() {
   const root = path.join(claudeDir(), 'projects');
   const now = Date.now();
   const weekAgo = now - 7 * 864e5;
@@ -244,4 +289,4 @@ function localStats() {
   return { ...buckets, byDay, lastActivity: lastActivity || null, available: fs.existsSync(root) };
 }
 
-module.exports = { readClaudeCodeSession, fetchLimits, parseLimits, localStats, parseFile };
+module.exports = { readClaudeCodeSession, fetchLimits, parseLimits, localStats, localStatsOld, statsFrom, entryFromLine, parseFile, claudeDir };

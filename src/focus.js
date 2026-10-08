@@ -288,7 +288,7 @@ function start(onSample, onError) {
   const run = () => {
     if (stopped || process.platform !== 'win32') return;
     const encoded = Buffer.from(PS_SCRIPT, 'utf16le').toString('base64');
-    child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded], {
+    child = spawnImpl('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded], {
       windowsHide: true,
       stdio: ['ignore', 'pipe', 'ignore'],
     });
@@ -333,4 +333,9 @@ function presentingFrom(sample) {
   return null;
 }
 
-module.exports = { start, classify, meetingFrom, presentingFrom, parseLinux };
+// Quién abre el PowerShell del vigilante: en la app, un hilo aparte (src/main/proc.js), porque
+// abrirlo congela unos segundos a quien lo abre.
+let spawnImpl = (file, args, opts) => spawn(file, args, opts);
+function setSpawn(fn) { spawnImpl = fn; }
+
+module.exports = { start, classify, meetingFrom, presentingFrom, parseLinux, setSpawn };

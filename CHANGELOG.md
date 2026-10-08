@@ -1,5 +1,12 @@
 # Novedades de PM Pollito
 
+## 2.1.3 — Ya no traba la PC
+- **Arranque**: PM leía de golpe todo el historial de Claude Code (más de 1 GB en algunos equipos) en el hilo principal, y lo repetía en cada actualización del consumo. Ahora solo lee lo nuevo desde la última vez, en trozos y en un hilo aparte, y recuerda lo leído entre reinicios: de 4–5 s por lectura a milisegundos.
+- **Git**: ya no abre ~140 procesos de git cada 10 minutos. Revisa solo los repos con actividad (según sus reflogs, sin abrir git), usa un solo comando por repo y lanza los procesos desde un hilo aparte para que el antivirus no congele la app.
+- **Vigilante de ventanas** (modo foco): su PowerShell también arranca fuera del hilo principal.
+- Resultado: los bloqueos al iniciar pasan de ~15 s a ~1 s, y en reposo PM usa menos de 1% de CPU.
+- "Acerca de" ya no muestra el nombre del autor.
+
 ## 2.1.2 — Nada se corta
 - **Menú rápido del pollito** (mantenerlo presionado): después de que el pollito paseaba, se dibujaba corrido hacia abajo y la ventana lo cortaba (se veían 2 de 6 botones o ninguno). Ahora se ven los 6 siempre, aunque el pollito esté en un borde.
 - **Globo de "pensando"** (Claude trabajando): ya no se sale por la derecha cuando el pollito camina hacia ese lado.

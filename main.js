@@ -1,4 +1,30 @@
 const { app, BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage, safeStorage, shell, dialog, Notification } = require('electron');
+
+// Diagnóstico de rendimiento (solo con PM_PERF=archivo): anota cada vez que el proceso principal
+// se congela más de 40 ms (la app no responde mientras tanto).
+if (process.env.PM_PERF) {
+  const t0 = Date.now();
+  let last = Date.now();
+  const out = [];
+  setInterval(() => {
+    const now = Date.now();
+    const lag = now - last - 25;
+    if (lag > 40) out.push(`${((now - t0) / 1000).toFixed(1)}s bloqueado ${lag} ms`);
+    last = now;
+  }, 25).unref();
+  setInterval(() => { try { require('fs').writeFileSync(process.env.PM_PERF, out.join('\n')); } catch { /* sin disco */ } }, 1000).unref();
+  // Y un perfil de CPU de los primeros 30 s (PM_PERF.cpuprofile, se abre con las DevTools de Chrome).
+  try {
+    const inspector = require('inspector');
+    const ses = new inspector.Session();
+    ses.connect();
+    ses.post('Profiler.enable', () => ses.post('Profiler.start', () => {
+      setTimeout(() => ses.post('Profiler.stop', (err, r) => {
+        if (!err) require('fs').writeFileSync(process.env.PM_PERF + '.cpuprofile', JSON.stringify(r.profile));
+      }), 30000).unref();
+    }));
+  } catch { /* sin inspector */ }
+}
 const path = require('path');
 const os = require('os');
 const { Store } = require('./src/store');
@@ -1167,6 +1193,10 @@ mods.whereami = require('./src/main/whereami')(M);
 M.whereami = mods.whereami;
 mods.coach = require('./src/main/coach')(M);
 M.coach = mods.coach;
+mods.proc = require('./src/main/proc')(M);
+M.proc = mods.proc;
+mods.scan = require('./src/main/claudescan')(M);
+M.scan = mods.scan;
 mods.fly = require('./src/main/petfly')(M);
 M.fly = mods.fly;
 mods.worksum = require('./src/main/worksummary')(M);
@@ -1196,6 +1226,8 @@ app.on('before-quit', () => {
   M.writeBoot({ pending: false, fails: 0, at: Date.now() });
   if (store) try { M.syncNow(false); } catch { /* al cerrar, sin drama */ }
   if (stopFocus) stopFocus();
+  if (M.proc) M.proc.stop();
+  if (M.scan) M.scan.stop();
   if (mods.remote) mods.remote.stopPolling();
   if (store) {
     M.markStopped(quitHow || 'user');
