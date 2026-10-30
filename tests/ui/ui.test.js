@@ -774,6 +774,56 @@ test('el menú rápido y el globo de "pensando" caben en la ventana del pollito,
   assert.deepEqual(r, [-55, 0, 55].map((x) => ({ x, botones: 6, dentro: true, globo: true })));
 });
 
+test('ChickRig: en reposo no anima a 60 fps, sigue al cursor con las pupilas y la colita no corre en cada cuadro', async () => {
+  const pet = await waitPage('pet');
+  const r = await pet.evaluate(async () => {
+    const wait = (ms) => new Promise((res) => setTimeout(res, ms));
+    const clean = () => { for (const c of [...document.body.classList]) if (/^(a-|walking|music|dragged|flying|petting|user-away|breathing|breathe-|visiting|visit-)/.test(c)) document.body.classList.remove(c); };
+    clean();
+    hideBubble();
+    // Una burbuja de otra prueba lo deja fluido unos segundos: esperar a que se calme.
+    for (let i = 0; i < 40 && ChickRig.stats().mode !== 'idle'; i++) { clean(); await wait(200); }
+    await wait(300);
+    // Reposo: las infinitas quedan pausadas (las avanza el motor) y van a pocos cuadros por segundo.
+    const infinite = () => document.getAnimations().filter((a) => a.effect.getTiming().iterations === Infinity);
+    const idle = ChickRig.stats();
+    const cls = document.body.className;
+    const pausedIdle = infinite().every((a) => a.playState === 'paused');
+    const t0 = infinite()[0] && infinite()[0].currentTime;
+    await wait(400);
+    const advanced = infinite()[0] ? infinite()[0].currentTime > t0 : true;
+    // Sin tocar la PC: aún menos cuadros.
+    document.body.classList.add('user-away');
+    await wait(100);
+    const away = ChickRig.stats();
+    document.body.classList.remove('user-away');
+    // Caminando: fluidez completa (las infinitas vuelven a correr solas).
+    document.body.classList.add('walking');
+    await wait(100);
+    const walking = ChickRig.stats();
+    const runningWalking = infinite().some((a) => a.playState === 'running');
+    document.body.classList.remove('walking');
+    // El cursor a la derecha del pollito → las pupilas se corren a la derecha (resorte, no transición CSS).
+    const c = document.querySelector('#chick').getBoundingClientRect();
+    for (let i = 0; i < 6; i++) { ChickRig.lookAt(c.right + 60, c.top + c.height / 2); await wait(60); }
+    const m = /translate\(([-\d.]+) ([-\d.]+)\)/.exec(document.querySelector('#pupils').getAttribute('transform') || '');
+    // La colita de la burbuja es un "seguidor" mientras la burbuja está abierta.
+    say({ text: 'Hola', ms: 2000 });
+    const tail = ChickRig.stats().followers.includes('tail');
+    return { cls, idle: idle.mode, idleFps: idle.fps, pausedIdle, advanced, away: away.mode, awayFps: away.fps, walking: walking.mode, runningWalking, pupilX: m ? Number(m[1]) : 0, tail };
+  });
+  assert.equal(r.idle, 'idle', r.cls);
+  assert.ok(r.idleFps > 0 && r.idleFps <= 12, 'reposo a pocos fps: ' + r.idleFps);
+  assert.ok(r.pausedIdle, 'las animaciones de reposo las mueve el motor');
+  assert.ok(r.advanced, 'y aun así avanzan');
+  assert.equal(r.away, 'drowsy');
+  assert.ok(r.awayFps < r.idleFps);
+  assert.equal(r.walking, 'active');
+  assert.ok(r.runningWalking, 'al caminar vuelven a fluidez completa');
+  assert.ok(r.pupilX > 0.5, 'las pupilas miran al cursor: ' + r.pupilX);
+  assert.ok(r.tail);
+});
+
 test('ajustes: diagnóstico sin errores de la app', async () => {
   const panel = await waitPage('panel');
   await panel.evaluate(() => pm.command('diag'));

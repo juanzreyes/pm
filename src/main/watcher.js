@@ -145,7 +145,7 @@ module.exports = function install(M) {
 
     // Gestos del pollito según lo que estás haciendo.
     const payload = { cat: c.cat, label: c.label, scoldLevel: M.fx.scoldLevel, idle: s.i };
-    const key = `${c.cat}|${M.fx.scoldLevel}|${s.i > 300}`;
+    const key = `${c.cat}|${M.fx.scoldLevel}|${s.i > 120}|${s.i > 300}`;
     if (key !== M.fx.sentKey && M.petWin && !M.petWin.isDestroyed()) {
       M.fx.sentKey = key;
       M.petWin.webContents.send('pet:focus', payload);

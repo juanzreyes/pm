@@ -32,6 +32,7 @@ const DEFAULTS = {
     petSize: 'm', // 's' | 'm' | 'l'
     discreet: false, // se esconde en el borde de la pantalla
     reducedMotion: false,
+    petFps: 'balanced', // fluidez del pollito en reposo: eco | balanced | smooth | max
     volume: 70,
     voice: true, // leer en voz alta los avisos importantes
     micWatch: true, // detectar reuniones por el micrófono (sin grabar nada)

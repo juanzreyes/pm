@@ -812,6 +812,7 @@ module.exports = function install(M) {
       const s = M.store.data.settings;
       if (patch.theme && ['system', 'light', 'dark', 'contrast'].includes(patch.theme)) s.theme = patch.theme;
       if ('reducedMotion' in patch) s.reducedMotion = !!patch.reducedMotion;
+      if (['eco', 'balanced', 'smooth', 'max'].includes(patch.petFps)) s.petFps = patch.petFps;
       if ('volume' in patch) s.volume = Math.max(0, Math.min(100, Number(patch.volume) || 0));
       M.store.save();
       if (patch.petSize) M.setPetSize(patch.petSize);

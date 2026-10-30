@@ -7,7 +7,6 @@ const fx = $('#fx');
 const walker = $('#walker');
 const meter = $('#meter');
 const meterText = $('#meter-text');
-const eyes = $('#eyes');
 
 let state = null;
 let lastInteract = Date.now();
@@ -246,6 +245,7 @@ function say(payload) {
   bubble.title = bubbleTarget ? (payload.lang === 'en' ? 'Click to see it' : 'Clic para ir a verlo') : '';
   if (!text) return;
   wake();
+  ChickRig.boost(3000);
   clearTimeout(typeTimer);
   body.classList.remove('lipsync', 'beak-open'); // si interrumpe a otra burbuja, el pico no se queda abierto
   clearTimeout(hideTimer);
@@ -319,6 +319,7 @@ function hideBubble() {
   setTimeout(() => {
     bubble.classList.add('hidden');
     bubble.classList.remove('out');
+    ChickRig.unfollow('tail');
     resetStack();
     hovered.delete(bubble);
     syncIgnore();
@@ -351,16 +352,8 @@ function updateTail() {
   const center = r.width ? r.left + r.width / 2 : 120 + posX;
   bubble.style.setProperty('--tail-x', Math.max(22, Math.min(200, center - 8)).toFixed(1) + 'px');
 }
-let tailRaf = 0;
-function followTail() {
-  cancelAnimationFrame(tailRaf);
-  const loop = () => {
-    if (bubble.classList.contains('hidden')) return;
-    updateTail();
-    tailRaf = requestAnimationFrame(loop);
-  };
-  loop();
-}
+// La colita se recalcula solo cuando el pollito se mueve (ChickRig), no en cada cuadro.
+function followTail() { ChickRig.follow('tail', updateTail); }
 
 // Deslizar la burbuja a un lado la descarta (como una notificación del móvil).
 let swipe = null;
@@ -623,20 +616,8 @@ let lastCursorMove = 0;
 pm.onCursor(({ x, y }) => {
   if (Math.abs(x - lastCursor.x) + Math.abs(y - lastCursor.y) > 2) lastCursorMove = Date.now();
   lastCursor = { x, y };
-  lookAt(x, y);
+  ChickRig.lookAt(x, y); // el motor mueve las pupilas con un resorte, sin transiciones CSS
 });
-
-function lookAt(x, y) {
-  const r = chick.getBoundingClientRect();
-  const cx = r.left + 60, cy = r.top + 66;
-  const dx = x - cx, dy = y - cy;
-  const d = Math.hypot(dx, dy) || 1;
-  const k = Math.min(d / 60, 1) * 3.2;
-  let ex = (dx / d) * k;
-  const ey = (dy / d) * k * 0.8;
-  if (body.classList.contains('left')) ex = -ex;
-  eyes.style.transform = `translate(${ex.toFixed(2)}px, ${ey.toFixed(2)}px)`;
-}
 
 // ---------- Vida: parpadeo, paseos y gestos ----------
 function blink() {
@@ -692,7 +673,7 @@ function idle() {
   // Con "menos animación" solo hace gestos suaves de vez en cuando; en el borde no pasea.
   if (reduced && !dragging && Date.now() > busyUntil) {
     if (Math.random() < 0.3) act('look', true);
-  } else if (!dragging && !sleeping() && Date.now() > busyUntil && !docked) {
+  } else if (!dragging && !sleeping() && Date.now() > busyUntil && !docked && !(body.classList.contains('user-away') && Math.random() < 0.85)) {
     const mood = [...body.classList].find((c) => c.startsWith('mood-')) || 'mood-happy';
     const hungry = body.classList.contains('hungry');
     let pool = standbyPool();
@@ -714,7 +695,7 @@ function idle() {
       act(lastIdle, true);
     }
   }
-  setTimeout(idle, rand(3500, 8000));
+  setTimeout(idle, body.classList.contains('user-away') ? rand(9000, 16000) : rand(3500, 8000)); // si no estás, menos gestos
 }
 
 // Zzz mientras duerme
@@ -833,6 +814,7 @@ function updateMeter() {
   updateLook();
   const st = state && state.settings;
   body.classList.toggle('reduced', !!(st && st.reducedMotion));
+  ChickRig.setPreset((st && st.petFps) || 'balanced');
   // Contador de avisos sin leer (clic en el medidor → centro de avisos).
   const unread = (state && state.unread) || 0;
   const badge = $('#unread');
@@ -894,23 +876,19 @@ pm.onClaude((c) => {
   keepThinkingInside();
 });
 // El globo de "pensando" va a la derecha del pollito; si al pasear se saldría de la ventana,
-// se corre lo justo hacia dentro (se revisa en cada cuadro mientras está visible).
-let thinkRaf = 0;
+// se corre lo justo hacia dentro (se recalcula cuando el pollito se mueve, no en cada cuadro).
 function keepThinkingInside() {
-  cancelAnimationFrame(thinkRaf);
   const el = $('#thinking');
-  const loop = () => {
-    if (!body.classList.contains('claude-working')) { el.style.translate = ''; return; }
+  if (!body.classList.contains('claude-working')) { ChickRig.unfollow('thinking'); el.style.translate = ''; return; }
+  ChickRig.follow('thinking', () => {
     el.style.translate = '';
     const r = el.getBoundingClientRect();
     const pad = 4;
     let dx = 0;
     if (r.right > innerWidth - pad) dx = innerWidth - pad - r.right;
     if (r.left + dx < pad) dx = pad - r.left;
-    if (dx) el.style.translate = `${Math.round(dx)}px 0`;
-    thinkRaf = requestAnimationFrame(loop);
-  };
-  loop();
+    el.style.translate = dx ? `${Math.round(dx)}px 0` : '';
+  });
 }
 
 pm.onMeeting((m) => {
@@ -923,6 +901,7 @@ pm.onFocus((f) => {
   body.classList.toggle('judging', distracted);
   body.classList.toggle('fuming', distracted && f.scoldLevel >= 2);
   body.classList.toggle('bored', f.cat === 'idle' && f.idle > 300);
+  body.classList.toggle('user-away', f.cat === 'idle' && f.idle > 120); // no estás mirando: casi no se mueve (ChickRig)
   if (distracted && !wasJudging) act('judge');
 });
 pm.onAnim(act);

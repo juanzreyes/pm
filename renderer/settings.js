@@ -90,6 +90,7 @@ function render() {
   $('#discreet').checked = !!s.discreet;
   $('#auto-hide').checked = state.autoHide !== false;
   $('#reduced').checked = !!s.reducedMotion;
+  $('#s-petfps').value = s.petFps || 'balanced';
   $('#s-sounds').checked = !!s.sounds;
   $('#voice').checked = s.voice !== false;
   if (document.activeElement !== $('#volume')) $('#volume').value = s.volume ?? 70;
@@ -226,6 +227,7 @@ $('#size').addEventListener('click', async (e) => { const b = e.target.closest('
 $('#discreet').addEventListener('change', async (e) => { state = await pm.setAppearance({ discreet: e.target.checked }); render(); });
 $('#auto-hide').addEventListener('change', (e) => pm.updateSettings({ autoHide: e.target.checked }));
 $('#reduced').addEventListener('change', async (e) => { state = await pm.setAppearance({ reducedMotion: e.target.checked }); render(); });
+$('#s-petfps').addEventListener('change', async (e) => { state = await pm.setAppearance({ petFps: e.target.value }); render(); });
 $('#s-sounds').addEventListener('change', (e) => pm.updateSettings({ sounds: e.target.checked }));
 $('#voice').addEventListener('change', (e) => pm.updateSettings({ voice: e.target.checked }));
 $('#voice-test').addEventListener('click', () => pm.command('voice.test'));

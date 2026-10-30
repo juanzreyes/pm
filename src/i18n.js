@@ -134,6 +134,8 @@
     'Tamaño del pollito': 'Chick size', 'Pequeño': 'Small', 'Mediano': 'Medium', 'Grande': 'Large', 'Modo discreto': 'Discreet mode',
     'Se esconde en el borde de la pantalla y se asoma cuando tiene algo que decirte o pasas el ratón.': 'Hides at the screen edge and peeks out when it has something to say or you hover it.',
     'Ocultarme al presentar': 'Hide while presenting', 'Pantalla completa o compartiendo en Teams: desaparezco yo y mis avisos.': 'Full screen or sharing in Teams: I and my alerts disappear.',
+    'Fluidez del pollito': 'Chick smoothness', 'Cuántas veces por segundo se mueve en reposo. Al tocarlo, hablar o hacer algo siempre va fluido. Menos fluidez = menos CPU.': 'How many times per second it moves while idle. Touching it, talking or doing something is always smooth. Less smoothness = less CPU.',
+    'Ahorro': 'Saver', 'Equilibrada': 'Balanced', 'Fluida': 'Smooth', 'Máxima (más CPU)': 'Maximum (more CPU)',
     'Menos animación': 'Reduced motion', 'Movimientos más suaves y sin efectos (accesibilidad).': 'Gentler movement and no effects (accessibility).',
     'Sonidos de pío': 'Chirp sounds', 'Volumen': 'Volume',
     'Solo te interrumpo si llevas tiempo trabajando sin parar, nunca en reuniones ni pomodoros.': 'I only interrupt after a long stretch of work, never during meetings or pomodoros.',
