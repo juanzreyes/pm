@@ -795,7 +795,8 @@ function updateLook() {
   if (vac) {
     $('#away-emoji').textContent = vac.emoji;
     const back = new Date(vac.until).toLocaleDateString(state.lang === 'en' ? 'en' : 'es', { weekday: 'long' });
-    $('#away-sign').textContent = state.lang === 'en' ? `On vacation · back ${back}` : `De vacaciones · vuelvo el ${back}`;
+    $('#away-where').textContent = state.lang === 'en' ? `On vacation in ${vac.place}` : `De vacaciones en ${vac.place}`;
+    $('#away-back').textContent = state.lang === 'en' ? `Back on ${back}` : `Vuelvo el ${back}`;
   }
   const style = (state.settings && state.settings.petStyle) || 'normal';
   for (const x of ['pixel', 'clay', 'minimal']) body.classList.toggle('style-' + x, style === x);

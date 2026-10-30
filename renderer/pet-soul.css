@@ -41,11 +41,15 @@
 .on-vacation #away {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%);
-  background: #fffdf6; border: 2.5px solid #3b2f2f; border-radius: 16px; padding: 8px 12px; box-shadow: 0 3px 0 #3b2f2f;
-  font: 800 12px "Segoe UI", system-ui, sans-serif; color: #3b2f2f; cursor: pointer; white-space: nowrap;
+  width: max-content; max-width: calc(100vw - 24px);
+  background: #fffdf6; border: 2.5px solid #3b2f2f; border-radius: 16px; padding: 8px 14px; box-shadow: 0 3px 0 #3b2f2f;
+  font: 700 11.5px/1.25 "Segoe UI", system-ui, sans-serif; color: #3b2f2f; cursor: pointer; text-align: center;
   animation: awaySway 4s ease-in-out infinite;
 }
 #away-emoji { font-size: 34px; line-height: 1; }
+#away-sign { display: flex; flex-direction: column; align-items: center; }
+#away-where { font-weight: 900; font-size: 12.5px; }
+#away-back { opacity: .75; }
 @keyframes awaySway { 50% { transform: translateX(-50%) rotate(-3deg); } }
 .reduced #away { animation: none; }
 

@@ -774,6 +774,30 @@ test('el menú rápido y el globo de "pensando" caben en la ventana del pollito,
   assert.deepEqual(r, [-55, 0, 55].map((x) => ({ x, botones: 6, dentro: true, globo: true })));
 });
 
+test('el cartel de vacaciones se ve completo, esté donde esté el pollito', async () => {
+  const pet = await waitPage('pet');
+  const r = await pet.evaluate(() => {
+    const walker = document.querySelector('#walker');
+    document.body.classList.add('on-vacation');
+    document.querySelector('#away-where').textContent = 'De vacaciones en la granja de mi primo';
+    document.querySelector('#away-back').textContent = 'Vuelvo el miércoles';
+    const out = [];
+    for (const x of [-55, 0, 55]) {
+      walker.style.transition = 'none';
+      walker.style.transform = `translateX(${x}px)`;
+      void walker.offsetWidth;
+      const q = document.querySelector('#away').getBoundingClientRect();
+      const sign = document.querySelector('#away-sign');
+      out.push(q.left >= 0 && q.right <= innerWidth && q.top >= 0 && sign.scrollWidth <= sign.clientWidth + 1);
+    }
+    walker.style.transform = 'translateX(0px)';
+    walker.style.transition = '';
+    document.body.classList.remove('on-vacation');
+    return out;
+  });
+  assert.deepEqual(r, [true, true, true]);
+});
+
 test('ChickRig: en reposo no anima a 60 fps, sigue al cursor con las pupilas y la colita no corre en cada cuadro', async () => {
   const pet = await waitPage('pet');
   const r = await pet.evaluate(async () => {
@@ -810,7 +834,7 @@ test('ChickRig: en reposo no anima a 60 fps, sigue al cursor con las pupilas y l
     // La colita de la burbuja es un "seguidor" mientras la burbuja está abierta.
     say({ text: 'Hola', ms: 2000 });
     const tail = ChickRig.stats().followers.includes('tail');
-    return { cls, idle: idle.mode, idleFps: idle.fps, pausedIdle, advanced, away: away.mode, awayFps: away.fps, walking: walking.mode, runningWalking, pupilX: m ? Number(m[1]) : 0, tail };
+    return { cls, idle: idle.mode, idleFps: idle.fps, pausedIdle, advanced, away: away.mode, awayFps: away.fps, walking: walking.mode, runningWalking, pupilX: (m ? Number(m[1]) : 0) * (document.body.classList.contains('left') ? -1 : 1), tail }; // en pantalla (el SVG se espeja al mirar a la izquierda)
   });
   assert.equal(r.idle, 'idle', r.cls);
   assert.ok(r.idleFps > 0 && r.idleFps <= 12, 'reposo a pocos fps: ' + r.idleFps);
