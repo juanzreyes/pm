@@ -1,5 +1,26 @@
 # Novedades de PM Pollito
 
+## 2.2.0 — Más liviano, con horario y en HD
+**⚡ Ya no se traba**
+- El pollito ya no anima a 60 cuadros por segundo todo el día. Un motor de animación propio (ChickRig) mueve lo de reposo a pocos cuadros por segundo y solo va fluido cuando lo tocas o lo miras de cerca. Medido con datos reales (pollito + GPU + proceso principal, % de un núcleo): usando la PC 31.6 → 16.2, sin tocar la PC 25.4 → 4.5.
+- Los ojos ya no crean una animación nueva cada vez que mueves el ratón en cualquier parte de la pantalla, y lo que está oculto no se anima.
+- Ajuste nuevo: Apariencia → Fluidez del pollito (Ahorro, Equilibrada, Fluida, Máxima).
+
+**🕗 Horario**
+- Días que trabajas (por defecto de lunes a viernes), entrada y salida (también turno de noche), desayuno, almuerzo, cena y pausas: Ajustes → General → Rutina.
+- Días especiales como se lo dirías, en el chat o en Ajustes: "trabajaré el domingo de 8 a 12", "el lunes es feriado".
+- Horas extra y nocturnas: si trabajas fuera de tu jornada las cuenta y te avisa; escribe "horas extra" en el chat para ver las de hoy y la semana.
+- El daily, el cierre y los regaños respetan tus días libres, comidas y pausas.
+
+**🛋️ Fines de semana**
+- El pollito descansa: ve series, YouTube, escucha música, se toma una cerveza, juega o disfruta el día, y se quita el gafete de PM.
+- El lunes ya no amanece enojado ni hambriento: fuera de tu jornada se cuida solo, y no se va de vacaciones por un fin de semana sin abrir PM.
+- Come contigo: pan dulce y café, arroz con frijoles, pupusas con curtido.
+
+**✨ Pollito HD**
+- Más volumen y brillo, ojos con iris y destellos, rubor suave, respiración más pausada y ojos que siguen al cursor con un resorte. Funciona con todas las especies y pieles.
+- El cartel de vacaciones ya no se corta en los bordes.
+
 ## 2.1.3 — Ya no traba la PC
 - **Arranque**: PM leía de golpe todo el historial de Claude Code (más de 1 GB en algunos equipos) en el hilo principal, y lo repetía en cada actualización del consumo. Ahora solo lee lo nuevo desde la última vez, en trozos y en un hilo aparte, y recuerda lo leído entre reinicios: de 4–5 s por lectura a milisegundos.
 - **Git**: ya no abre ~140 procesos de git cada 10 minutos. Revisa solo los repos con actividad (según sus reflogs, sin abrir git), usa un solo comando por repo y lanza los procesos desde un hilo aparte para que el antivirus no congele la app.
