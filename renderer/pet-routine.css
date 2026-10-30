@@ -27,8 +27,10 @@ body[class*="leisure-"] #badge, body[class*="meal-"] #badge, .resting #badge { d
 #meal .char { stroke: #8a5a23; stroke-width: 1.3; stroke-linecap: round; opacity: .8; }
 #meal .curtido { fill: none; stroke: #8bc34a; stroke-width: 1.4; stroke-linecap: round; }
 #meal .curtido:nth-of-type(n) { stroke-dasharray: 3 1.5; }
-#meal .steam { fill: none; stroke: #fff; stroke-width: 1.3; stroke-linecap: round; opacity: 0; animation: steam 2.6s ease-in-out infinite; }
-#meal .steam.s2 { animation-delay: 1.3s; }
+#meal .steam { fill: none; stroke: #fff; stroke-width: 1.3; stroke-linecap: round; opacity: 0; }
+/* Las animaciones solo existen mientras se ve el objeto (si no, se recalculan para nada). */
+body[class*="meal-"] #meal .steam { animation: steam 2.6s ease-in-out infinite; }
+body[class*="meal-"] #meal .steam.s2 { animation-delay: 1.3s; }
 @keyframes steam { 0% { opacity: 0; transform: translateY(2px); } 30% { opacity: .8; } 100% { opacity: 0; transform: translateY(-7px); } }
 /* Masticando: el pico se mueve despacio y el cuerpo se inclina hacia el plato. */
 .meal-breakfast #beakBottom, .meal-lunch #beakBottom, .meal-dinner #beakBottom { animation: chew .55s ease-in-out infinite alternate; }
@@ -47,7 +49,8 @@ body[class*="leisure-"] #badge, body[class*="meal-"] #badge, .resting #badge { d
 .leisure-series #lz-tv, .leisure-series #lz-popcorn { display: inline; }
 #lz-tv .tv-body { fill: url(#gWood); stroke: #3b2f2f; stroke-width: 1.6; }
 #lz-tv .tv-screen { fill: url(#gScreen); stroke: #2a2321; stroke-width: 1.2; }
-#lz-tv .tv-flicker { fill: #fff; opacity: 0; animation: flicker 2.4s steps(1) infinite; }
+#lz-tv .tv-flicker { fill: #fff; opacity: 0; }
+.leisure-series #lz-tv .tv-flicker { animation: flicker 2.4s steps(1) infinite; }
 @keyframes flicker { 0% { opacity: 0; } 20% { opacity: .18; } 35% { opacity: 0; } 60% { opacity: .1; } 72% { opacity: 0; } }
 #lz-tv .tv-knob { fill: #f2d7a6; stroke: #3b2f2f; stroke-width: .8; }
 #lz-tv .tv-ant, #lz-tv .tv-legs { stroke: #3b2f2f; stroke-width: 1.4; stroke-linecap: round; fill: none; }
@@ -63,7 +66,8 @@ body[class*="leisure-"] #badge, body[class*="meal-"] #badge, .resting #badge { d
 #lz-phone .phone-screen { fill: #fff; }
 #lz-phone .yt { fill: #ff2d2d; }
 #lz-phone .yt-play { fill: #fff; }
-#lz-phone .face-glow { fill: url(#gFaceGlow); animation: glow 3s ease-in-out infinite; }
+#lz-phone .face-glow { fill: url(#gFaceGlow); }
+.leisure-youtube #lz-phone .face-glow { animation: glow 3s ease-in-out infinite; }
 @keyframes glow { 0%, 100% { opacity: .7; } 50% { opacity: 1; } }
 
 /* ---------- 🎧 música ---------- */
@@ -72,8 +76,8 @@ body[class*="leisure-"] #badge, body[class*="meal-"] #badge, .resting #badge { d
 @keyframes bopSlow { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-2px) rotate(-3deg); } }
 #lz-notes .note, #lz-notes .note-flag { fill: none; stroke: #6c5ce7; stroke-width: 1.6; stroke-linecap: round; }
 #lz-notes .note-head { fill: #6c5ce7; }
-#lz-notes .n1, #lz-notes .n2 { animation: noteFloat 3.2s ease-in-out infinite; }
-#lz-notes .n2 { animation-delay: 1.6s; }
+.leisure-music #lz-notes .n1, .leisure-music #lz-notes .n2 { animation: noteFloat 3.2s ease-in-out infinite; }
+.leisure-music #lz-notes .n2 { animation-delay: 1.6s; }
 @keyframes noteFloat { 0% { opacity: 0; transform: translateY(6px); } 25% { opacity: 1; } 100% { opacity: 0; transform: translateY(-10px); } }
 
 /* ---------- 🍺 cerveza ---------- */
@@ -82,8 +86,9 @@ body[class*="leisure-"] #badge, body[class*="meal-"] #badge, .resting #badge { d
 #lz-beer .beer-glass { fill: url(#gGlass); stroke: #3b2f2f; stroke-width: 1.3; stroke-linejoin: round; }
 #lz-beer .beer-handle { fill: none; stroke: #3b2f2f; stroke-width: 1.6; }
 #lz-beer .foam { fill: #fffdf5; stroke: #3b2f2f; stroke-width: 1.1; stroke-linejoin: round; }
-#lz-beer .bubble { fill: #fff3c4; animation: bubble 2.2s ease-in infinite; }
-#lz-beer .b2 { animation-delay: .7s; } #lz-beer .b3 { animation-delay: 1.4s; }
+#lz-beer .bubble { fill: #fff3c4; }
+.leisure-beer #lz-beer .bubble { animation: bubble 2.2s ease-in infinite; }
+.leisure-beer #lz-beer .b2 { animation-delay: .7s; } .leisure-beer #lz-beer .b3 { animation-delay: 1.4s; }
 @keyframes bubble { 0% { opacity: 0; transform: translateY(0); } 20% { opacity: .9; } 100% { opacity: 0; transform: translateY(-12px); } }
 .leisure-beer #cheeks ellipse { opacity: 1; }
 .leisure-beer #wingR { animation: sipWing 5s ease-in-out infinite; }
@@ -104,7 +109,8 @@ body[class*="leisure-"] #badge, body[class*="meal-"] #badge, .resting #badge { d
 .leisure-games #lz-pad { display: inline; }
 #lz-pad .pad { fill: url(#gPad); stroke: #1c1f28; stroke-width: 1.3; stroke-linejoin: round; }
 #lz-pad .pad-dpad { stroke: #c9d1e3; stroke-width: 2; stroke-linecap: round; }
-#lz-pad .pad-a { fill: #51cf66; } #lz-pad .pad-b { fill: #ff6b6b; animation: press .9s steps(1) infinite; }
+#lz-pad .pad-a { fill: #51cf66; } #lz-pad .pad-b { fill: #ff6b6b; }
+.leisure-games #lz-pad .pad-b { animation: press .9s steps(1) infinite; }
 #lz-pad .pad-stick { fill: #1c1f28; stroke: #6b7389; stroke-width: .8; }
 @keyframes press { 50% { opacity: .45; } }
 .leisure-games #pupils { transform: translate(0, 2px); }

@@ -19,7 +19,7 @@
   // Fluidez en reposo según el ajuste (cuadros por segundo). 'max' = sin gobernador.
   const PRESETS = { eco: 8, balanced: 10, smooth: 24, max: 0 };
   const ACTING_FPS = 20;
-  const NEAR_FPS = 24; // el cursor anda cerca: lo estás viendo, más fluido (pero sin llegar a 60)
+  const NEAR_FPS = 20; // el cursor anda cerca: lo estás viendo, más fluido (pero sin llegar a 60)
   // Interacción de verdad (lo estás tocando, camina, baila…): todo a fluidez completa.
   const ACTIVE = /(^|\s)(walking|music|dragged|flying|petting|breathing|visiting|visit-leaving)(\s|$)/;
   // Un gesto (a-hop, a-look…): fluido si lo estás viendo (cursor cerca); si no, a ACTING_FPS.
@@ -74,6 +74,13 @@
     const governed = mode === 'idle' || mode === 'near' || mode === 'drowsy' || (mode === 'acting' && fps() > 0);
     const t = now();
     for (const a of document.getAnimations()) {
+      // Lo que no se ve (dentro de un grupo oculto: en SVG, display:none en el padre NO detiene
+      // las animaciones de los hijos) queda pausado y no se toca: moverlo es trabajo para nada.
+      const target = a.effect && a.effect.target;
+      if (target && target.checkVisibility && !target.checkVisibility()) {
+        if (a.playState === 'running') { a.__rigStart = t - (a.currentTime || 0); a.pause(); }
+        continue;
+      }
       // En reposo, solo las infinitas; adormilado, también los gestos (animaciones CSS finitas).
       const mine = isIdleAnim(a) || ((mode === 'drowsy' || mode === 'acting') && typeof CSSAnimation !== 'undefined' && a instanceof CSSAnimation);
       if (!mine && a.__rigStart === undefined) continue;
