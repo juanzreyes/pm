@@ -86,7 +86,7 @@ module.exports = function install(M) {
     const now = new Date();
     const hm = M.pad(now.getHours()) + ':' + M.pad(now.getMinutes());
     const posted = M.store.data.teamPosted || {};
-    const workday = now.getDay() !== 0 && now.getDay() !== 6;
+    const workday = M.routine ? M.routine.isWorkday() : now.getDay() !== 0 && now.getDay() !== 6;
     const st = M.today().standup;
     if (s.teamDaily && workday && hm >= s.teamDaily && posted.daily !== M.dayKey() && st && (st.today || []).length) postDaily(false);
     if (s.teamWeekly && now.getDay() === 5 && hm >= (s.eveningTime || '16:30') && posted.weekly !== M.dayKey()) postWeekly(false);

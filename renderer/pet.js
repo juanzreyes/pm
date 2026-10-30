@@ -790,6 +790,7 @@ function updateLook() {
   // Rasgos que salen de cómo trabajas y vacaciones (2.0)
   for (const c of [...body.classList]) if (c.startsWith('trait-')) body.classList.remove(c);
   for (const t of ((state.soul && state.soul.traits) || [])) body.classList.add('trait-' + t.id);
+  applyRoutine(state.routine, !!(state.soul && state.soul.vacation));
   const vac = state.soul && state.soul.vacation;
   body.classList.toggle('on-vacation', !!vac);
   if (vac) {
@@ -809,6 +810,22 @@ function updateLook() {
     if (slot === 'skin') body.classList.add(id);
     else body.classList.add('acc-' + id, 'has-' + slot);
   }
+}
+
+// Rutina (2.2): come contigo, hace pausas y el fin de semana tiene planes (series, YouTube…).
+const ROUTINE_CLASSES = ['meal-breakfast', 'meal-lunch', 'meal-dinner', 'on-break', 'resting', 'leisure-series', 'leisure-youtube', 'leisure-music', 'leisure-beer', 'leisure-chill', 'leisure-games'];
+function applyRoutine(r, away) {
+  const want = new Set();
+  if (r && !away) {
+    const p = r.phase || {};
+    if (p.kind === 'meal') want.add('meal-' + p.meal);
+    else if (p.kind === 'break') want.add('on-break');
+    else if (r.leisure) want.add('leisure-' + r.leisure.id);
+    if (p.kind === 'rest') want.add('resting');
+  }
+  for (const c of ROUTINE_CLASSES) body.classList.toggle(c, want.has(c));
+  const tip = r && r.leisure && !(r.phase && r.phase.kind === 'meal') ? { series: 'Viendo series 📺', youtube: 'Viendo YouTube ▶️', music: 'Escuchando música 🎧', beer: 'Una cervecita 🍺', chill: 'Disfrutando el día 😎', games: 'Jugando 🎮' }[r.leisure.id] : r && r.phase && r.phase.kind === 'meal' ? `Comiendo (${r.phase.label}) 🍽️` : '';
+  if (tip && !body.classList.contains('music')) chick.title = tip;
 }
 
 function updateMeter() {

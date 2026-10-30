@@ -96,3 +96,17 @@ input.switch:active::after { width: 21px; }
 input.switch:checked:active::after { left: 15px; }
 /* Cada sección entra con un deslizamiento corto */
 .sec:not(.hidden) { animation: m-in var(--d-med, 220ms) var(--ease-out, ease-out); }
+
+/* ---------- Horario (2.2) ---------- */
+.sched-days button { min-width: 27px; padding: 4px 0; text-align: center; font-weight: 900; }
+.sched-days button.on { background: var(--yellow, #ffd84a); border-color: var(--ink); }
+.sched-meals, .sched-breaks { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.sched-meal, .sched-break { display: flex; align-items: center; gap: 6px; font-weight: 700; white-space: nowrap; }
+.sched-meal span { min-width: 70px; }
+.sched-meal input[type=number], .sched-break input[type=number] { width: 58px; }
+.sched-meal input[type=time], .sched-break input[type=time] { width: auto; }
+.sched-extras { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.sched-extras .entry { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; border: 1.5px dashed var(--line); }
+.sched-days { display: flex; gap: 3px; flex-wrap: nowrap; justify-content: flex-end; flex: none; }
+.sched-days button { background: var(--card, #fff); border: 1.5px solid var(--line); border-radius: 99px; font-size: 11.5px; cursor: pointer; color: var(--ink); }
+html.dark .sched-days button.on, html.contrast .sched-days button.on { background: var(--yellow, #ffd84a); color: #231f1b; border-color: #ffd84a; }

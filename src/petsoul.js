@@ -309,9 +309,15 @@ function create(ctx) {
       return;
     }
     const neglected = (p.fullness ?? 100) <= 5 && (p.happiness ?? 100) <= 10;
-    if (!neglected) { if (p.neglectedSince) { delete p.neglectedSince; save(); } return; }
-    if (!p.neglectedSince) { p.neglectedSince = Date.now(); save(); return; }
-    if (Date.now() - p.neglectedSince < 24 * 3600e3) return;
+    const t = Date.now();
+    const lastCheck = p.neglectCheckAt || t;
+    p.neglectCheckAt = t;
+    if (!neglected) { if (p.neglectedMs || p.neglectedSince) { delete p.neglectedMs; delete p.neglectedSince; save(); } return; }
+    // Solo cuenta el descuido en tu jornada: una noche o un fin de semana sin abrir PM no es abandono.
+    if (ctx.isWorkTime && !ctx.isWorkTime()) return;
+    p.neglectedMs = (p.neglectedMs || 0) + Math.min(t - lastCheck, 10 * 60e3);
+    save();
+    if (p.neglectedMs < 8 * 3600e3) return; // un día de trabajo entero sin cuidarlo
     const v = pick(PLACES);
     p.vacation = { ...v, since: Date.now(), until: Date.now() + VACATION_DAYS * 864e5 };
     delete p.neglectedSince;

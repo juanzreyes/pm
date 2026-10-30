@@ -43,9 +43,26 @@
           <div class="opt row gap wrap" id="prof-new-row"><input id="prof-emoji" class="emoji-in" value="🏠" maxlength="4" aria-label="Emoji del perfil" /><input id="prof-name" placeholder="Nuevo perfil (ej: Personal)" maxlength="24" /><button id="prof-add" class="ghost">＋ Crear</button><button id="prof-del" class="ghost">Borrar el elegido</button></div>
           <div class="opt row between"><div><b>Iniciar con Windows</b><p class="muted small">El pollito aparece al encender el PC.</p></div><input type="checkbox" class="switch" id="s-autostart" /></div>
           <h3>Rutina</h3>
-          <div class="opt row between"><div><b>Pregunta del daily</b><p class="muted small">A esta hora te pregunto qué hiciste ayer y qué harás hoy.</p></div><input type="time" id="s-morning" /></div>
-          <div class="opt row between"><div><b>Cierre del día</b><p class="muted small">Te pregunto si cumpliste lo planeado.</p></div><input type="time" id="s-evening" /></div>
-          <div class="opt row between"><div><b>Solo de lunes a viernes</b></div><input type="checkbox" class="switch" id="s-workdays" /></div>
+          <div class="opt row between"><div><b>Días que trabajas</b><p class="muted small">Los demás son de descanso: sin daily, sin regaños y sin enojarse cuando vuelvas.</p></div>
+            <div class="chips sched-days" id="s-workdays" role="group" aria-label="Días que trabajas">
+              <button type="button" data-d="1" title="Lunes">L</button><button type="button" data-d="2" title="Martes">M</button><button type="button" data-d="3" title="Miércoles">X</button><button type="button" data-d="4" title="Jueves">J</button><button type="button" data-d="5" title="Viernes">V</button><button type="button" data-d="6" title="Sábado">S</button><button type="button" data-d="0" title="Domingo">D</button>
+            </div></div>
+          <div class="opt row between"><div><b>Entrada</b><p class="muted small">Empieza tu jornada: te pregunto qué hiciste ayer y qué harás hoy.</p></div><input type="time" id="s-morning" /></div>
+          <div class="opt row between"><div><b>Salida</b><p class="muted small">Te pregunto si cumpliste lo planeado. Si trabajas después, lo cuento como horas extra. Si sales después de medianoche (turno de noche), pon la hora de salida y lo entiendo.</p></div><input type="time" id="s-evening" /></div>
+          <div class="opt row between"><div><b>Comidas</b><p class="muted small">Comemos juntos: te lo recuerdo y a esa hora no te regaño por despegarte de la pantalla.</p></div>
+            <div class="sched-meals">
+              <label class="sched-meal"><input type="checkbox" class="switch" data-meal="breakfast" /> <span>Desayuno</span> <input type="time" data-meal-at="breakfast" /> <input type="number" min="5" max="180" step="5" data-meal-min="breakfast" aria-label="Minutos del desayuno" /> min</label>
+              <label class="sched-meal"><input type="checkbox" class="switch" data-meal="lunch" /> <span>Almuerzo</span> <input type="time" data-meal-at="lunch" /> <input type="number" min="5" max="180" step="5" data-meal-min="lunch" aria-label="Minutos del almuerzo" /> min</label>
+              <label class="sched-meal"><input type="checkbox" class="switch" data-meal="dinner" /> <span>Cena</span> <input type="time" data-meal-at="dinner" /> <input type="number" min="5" max="180" step="5" data-meal-min="dinner" aria-label="Minutos de la cena" /> min</label>
+            </div></div>
+          <div class="opt row between"><div><b>Pausas</b><p class="muted small">Descansos cortos dentro de la jornada (estirarte, agua, vista lejos).</p></div>
+            <div class="sched-breaks"><div id="s-breaks"></div><button type="button" id="s-break-add" class="ghost mini">＋ Pausa</button></div></div>
+          <div class="opt row between"><div><b>Recordarme comidas y pausas</b></div><input type="checkbox" class="switch" id="s-mealrem" /></div>
+          <div class="opt row between"><div><b>Planes de descanso</b><p class="muted small">El fin de semana y después de la jornada, el pollito ve series, YouTube, escucha música, se toma una cerveza o disfruta el día.</p></div><input type="checkbox" class="switch" id="s-leisure" /></div>
+          <div class="opt"><div><b>Días especiales</b><p class="muted small">Escríbelo como se lo dirías: <i>trabajaré el domingo de 8 a 12</i> · <i>el lunes es feriado</i>. También puedes decírselo en el chat.</p></div>
+            <div class="row gap" style="margin-top:8px"><input id="s-extra-text" placeholder="trabajaré el domingo de 8 a 12" maxlength="120" aria-label="Día especial" /><button type="button" id="s-extra-add" class="soft">Anotar</button></div>
+            <div id="s-extras" class="sched-extras"></div></div>
+          <div class="opt row between" id="s-overtime-row"><div><b>Horas extra de hoy</b><p class="muted small" id="s-overtime">Nada fuera de tu jornada 👌</p></div></div>
           <div class="opt row between"><div><b>Personalidad</b><p class="muted small">Cambia cómo te habla, te felicita y te regaña (también la IA).</p></div>
             <select id="s-personality" aria-label="Personalidad"><option value="motivador">🥳 Motivador</option><option value="sarcastico">😏 Sarcástico</option><option value="zen">🧘 Zen</option><option value="sargento">🪖 Sargento</option></select></div>
           <div class="opt row between"><div><b>Modo música</b><p class="muted small">Si suena Spotify (o YouTube Music, Deezer…), bailo al ritmo.</p></div><input type="checkbox" class="switch" id="s-music" /></div>

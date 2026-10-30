@@ -72,7 +72,7 @@ function render() {
   $('#s-autostart').checked = !!state.autoStart;
   if (document.activeElement !== $('#s-morning')) $('#s-morning').value = s.morningTime;
   if (document.activeElement !== $('#s-evening')) $('#s-evening').value = s.eveningTime;
-  $('#s-workdays').checked = !!s.workdaysOnly;
+  renderSchedule();
   $('#s-chatter').checked = !!s.chatter;
   $('#s-focus-blocks').checked = s.focusDuringBlocks !== false;
   $('#s-personality').value = s.personality || 'motivador';
@@ -180,7 +180,63 @@ $('#lang').addEventListener('change', async (e) => { await pm.updateSettings({ l
 $('#s-autostart').addEventListener('change', (e) => pm.updateSettings({ autoStart: e.target.checked }));
 $('#s-morning').addEventListener('change', (e) => e.target.value && pm.updateSettings({ morningTime: e.target.value }));
 $('#s-evening').addEventListener('change', (e) => e.target.value && pm.updateSettings({ eveningTime: e.target.value }));
-$('#s-workdays').addEventListener('change', (e) => pm.updateSettings({ workdaysOnly: e.target.checked }));
+// ---------- Horario: días, comidas, pausas, descanso y días especiales ----------
+function renderSchedule() {
+  const r = state.routine;
+  if (!r) return;
+  const s = state.settings;
+  for (const b of $$('#s-workdays button')) b.classList.toggle('on', r.workDays.includes(Number(b.dataset.d)));
+  for (const [k, m] of Object.entries(r.meals)) {
+    $(`[data-meal="${k}"]`).checked = m.on;
+    if (document.activeElement !== $(`[data-meal-at="${k}"]`)) $(`[data-meal-at="${k}"]`).value = m.at;
+    if (document.activeElement !== $(`[data-meal-min="${k}"]`)) $(`[data-meal-min="${k}"]`).value = m.min;
+  }
+  const box = $('#s-breaks');
+  if (!box.contains(document.activeElement)) {
+    box.innerHTML = r.breaks.map((b, i) => `<div class="sched-break" data-i="${i}"><input type="time" value="${esc(b.at)}" aria-label="Hora de la pausa" /> <input type="number" min="5" max="60" step="5" value="${b.min}" aria-label="Minutos" /> min <button type="button" class="ghost mini" data-del="${i}" title="Quitar">✕</button></div>`).join('') || '<span class="muted small">Sin pausas</span>';
+  }
+  $('#s-mealrem').checked = s.mealReminders !== false;
+  $('#s-leisure').checked = s.leisure !== false;
+  $('#s-extras').innerHTML = (r.extras || []).map((x) => `<div class="entry"><span>${x.off ? '🌴' : '📅'} <b>${esc(x.label)}</b> · ${x.off ? 'libre' : `de ${esc(x.start)} a ${esc(x.end)}`}</span><button type="button" class="ghost mini" data-date="${esc(x.date)}" data-start="${esc(x.start || '')}" title="Quitar">✕</button></div>`).join('');
+  const ot = r.overtime;
+  const fmt = (secs) => { const m = Math.round(secs / 60); return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`; };
+  $('#s-overtime').textContent = ot && ot.secs >= 60 ? `${fmt(ot.secs)} fuera de tu jornada${ot.night >= 60 ? ` (${fmt(ot.night)} nocturnas)` : ''}${ot.planned >= 60 ? ` · ${fmt(ot.planned)} en turno extra` : ''}` : 'Nada fuera de tu jornada 👌';
+}
+const readBreaks = () => $$('#s-breaks .sched-break').map((row) => { const [t, n] = row.querySelectorAll('input'); return { at: t.value, min: Number(n.value) || 15 }; }).filter((b) => /^\d{2}:\d{2}$/.test(b.at));
+$('#s-workdays').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-d]');
+  if (!b) return;
+  b.classList.toggle('on');
+  pm.updateSettings({ workDays: $$('#s-workdays button.on').map((x) => Number(x.dataset.d)) });
+});
+$('.sched-meals').addEventListener('change', () => {
+  const meals = {};
+  for (const k of ['breakfast', 'lunch', 'dinner']) meals[k] = { on: $(`[data-meal="${k}"]`).checked, at: $(`[data-meal-at="${k}"]`).value, min: Number($(`[data-meal-min="${k}"]`).value) || 30 };
+  pm.updateSettings({ meals });
+});
+$('#s-breaks').addEventListener('change', () => pm.updateSettings({ breaks: readBreaks() }));
+$('#s-breaks').addEventListener('click', (e) => {
+  const d = e.target.closest('[data-del]');
+  if (d) pm.updateSettings({ breaks: readBreaks().filter((_, i) => i !== Number(d.dataset.del)) });
+});
+$('#s-break-add').addEventListener('click', () => pm.updateSettings({ breaks: [...readBreaks(), { at: '15:00', min: 15 }] }));
+$('#s-mealrem').addEventListener('change', (e) => pm.updateSettings({ mealReminders: e.target.checked, breakReminders: e.target.checked }));
+$('#s-leisure').addEventListener('change', (e) => pm.updateSettings({ leisure: e.target.checked }));
+async function addWorkExtra() {
+  const t = $('#s-extra-text').value.trim();
+  if (!t) return;
+  const r = await pm.workExtra({ text: t });
+  if (r && r.ok) $('#s-extra-text').value = '';
+  $('#s-extra-text').setCustomValidity(r && r.ok ? '' : 'No lo entendí. Prueba: "trabajaré el domingo de 8 a 12" o "el lunes es feriado".');
+  $('#s-extra-text').reportValidity();
+}
+$('#s-extra-add').addEventListener('click', addWorkExtra);
+$('#s-extra-text').addEventListener('keydown', (e) => { if (e.key === 'Enter') addWorkExtra(); });
+$('#s-extra-text').addEventListener('input', (e) => e.target.setCustomValidity(''));
+$('#s-extras').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-date]');
+  if (b) pm.workExtra({ remove: { date: b.dataset.date, start: b.dataset.start } });
+});
 $('#s-personality').addEventListener('change', (e) => pm.updateSettings({ personality: e.target.value }));
 $('#s-music').addEventListener('change', (e) => pm.updateSettings({ musicMode: e.target.checked }));
 $('#s-musicdetect').addEventListener('change', (e) => pm.updateSettings({ musicDetect: e.target.checked }));

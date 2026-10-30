@@ -86,6 +86,20 @@ module.exports = function install(M) {
         const intro = M.coach.duckStart('');
         return { text: intro };
       }
+      // "trabajaré el domingo de 8 a 12", "el lunes es feriado" → tu horario
+      const sched = M.routine && M.routine.fromChat(text);
+      if (sched) {
+        M.pushChat('pet', sched);
+        M.broadcast();
+        return { text: sched };
+      }
+      // "horas extra" → lo de hoy y lo de la semana
+      if (/^\s*(mis )?(horas? extras?|overtime|horas fuera)\b/i.test(text)) {
+        const msg = M.routine.overtimeSummary();
+        M.pushChat('pet', msg);
+        M.broadcast();
+        return { text: msg };
+      }
       // "cada lunes: revisar métricas" → tarea recurrente
       if (M.ex && M.ex.parseRecurring(text)) {
         const msg = M.prod.capture(text);
@@ -295,8 +309,25 @@ module.exports = function install(M) {
       return true;
     });
 
+    // Días especiales: "trabajaré el domingo de 8 a 12", "el lunes es feriado" (o quitar uno).
+    M.ipcMain.handle('schedule:extra', (_e, req) => {
+      if (req && req.remove) return M.routine.removeExtra(String(req.remove.date || ''), String(req.remove.start || ''));
+      const text = M.routine.fromChat(String((req && req.text) || '').slice(0, 200));
+      return text ? { ok: true, text } : { ok: false };
+    });
+
     M.ipcMain.handle('settings:update', (_e, patch) => {
-      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget', 'claudeParallel', 'claudeReview', 'claudeAutoFixCi', 'claudeAutoFixReview', 'claudeMaxFixes', 'petPerch', 'pcReactions', 'typeAlong', 'weatherCity', 'petStyle', 'stuckDetector', 'planCheck', 'bestHour', 'closingRitual', 'endOfDay', 'closeApps', 'myName', 'claudeRespectLimits', 'claudeLimitPct', 'claudeModelAuto', 'teamShare', 'focusBlock', 'summaryWithClaude', 'petPhysics', 'uiSounds', 'winMaterial'];
+      const allowed = ['morningTime', 'eveningTime', 'workdaysOnly', 'chatter', 'focusWatch', 'sounds', 'lang', 'aiModel', 'aiEnabled', 'autoHide', 'voice', 'smartClipboard', 'followMonitor', 'strolls', 'autoBackup', 'focusDuringBlocks', 'focusDuringPomodoro', 'claudeBudget', 'personality', 'musicMode', 'buildWatch', 'lowMemory', 'syncEnabled', 'autoMarkdown', 'musicDetect', 'trackersClose', 'trackersLogTime', 'claudeAutoRun', 'claudeRunPermission', 'claudeRunTests', 'claudeRunBudget', 'claudeParallel', 'claudeReview', 'claudeAutoFixCi', 'claudeAutoFixReview', 'claudeMaxFixes', 'petPerch', 'pcReactions', 'typeAlong', 'weatherCity', 'petStyle', 'stuckDetector', 'planCheck', 'bestHour', 'closingRitual', 'endOfDay', 'closeApps', 'myName', 'claudeRespectLimits', 'claudeLimitPct', 'claudeModelAuto', 'teamShare', 'focusBlock', 'summaryWithClaude', 'petPhysics', 'uiSounds', 'winMaterial', 'workDays', 'meals', 'breaks', 'leisure', 'mealReminders', 'breakReminders'];
+      // Horario (src/schedule.js): se valida aquí y lo usa todo lo demás.
+      const hm = (v) => /^\d{2}:\d{2}$/.test(String(v || ''));
+      if ('workDays' in patch) patch.workDays = [...new Set((Array.isArray(patch.workDays) ? patch.workDays : []).map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))].sort();
+      if ('meals' in patch) {
+        const m = patch.meals && typeof patch.meals === 'object' ? patch.meals : {};
+        patch.meals = {};
+        for (const k of ['breakfast', 'lunch', 'dinner']) if (m[k]) patch.meals[k] = { on: m[k].on !== false, at: hm(m[k].at) ? m[k].at : undefined, min: Math.max(5, Math.min(180, Number(m[k].min) || 30)) };
+      }
+      if ('breaks' in patch) patch.breaks = (Array.isArray(patch.breaks) ? patch.breaks : []).filter((b) => b && hm(b.at)).slice(0, 8).map((b) => ({ at: b.at, min: Math.max(5, Math.min(60, Number(b.min) || 15)) }));
+      if (['workDays', 'meals', 'breaks', 'morningTime', 'eveningTime', 'leisure'].some((k) => k in patch)) setTimeout(() => M.routine.tick(), 50);
       if ('claudeLimitPct' in patch) patch.claudeLimitPct = Math.max(50, Math.min(99, Math.round(Number(patch.claudeLimitPct)) || 85));
       if ('endOfDay' in patch && !/^\d{2}:\d{2}$/.test(patch.endOfDay || '')) delete patch.endOfDay;
       if ('closeApps' in patch) patch.closeApps = (Array.isArray(patch.closeApps) ? patch.closeApps : String(patch.closeApps || '').split(/[,\n]/)).map((x) => String(x).trim().replace(/\.exe$/i, '')).filter((x) => /^[\w .-]{2,40}$/.test(x)).slice(0, 12);

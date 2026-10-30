@@ -405,12 +405,12 @@ function calmDown(minutes) {
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+// Tu horario (src/schedule.js): días laborales, jornada, comidas, pausas y excepciones.
 function inWorkHours() {
+  if (mods.routine) return mods.routine.isWorkTime();
   const now = new Date();
-  const dow = now.getDay();
-  if (store.data.settings.workdaysOnly && (dow === 0 || dow === 6)) return false;
   const m = now.getHours() * 60 + now.getMinutes();
-  return m >= toMinutes(store.data.settings.morningTime) && m <= toMinutes(store.data.settings.eveningTime) + 60;
+  return now.getDay() % 6 !== 0 && m >= toMinutes(store.data.settings.morningTime) && m <= toMinutes(store.data.settings.eveningTime);
 }
 
 function firstPending() {
@@ -1193,6 +1193,8 @@ mods.whereami = require('./src/main/whereami')(M);
 M.whereami = mods.whereami;
 mods.coach = require('./src/main/coach')(M);
 M.coach = mods.coach;
+mods.routine = require('./src/main/routine')(M);
+M.routine = mods.routine;
 mods.proc = require('./src/main/proc')(M);
 M.proc = mods.proc;
 mods.scan = require('./src/main/claudescan')(M);

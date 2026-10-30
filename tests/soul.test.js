@@ -79,12 +79,22 @@ test('trucos: practicar con límite diario y energía; aprendido, lo hace al ter
   assert.deepEqual(ctx.sent.at(-1), ['pet:anim', 'trick-spin']);
 });
 
-test('vacaciones: si lo descuidas 24 h se va y vuelve con una postal', () => {
+test('vacaciones: fuera de tu jornada (noche, fin de semana) el descuido no cuenta', () => {
+  const { soul, data, ctx } = ctxWith();
+  ctx.isWorkTime = () => false;
+  Object.assign(data.pet, { fullness: 0, happiness: 5, neglectedMs: 8 * 3600e3 - 1000, neglectCheckAt: Date.now() - 9 * 60e3 });
+  soul.vacationTick();
+  assert.ok(!data.pet.vacation, 'el finde no se va de vacaciones');
+  assert.equal(data.pet.neglectedMs, 8 * 3600e3 - 1000);
+});
+
+test('vacaciones: si lo descuidas un día de trabajo se va y vuelve con una postal', () => {
   const { soul, data, ctx } = ctxWith();
   Object.assign(data.pet, { fullness: 0, happiness: 5 });
   soul.vacationTick();
-  assert.ok(data.pet.neglectedSince && !data.pet.vacation, 'primero solo lo anota');
-  data.pet.neglectedSince = Date.now() - 25 * 3600e3;
+  assert.ok(!data.pet.vacation, 'primero solo lo anota');
+  data.pet.neglectedMs = 8 * 3600e3 - 1000;
+  data.pet.neglectCheckAt = Date.now() - 5000;
   soul.vacationTick();
   assert.ok(data.pet.vacation, 'se fue');
   assert.match(ctx.said.at(-1), /vacaciones/);

@@ -1,0 +1,114 @@
+/* Rutina del pollito (2.2): come contigo, hace pausas y el fin de semana tiene planes.
+   Todo el movimiento ambiental es con animaciones infinitas: ChickRig las gobierna (pocos fps). */
+.rt, .lz { display: none; }
+.vb, #lz-tv * , #lz-popcorn *, #lz-phone *, #lz-beer *, #lz-drink *, #lz-pad *, #meal * { transform-box: view-box; }
+
+/* ---------- 🍽️ comidas ---------- */
+.meal-breakfast #meal, .meal-lunch #meal, .meal-dinner #meal { display: inline; }
+#meal [class^="food-"] { display: none; }
+.meal-breakfast #meal .food-breakfast, .meal-lunch #meal .food-lunch, .meal-dinner #meal .food-dinner { display: inline; }
+/* Fuera del trabajo se quita el gafete de PM. */
+body[class*="leisure-"] #badge, body[class*="meal-"] #badge, .resting #badge { display: none; }
+/* La comida un poco más grande, para que se distinga a tamaño real. */
+#meal [class^="food-"] { transform-box: view-box; transform-origin: 60px 109px; transform: scale(1.18); }
+#meal .plate { fill: url(#gPlate); stroke: #9aa7b4; stroke-width: 1.2; }
+#meal .plate-in { fill: none; stroke: #c8d2dc; stroke-width: 1; }
+#meal .concha { fill: #f2c27b; stroke: #b57a32; stroke-width: 1; }
+#meal .concha-top { fill: none; stroke: #fff2f6; stroke-width: 1.4; stroke-linecap: round; }
+#meal .mini-cup { fill: #fff; stroke: #3b2f2f; stroke-width: 1.1; }
+#meal .mini-handle { fill: none; stroke: #3b2f2f; stroke-width: 1.1; }
+#meal .rice { fill: #fffdf7; stroke: #d7cdb8; stroke-width: 1; }
+#meal .rice-grain { stroke: #e8dfcc; stroke-width: 1; stroke-linecap: round; }
+#meal .beans { fill: #6b3a2a; stroke: #3f2018; stroke-width: .8; }
+#meal .beans-dot { stroke: #8f5640; stroke-width: 1; stroke-linecap: round; }
+#meal .salad { fill: #6fcf6a; stroke: #3c8f3a; stroke-width: .8; }
+#meal .tomato { fill: #ff5a4f; stroke: #b8322b; stroke-width: .6; }
+#meal .pupusa { fill: url(#gPupusa); stroke: #a8783a; stroke-width: 1; }
+#meal .char { stroke: #8a5a23; stroke-width: 1.3; stroke-linecap: round; opacity: .8; }
+#meal .curtido { fill: none; stroke: #8bc34a; stroke-width: 1.4; stroke-linecap: round; }
+#meal .curtido:nth-of-type(n) { stroke-dasharray: 3 1.5; }
+#meal .steam { fill: none; stroke: #fff; stroke-width: 1.3; stroke-linecap: round; opacity: 0; animation: steam 2.6s ease-in-out infinite; }
+#meal .steam.s2 { animation-delay: 1.3s; }
+@keyframes steam { 0% { opacity: 0; transform: translateY(2px); } 30% { opacity: .8; } 100% { opacity: 0; transform: translateY(-7px); } }
+/* Masticando: el pico se mueve despacio y el cuerpo se inclina hacia el plato. */
+.meal-breakfast #beakBottom, .meal-lunch #beakBottom, .meal-dinner #beakBottom { animation: chew .55s ease-in-out infinite alternate; }
+@keyframes chew { from { transform: scaleY(.25); } to { transform: scaleY(.8); } }
+.meal-breakfast #wingL, .meal-lunch #wingL, .meal-dinner #wingL { animation: mealWing 2.2s ease-in-out infinite; }
+@keyframes mealWing { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-14deg); } }
+
+/* ---------- ☕ pausa ---------- */
+.on-break #prop-cup { display: inline; transform: translate(7px, -3px); }
+.on-break #wingL { animation: stretchL 4s ease-in-out infinite; }
+.on-break #wingR { animation: stretchR 4s ease-in-out infinite; }
+@keyframes stretchL { 0%, 100% { transform: rotate(0); } 40%, 60% { transform: rotate(-38deg) translateY(-3px); } }
+@keyframes stretchR { 0%, 100% { transform: rotate(0); } 40%, 60% { transform: rotate(38deg) translateY(-3px); } }
+
+/* ---------- 📺 series ---------- */
+.leisure-series #lz-tv, .leisure-series #lz-popcorn { display: inline; }
+#lz-tv .tv-body { fill: url(#gWood); stroke: #3b2f2f; stroke-width: 1.6; }
+#lz-tv .tv-screen { fill: url(#gScreen); stroke: #2a2321; stroke-width: 1.2; }
+#lz-tv .tv-flicker { fill: #fff; opacity: 0; animation: flicker 2.4s steps(1) infinite; }
+@keyframes flicker { 0% { opacity: 0; } 20% { opacity: .18; } 35% { opacity: 0; } 60% { opacity: .1; } 72% { opacity: 0; } }
+#lz-tv .tv-knob { fill: #f2d7a6; stroke: #3b2f2f; stroke-width: .8; }
+#lz-tv .tv-ant, #lz-tv .tv-legs { stroke: #3b2f2f; stroke-width: 1.4; stroke-linecap: round; fill: none; }
+#lz-tv .tv-ant-tip { fill: #ff6b6b; stroke: #3b2f2f; stroke-width: .7; }
+#lz-popcorn .pop-bucket { fill: #fff; stroke: #3b2f2f; stroke-width: 1.3; stroke-linejoin: round; }
+#lz-popcorn .pop-stripe { stroke: #ef4444; stroke-width: 2.6; }
+#lz-popcorn .pop { fill: #fff8e1; stroke: #e0b85a; stroke-width: .9; }
+.leisure-series #pupils { transform: translate(-2px, 1px); }
+
+/* ---------- ▶️ YouTube ---------- */
+.leisure-youtube #lz-phone { display: inline; }
+#lz-phone .phone { fill: #22252e; stroke: #3b2f2f; stroke-width: 1.2; }
+#lz-phone .phone-screen { fill: #fff; }
+#lz-phone .yt { fill: #ff2d2d; }
+#lz-phone .yt-play { fill: #fff; }
+#lz-phone .face-glow { fill: url(#gFaceGlow); animation: glow 3s ease-in-out infinite; }
+@keyframes glow { 0%, 100% { opacity: .7; } 50% { opacity: 1; } }
+
+/* ---------- 🎧 música ---------- */
+.leisure-music #headset, .leisure-music #lz-notes { display: inline; }
+.leisure-music #bod { animation: bopSlow 1.2s ease-in-out infinite; }
+@keyframes bopSlow { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-2px) rotate(-3deg); } }
+#lz-notes .note, #lz-notes .note-flag { fill: none; stroke: #6c5ce7; stroke-width: 1.6; stroke-linecap: round; }
+#lz-notes .note-head { fill: #6c5ce7; }
+#lz-notes .n1, #lz-notes .n2 { animation: noteFloat 3.2s ease-in-out infinite; }
+#lz-notes .n2 { animation-delay: 1.6s; }
+@keyframes noteFloat { 0% { opacity: 0; transform: translateY(6px); } 25% { opacity: 1; } 100% { opacity: 0; transform: translateY(-10px); } }
+
+/* ---------- 🍺 cerveza ---------- */
+.leisure-beer #lz-beer { display: inline; }
+#lz-beer .beer { fill: url(#gBeer); }
+#lz-beer .beer-glass { fill: url(#gGlass); stroke: #3b2f2f; stroke-width: 1.3; stroke-linejoin: round; }
+#lz-beer .beer-handle { fill: none; stroke: #3b2f2f; stroke-width: 1.6; }
+#lz-beer .foam { fill: #fffdf5; stroke: #3b2f2f; stroke-width: 1.1; stroke-linejoin: round; }
+#lz-beer .bubble { fill: #fff3c4; animation: bubble 2.2s ease-in infinite; }
+#lz-beer .b2 { animation-delay: .7s; } #lz-beer .b3 { animation-delay: 1.4s; }
+@keyframes bubble { 0% { opacity: 0; transform: translateY(0); } 20% { opacity: .9; } 100% { opacity: 0; transform: translateY(-12px); } }
+.leisure-beer #cheeks ellipse { opacity: 1; }
+.leisure-beer #wingR { animation: sipWing 5s ease-in-out infinite; }
+@keyframes sipWing { 0%, 70%, 100% { transform: rotate(0); } 80%, 90% { transform: rotate(18deg); } }
+
+/* ---------- 😎 disfrutar el día ---------- */
+.leisure-chill #acc-glasses-sun, .leisure-chill #lz-drink { display: inline; }
+.leisure-chill #eyesOpen { opacity: 0; }
+#lz-drink .drink-glass { fill: url(#gGlass); stroke: #3b2f2f; stroke-width: 1.2; stroke-linejoin: round; }
+#lz-drink .drink-liquid { fill: #ff8fa3; }
+#lz-drink .drink-stem, #lz-drink .umbrella-stick { stroke: #3b2f2f; stroke-width: 1.2; stroke-linecap: round; }
+#lz-drink .drink-straw { stroke: #4dabf7; stroke-width: 1.4; stroke-linecap: round; }
+#lz-drink .umbrella { fill: #ffd43b; stroke: #3b2f2f; stroke-width: 1; }
+.leisure-chill #bod { animation: chillSway 4.5s ease-in-out infinite; }
+@keyframes chillSway { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(3deg); } }
+
+/* ---------- 🎮 videojuegos ---------- */
+.leisure-games #lz-pad { display: inline; }
+#lz-pad .pad { fill: url(#gPad); stroke: #1c1f28; stroke-width: 1.3; stroke-linejoin: round; }
+#lz-pad .pad-dpad { stroke: #c9d1e3; stroke-width: 2; stroke-linecap: round; }
+#lz-pad .pad-a { fill: #51cf66; } #lz-pad .pad-b { fill: #ff6b6b; animation: press .9s steps(1) infinite; }
+#lz-pad .pad-stick { fill: #1c1f28; stroke: #6b7389; stroke-width: .8; }
+@keyframes press { 50% { opacity: .45; } }
+.leisure-games #pupils { transform: translate(0, 2px); }
+.leisure-games #wingL, .leisure-games #wingR { animation: none; transform: rotate(10deg); }
+
+/* Con "menos animación": los objetos se ven, pero quietos. */
+.reduced .rt *, .reduced .lz * { animation: none !important; }

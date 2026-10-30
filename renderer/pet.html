@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="pet-needs.css" />
   <link rel="stylesheet" href="pet-species.css" />
   <link rel="stylesheet" href="pet-soul.css" />
+  <link rel="stylesheet" href="pet-routine.css" />
 </head>
 <body>
   <div id="bubble" class="hidden hit"><span id="bubble-text"></span><div id="bubble-actions"></div><button id="bubble-stack" class="hidden" type="button" title="Ver todos en el centro de avisos"></button></div>
@@ -19,14 +20,69 @@
     <div id="chick" class="hit">
       <svg viewBox="0 0 120 130" width="120" height="130" aria-label="Pollito PM">
         <defs>
-          <radialGradient id="gBody" cx="40%" cy="35%" r="70%">
-            <stop offset="0%" stop-color="#FFF08A" />
-            <stop offset="60%" stop-color="#FFD84A" />
-            <stop offset="100%" stop-color="#F9BE2A" />
+          <!-- 2.2 "HD": volumen con luz arriba a la izquierda. Las capas de sombra/brillo son
+               neutras (negro/blanco con transparencia) para que funcionen con cualquier especie o piel. -->
+          <radialGradient id="gBody" cx="36%" cy="28%" r="80%">
+            <stop offset="0%" stop-color="#FFF7B8" />
+            <stop offset="32%" stop-color="#FFE766" />
+            <stop offset="72%" stop-color="#FFCD3C" />
+            <stop offset="100%" stop-color="#F4AA1E" />
           </radialGradient>
-          <radialGradient id="gWing" cx="40%" cy="30%" r="80%">
-            <stop offset="0%" stop-color="#FFE45C" />
-            <stop offset="100%" stop-color="#F3AE1C" />
+          <radialGradient id="gShade" cx="42%" cy="18%" r="92%">
+            <stop offset="58%" stop-color="#3a1d00" stop-opacity="0" />
+            <stop offset="88%" stop-color="#3a1d00" stop-opacity=".13" />
+            <stop offset="100%" stop-color="#3a1d00" stop-opacity=".22" />
+          </radialGradient>
+          <radialGradient id="gSpec" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#fff" stop-opacity=".85" />
+            <stop offset="55%" stop-color="#fff" stop-opacity=".35" />
+            <stop offset="100%" stop-color="#fff" stop-opacity="0" />
+          </radialGradient>
+          <radialGradient id="gBelly" cx="50%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#FFFDEB" />
+            <stop offset="100%" stop-color="#FFF0B3" />
+          </radialGradient>
+          <radialGradient id="gWing" cx="35%" cy="25%" r="85%">
+            <stop offset="0%" stop-color="#FFEE88" />
+            <stop offset="55%" stop-color="#FFCF45" />
+            <stop offset="100%" stop-color="#EE9F17" />
+          </radialGradient>
+          <linearGradient id="gTuft" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#FFF1A0" />
+            <stop offset="100%" stop-color="#FFC93A" />
+          </linearGradient>
+          <radialGradient id="gIris" cx="50%" cy="68%" r="70%">
+            <stop offset="0%" stop-color="#6b4630" />
+            <stop offset="45%" stop-color="#3a241a" />
+            <stop offset="100%" stop-color="#170e0b" />
+          </radialGradient>
+          <radialGradient id="gBlush" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ff7d96" stop-opacity=".95" />
+            <stop offset="60%" stop-color="#ff8fa3" stop-opacity=".55" />
+            <stop offset="100%" stop-color="#ff9fb0" stop-opacity="0" />
+          </radialGradient>
+          <linearGradient id="gBeak" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#FFC15A" />
+            <stop offset="60%" stop-color="#FF9F1C" />
+            <stop offset="100%" stop-color="#EE7D0A" />
+          </linearGradient>
+          <linearGradient id="gFoot" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#FFB547" />
+            <stop offset="100%" stop-color="#F08A0C" />
+          </linearGradient>
+          <!-- Rutina (2.2): comida, pausas y planes de descanso -->
+          <linearGradient id="gPlate" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffffff" /><stop offset="100%" stop-color="#e6ebf0" /></linearGradient>
+          <linearGradient id="gWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a0714f" /><stop offset="100%" stop-color="#6e4a31" /></linearGradient>
+          <radialGradient id="gScreen" cx="45%" cy="40%" r="75%"><stop offset="0%" stop-color="#d9f2ff" /><stop offset="55%" stop-color="#7cc4f0" /><stop offset="100%" stop-color="#3a78b8" /></radialGradient>
+          <linearGradient id="gBeer" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffd24d" /><stop offset="100%" stop-color="#e58a00" /></linearGradient>
+          <linearGradient id="gGlass" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#fff" stop-opacity=".55" /><stop offset="35%" stop-color="#fff" stop-opacity=".1" /><stop offset="100%" stop-color="#fff" stop-opacity=".3" /></linearGradient>
+          <linearGradient id="gPad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5b6275" /><stop offset="100%" stop-color="#2c313f" /></linearGradient>
+          <linearGradient id="gPupusa" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f6dca8" /><stop offset="100%" stop-color="#d9ac68" /></linearGradient>
+          <radialGradient id="gFaceGlow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#bfe6ff" stop-opacity=".55" /><stop offset="100%" stop-color="#bfe6ff" stop-opacity="0" /></radialGradient>
+          <radialGradient id="gShadow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#000" stop-opacity=".32" />
+            <stop offset="65%" stop-color="#000" stop-opacity=".14" />
+            <stop offset="100%" stop-color="#000" stop-opacity="0" />
           </radialGradient>
           <!-- Estilos visuales (2.0): Game Boy pixelado y plastilina -->
           <filter id="fxPixel" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" x="-10" y="-20" width="150" height="160">
@@ -62,7 +118,7 @@
           </linearGradient>
         </defs>
 
-        <ellipse id="shadow" cx="60" cy="123" rx="30" ry="5" />
+        <ellipse id="shadow" cx="60" cy="123" rx="34" ry="6.5" />
 
         <g id="flip"><g id="grow">
           <g id="feet">
@@ -80,8 +136,8 @@
               <path class="f2" d="M90 92 q30 -18 34 -40 q-2 26 -30 46z" />
               <path class="f3" d="M90 100 q28 -4 34 -24 q-4 22 -32 30z" />
             </g>
-            <g id="wingL" class="wing"><ellipse cx="22" cy="78" rx="11" ry="17" transform="rotate(20 22 78)" /></g>
-            <g id="wingR" class="wing"><ellipse cx="98" cy="78" rx="11" ry="17" transform="rotate(-20 98 78)" /></g>
+            <g id="wingL" class="wing"><ellipse cx="22" cy="78" rx="11" ry="17" transform="rotate(20 22 78)" /><g class="vb feathers" transform="rotate(20 22 78)"><path d="M14 86 q4 3 8 1 M15.5 91 q3 2 6 .5" /></g></g>
+            <g id="wingR" class="wing"><ellipse cx="98" cy="78" rx="11" ry="17" transform="rotate(-20 98 78)" /><g class="vb feathers" transform="rotate(-20 98 78)"><path d="M106 86 q-4 3 -8 1 M104.5 91 q-3 2 -6 .5" /></g></g>
 
             <!-- Especies: orejas y cola de gato (detrás del cuerpo) -->
             <g id="sp-cat-back" class="sp">
@@ -91,6 +147,11 @@
             </g>
             <ellipse id="body" cx="60" cy="72" rx="40" ry="41" />
             <ellipse id="belly" cx="60" cy="90" rx="24" ry="17" />
+            <!-- Volumen (2.2): sombra abajo, brillo arriba, luz de borde y plumón en los costados -->
+            <ellipse id="bodyShade" class="vol" cx="60" cy="72" rx="40" ry="41" />
+            <ellipse id="bodySpec" class="vol vb" cx="43" cy="47" rx="15" ry="9" transform="rotate(-30 43 47)" />
+            <path id="bodyRim" class="vol" d="M93.5 60 q5.5 11 2.2 24" />
+            <path id="fluff" class="vol" d="M20.8 66 q-3.4 2.6 -.6 6 M19.6 74 q-3 2.4 -.2 5.2 M99.2 66 q3.4 2.6 .6 6 M100.4 74 q3 2.4 .2 5.2" />
             <ellipse id="flush" cx="60" cy="72" rx="40" ry="41" />
             <!-- Pingüino: antifaz blanco alrededor de los ojos -->
             <g id="sp-penguin" class="sp"><ellipse cx="45" cy="67" rx="12" ry="13" /><ellipse cx="75" cy="67" rx="12" ry="13" /><path d="M45 78 q15 10 30 0 l0 8 q-15 8 -30 0z" /></g>
@@ -105,21 +166,25 @@
             <path id="comb" d="M44 36 q-4 -10 5 -11 q-1 -9 8 -8 q3 -9 11 -4 q8 -3 8 6 q7 3 1 11 q-16 -4 -33 6z" />
 
             <g id="cheeks">
-              <ellipse cx="35" cy="80" rx="7" ry="4.5" />
-              <ellipse cx="85" cy="80" rx="7" ry="4.5" />
+              <ellipse cx="35" cy="80" rx="8.5" ry="5.5" />
+              <ellipse cx="85" cy="80" rx="8.5" ry="5.5" />
             </g>
 
             <g id="eyes">
               <g id="eyesOpen"><g id="pupils">
                 <g class="eye" id="eyeL">
-                  <ellipse cx="45" cy="66" rx="6" ry="7.5" class="pupil" />
-                  <circle cx="47.2" cy="63" r="2.4" class="shine" />
-                  <circle cx="43.2" cy="69" r="1.1" class="shine" />
+                  <ellipse cx="45" cy="66" rx="6.4" ry="8" class="pupil" />
+                  <ellipse cx="45" cy="70.6" rx="3.4" ry="2" class="iris-glow" />
+                  <circle cx="47.7" cy="62.4" r="2.6" class="shine" />
+                  <circle cx="43" cy="69.4" r="1.15" class="shine" />
+                  <circle cx="48.6" cy="66.2" r=".6" class="shine sparkle" />
                 </g>
                 <g class="eye" id="eyeR">
-                  <ellipse cx="75" cy="66" rx="6" ry="7.5" class="pupil" />
-                  <circle cx="77.2" cy="63" r="2.4" class="shine" />
-                  <circle cx="73.2" cy="69" r="1.1" class="shine" />
+                  <ellipse cx="75" cy="66" rx="6.4" ry="8" class="pupil" />
+                  <ellipse cx="75" cy="70.6" rx="3.4" ry="2" class="iris-glow" />
+                  <circle cx="77.7" cy="62.4" r="2.6" class="shine" />
+                  <circle cx="73" cy="69.4" r="1.15" class="shine" />
+                  <circle cx="78.60000000000001" cy="66.2" r=".6" class="shine sparkle" />
                 </g>
               </g></g>
               <g id="eyesHappy">
@@ -144,6 +209,7 @@
             <g id="beak">
               <path id="beakBottom" d="M53 80 q7 9 14 0z" />
               <path id="beakTop" d="M51 77 q9 -7 18 0 q-9 7 -18 0z" />
+              <path id="beakShine" d="M55.2 75.6 q4.6 -2.4 8.8 -.5" />
             </g>
 
             <!-- Pico de pato y hocico de gato -->
@@ -214,6 +280,67 @@
             <circle id="prop-gum" class="prop" cx="60" cy="84" r="7" />
             <g id="prop-foot" class="prop" transform="translate(99 44) rotate(-145) scale(1.35)">
               <path class="scratchfoot" d="M0 0 q-2 9 -7 11 q5 0 7 -3 q1 4 5 4 q-4 -3 -2 -12z" />
+            </g>
+
+            <!-- ===== Rutina (2.2): comidas, pausa y planes de descanso ===== -->
+            <g id="meal" class="rt">
+              <ellipse class="plate" cx="60" cy="111" rx="25" ry="6.5" />
+              <ellipse class="plate-in" cx="60" cy="110" rx="17" ry="3.8" />
+              <g class="food-breakfast">
+                <path class="concha" d="M44 108 q8 -13 17 0z" /><path class="concha-top" d="M45.5 106 q6.5 -10 14 0 M48 103.5 l9 4 M57 103.5 l-9 4 M52.5 99.5 v8" />
+                <path class="mini-cup" d="M65 100 h10 v7 q0 4 -5 4 q-5 0 -5 -4z" /><path class="mini-handle" d="M75 102 q4 0 4 2.5 q0 2.5 -4 2.5" />
+                <path class="steam s1" d="M68 97 q-2 -3 0 -6 q2 -3 0 -6" /><path class="steam s2" d="M72 97 q-2 -3 0 -6 q2 -3 0 -6" />
+              </g>
+              <g class="food-lunch">
+                <path class="rice" d="M44 109 q1 -8 8 -8 q7 0 8 8z" /><path class="rice-grain" d="M48 104 h2 M52 102.5 h2 M55 105 h2 M50 106.5 h2" />
+                <ellipse class="beans" cx="65" cy="108" rx="6" ry="3" /><path class="beans-dot" d="M62.5 107.5 h1 M65.5 107 h1 M67.5 108.5 h1" />
+                <path class="salad" d="M71 109 q2 -6 6 -5 q-1 3 -4 5 M73 109 q4 -5 7 -2 q-3 1 -5 3" /><circle class="tomato" cx="75.5" cy="106.5" r="1.8" />
+              </g>
+              <g class="food-dinner">
+                <ellipse class="pupusa" cx="51" cy="107" rx="8" ry="3.6" /><ellipse class="pupusa" cx="62" cy="105.5" rx="8" ry="3.6" />
+                <path class="char" d="M47 106.5 h1.5 M53 107.5 h1.5 M59 105 h1.5 M64.5 106 h1.5" />
+                <path class="curtido" d="M70 108 q3 -4 7 -2 M71 109 q4 -2 8 0 M72 106 q2 -3 5 -2" />
+                <path class="steam s1" d="M52 102 q-2 -3 0 -6 q2 -3 0 -6" /><path class="steam s2" d="M62 100 q-2 -3 0 -6 q2 -3 0 -6" />
+              </g>
+            </g>
+
+            <g id="lz-tv" class="lz">
+              <path class="tv-ant" d="M-2 85 l-6 -10 M5 85 l5 -10" /><circle class="tv-ant-tip" cx="-8" cy="75" r="1.4" /><circle class="tv-ant-tip" cx="10" cy="75" r="1.4" />
+              <rect class="tv-body" x="-14" y="85" width="32" height="25" rx="5" />
+              <rect class="tv-screen" x="-11" y="88.5" width="21" height="18" rx="3.5" />
+              <rect class="tv-flicker" x="-11" y="88.5" width="21" height="18" rx="3.5" />
+              <circle class="tv-knob" cx="14" cy="93" r="1.6" /><circle class="tv-knob" cx="14" cy="99" r="1.6" />
+              <path class="tv-legs" d="M-9 110 l-2 5 M13 110 l2 5" />
+            </g>
+            <g id="lz-popcorn" class="lz">
+              <path class="pop-bucket" d="M88 92 h17 l-2.5 19 h-12z" /><path class="pop-stripe" d="M92.5 92 l1 19 M98 92 l-.6 19" />
+              <circle class="pop" cx="90" cy="91" r="3" /><circle class="pop" cx="94.5" cy="89" r="3.2" /><circle class="pop" cx="99" cy="90" r="3" /><circle class="pop" cx="103" cy="91.5" r="2.6" /><circle class="pop" cx="96.5" cy="86" r="2.4" />
+            </g>
+            <g id="lz-phone" class="lz">
+              <ellipse class="face-glow" cx="78" cy="78" rx="18" ry="14" />
+              <rect class="phone" x="91" y="78" width="13" height="22" rx="3" />
+              <rect class="phone-screen" x="92.6" y="80.5" width="9.8" height="16" rx="1.6" />
+              <rect class="yt" x="94" y="85.5" width="7" height="5" rx="1.5" /><path class="yt-play" d="M96.7 86.6 l2.4 1.4 l-2.4 1.4z" />
+            </g>
+            <g id="lz-notes" class="lz">
+              <path class="note n1" d="M104 52 v-10 l7 -2 v10" /><circle class="note-head n1" cx="102.5" cy="52" r="2.2" /><circle class="note-head n1" cx="109.5" cy="50" r="2.2" />
+              <path class="note n2" d="M14 46 v-9" /><circle class="note-head n2" cx="12.5" cy="46" r="2.2" /><path class="note-flag n2" d="M14 37 q4 1 4 5" />
+            </g>
+            <g id="lz-beer" class="lz">
+              <path class="beer" d="M89 85 h14 l-1.2 19 q-.2 2 -2.2 2 h-7.2 q-2 0 -2.2 -2z" />
+              <path class="beer-glass" d="M89 85 h14 l-1.2 19 q-.2 2 -2.2 2 h-7.2 q-2 0 -2.2 -2z" />
+              <path class="beer-handle" d="M102.6 89 q6 0 6 5.5 q0 5.5 -6.6 5.5" />
+              <path class="foam" d="M88 86 q-2 -4 2 -5 q1 -4 5 -2.5 q2.5 -3 6 -.5 q4 -1 3.5 3.5 q2 2 -1 4.5z" />
+              <circle class="bubble b1" cx="93" cy="101" r=".9" /><circle class="bubble b2" cx="97" cy="103" r=".8" /><circle class="bubble b3" cx="99.5" cy="99" r=".7" />
+            </g>
+            <g id="lz-drink" class="lz">
+              <path class="drink-glass" d="M88 84 h16 l-8 10z" /><path class="drink-liquid" d="M90 86 h12 l-6 7.5z" /><path class="drink-stem" d="M96 94 v8 M91.5 102.5 h9" />
+              <path class="drink-straw" d="M99 86 l4 -9" /><path class="umbrella" d="M86 82 q5 -8 12 -4 q-3 -1 -6 1 q-3 -1 -6 3z" /><path class="umbrella-stick" d="M92 80 l3 6" />
+            </g>
+            <g id="lz-pad" class="lz">
+              <path class="pad" d="M40 96 q-6 0 -6 6 q0 6 5 6 q3 0 5 -3 h32 q2 3 5 3 q5 0 5 -6 q0 -6 -6 -6z" />
+              <path class="pad-dpad" d="M41 101 h6 M44 98 v6" /><circle class="pad-a" cx="77" cy="100" r="1.8" /><circle class="pad-b" cx="81" cy="103" r="1.8" />
+              <circle class="pad-stick" cx="55" cy="103" r="2.4" /><circle class="pad-stick" cx="65" cy="103" r="2.4" />
             </g>
 
             <!-- Barbilla de gallo -->

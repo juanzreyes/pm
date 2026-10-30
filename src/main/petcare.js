@@ -4,16 +4,20 @@
 // Parte del proceso principal (antes en main.js). `M` es el contexto compartido de la app.
 /* eslint-disable no-use-before-define */
 module.exports = function install(M) {
-  // ---------- horario: daily a las 8 y cierre antes de las 5 ----------
+  // ---------- horario: daily al empezar la jornada y cierre al terminarla ----------
+  // Solo los días que se trabaja (tu horario, src/schedule.js): el finde no hay daily, y un turno
+  // extra ("trabajaré el domingo de 8 a 12") tiene su daily a las 8 y su cierre a las 12.
   function checkSchedule() {
     const store = M.store;
     const now = new Date();
     const dow = now.getDay();
-    if (store.data.settings.workdaysOnly && (dow === 0 || dow === 6)) return;
+    const shift = M.routine ? M.routine.shiftsToday()[0] : null;
+    if (M.routine && !shift) return;
     if (!store.data.pet.name || M.isMuted() || M.meetingNow) return; // primero el onboarding; en silencio o reunión no molesta
     const nowMin = now.getHours() * 60 + now.getMinutes();
-    const morning = M.toMinutes(store.data.settings.morningTime);
-    const evening = M.toMinutes(store.data.settings.eveningTime);
+    const dayStart = new Date(now); dayStart.setHours(0, 0, 0, 0);
+    const morning = shift ? Math.round((shift.from - dayStart.getTime()) / 60000) : M.toMinutes(store.data.settings.morningTime);
+    const evening = shift ? Math.min(Math.round((shift.to - dayStart.getTime()) / 60000), 23 * 60 + 59) : M.toMinutes(store.data.settings.eveningTime);
     const day = M.today();
     const t = Date.now();
 
@@ -53,10 +57,13 @@ module.exports = function install(M) {
     if (p.vacation) { p.lastTick = now; M.store.data.life.lastSeen = now; M.store.save(); return; } // de vacaciones: nada baja
     const last = p.lastTick || now;
     const mins = Math.min((now - last) / 60000, 60 * 24);
-    p.fullness = clamp(p.fullness - mins / 15);
-    p.happiness = clamp(p.happiness - mins / 25);
+    // Hambre, ánimo y limpieza bajan en tu jornada; fuera de ella (noches, el finde) se cuida solo
+    // y bajan muy poco: el lunes no te espera hambriento, enfermo ni "de vacaciones".
+    const needMins = Math.min(M.routine ? M.routine.decayMinutes(last, now) : mins, 60 * 24);
+    p.fullness = clamp(p.fullness - needMins / 15);
+    p.happiness = clamp(p.happiness - needMins / 25);
     // Limpieza: se ensucia poco a poco.
-    p.clean = clamp((p.clean ?? 100) - mins / 40);
+    p.clean = clamp((p.clean ?? 100) - needMins / 40);
     // Energía: duerme de noche (o en la siesta) y se cansa de día.
     const h = new Date().getHours();
     const napping = (p.napUntil || 0) > now;
@@ -122,6 +129,15 @@ module.exports = function install(M) {
     }
     const life = M.store.data.life;
     const startup = M.startup;
+    // Cerrado (o apagado de golpe) solo en horas libres: el viernes en la tarde, de noche…
+    // Volver el lunes no es motivo de enojo.
+    if (startup && (startup.how === 'user' || startup.how === 'killed') && M.routine && M.routine.awayWasFree(startup.awayMs || 0)) {
+      const text = M.routine.welcomeBack(p.name, startup.awayMs || 0);
+      M.say(text, 'hop', 10000);
+      M.pushChat('pet', text);
+      M.broadcast();
+      return;
+    }
     if (startup && startup.how) {
       const g = M.brain.returnGreeting({
         name: p.name, how: startup.how, awayMs: startup.awayMs, crashes: life.crashes, closes: life.closes, pending: M.firstPending(),

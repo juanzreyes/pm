@@ -84,6 +84,7 @@ module.exports = function install(M) {
       if (c.cat === 'work') hb.w += dt; else hb.d += dt;
     }
     if (c.cat === 'work' && (hr >= 22 || hr < 6)) day.lateWork = (day.lateWork || 0) + dt;
+    if (c.cat === 'work' && M.routine) M.routine.onWorkSample(dt); // horas extra y nocturnas
     if (Math.floor(f.work / 3600) > hoursBefore) {
       M.addXp(10);
       if (!M.isMuted()) M.say(`¡${Math.floor(f.work / 3600)} h de trabajo enfocado hoy! 💪 +10 XP`, 'dance', 7000);

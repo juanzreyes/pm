@@ -56,7 +56,7 @@ test.before(async () => {
   const now = Date.now();
   fs.writeFileSync(path.join(dir, 'pm-data.json'), JSON.stringify({
     pet: { name: 'Testito', born: now - 3 * 864e5, happiness: 80, fullness: 80, xp: 20, coins: 500 },
-    settings: { autoStartAsked: true, lang: 'es', morningTime: '00:00', eveningTime: '23:59', focusWatch: false, chatter: false, sounds: false, voice: false, gitWatch: false, micWatch: false, gitRoots: [reposDir], claudeBin: fakeClaude, teamFolder: path.join(reposDir, 'equipo'), myName: 'Yo' },
+    settings: { autoStartAsked: true, lang: 'es', morningTime: '00:00', eveningTime: '23:59', workDays: [0, 1, 2, 3, 4, 5, 6], meals: { breakfast: { on: false }, lunch: { on: false }, dinner: { on: false } }, breaks: [], focusWatch: false, chatter: false, sounds: false, voice: false, gitWatch: false, micWatch: false, gitRoots: [reposDir], claudeBin: fakeClaude, teamFolder: path.join(reposDir, 'equipo'), myName: 'Yo' },
     farm: { id: 'yo-test', sent: [], seen: [], received: [], rewardWeek: '', pendingVisits: [] },
     flags: { tourDone: true },
     life: { running: false, lastQuitHow: 'update', lastQuitAt: now },
@@ -93,7 +93,7 @@ test('panel: añadir una tarea desde la interfaz', async () => {
   await sleep(600);
   await panel.fill('#task-input', 'Tarea de prueba UI');
   await panel.press('#task-input', 'Enter');
-  await panel.waitForFunction(() => [...document.querySelectorAll('#tasks .t')].some((x) => x.textContent.includes('Tarea de prueba UI')), null, { timeout: 5000 });
+  await panel.waitForFunction(() => [...document.querySelectorAll('#tasks .t')].some((x) => x.textContent.includes('Tarea de prueba UI')), null, { timeout: 5000, polling: 100 });
   // Las filas no se aplastan: el texto ocupa el espacio
   const w = await panel.evaluate(() => document.querySelector('#tasks .t').getBoundingClientRect().width);
   assert.ok(w > 150, `el texto de la tarea mide ${w}px`);
@@ -132,9 +132,9 @@ test('especie y modo foco se reflejan en el pollito', async () => {
   const panel = await waitPage('panel');
   const pet = await waitPage('pet');
   await panel.evaluate(() => pm.setSpecies('cat'));
-  await pet.waitForFunction(() => document.body.classList.contains('species-cat'), null, { timeout: 5000 });
+  await pet.waitForFunction(() => document.body.classList.contains('species-cat'), null, { timeout: 5000, polling: 100 });
   await panel.evaluate(() => pm.focusStart(25));
-  await pet.waitForFunction(() => document.body.classList.contains('focus-mode'), null, { timeout: 8000 });
+  await pet.waitForFunction(() => document.body.classList.contains('focus-mode'), null, { timeout: 8000, polling: 100 });
   await panel.evaluate(() => pm.focusStop());
 });
 
@@ -144,23 +144,23 @@ test('paleta: comandos y búsqueda global en tus datos', async () => {
   const pal = await waitPage('palette');
   await sleep(400);
   await pal.fill('#q', 'prueba UI');
-  await pal.waitForFunction(() => document.querySelector('#list').innerText.includes('Tarea de prueba UI'), null, { timeout: 5000 });
+  await pal.waitForFunction(() => document.querySelector('#list').innerText.includes('Tarea de prueba UI'), null, { timeout: 5000, polling: 100 });
   await pal.fill('#q', 'biblioteca');
-  await pal.waitForFunction(() => document.querySelector('#list').innerText.includes('Biblioteca de prompts'), null, { timeout: 5000 });
+  await pal.waitForFunction(() => document.querySelector('#list').innerText.includes('Biblioteca de prompts'), null, { timeout: 5000, polling: 100 });
   await pal.keyboard.press('Escape');
 });
 
 test('cola de Claude: ▶️ la ejecuta en una copia aparte y se acepta en una rama', async () => {
   const panel = await waitPage('panel');
   await panel.evaluate(() => pm.command('panel', 'day'));
-  await panel.waitForFunction(() => document.querySelectorAll('#queue-project option').length > 1, null, { timeout: 8000 });
+  await panel.waitForFunction(() => document.querySelectorAll('#queue-project option').length > 1, null, { timeout: 8000, polling: 100 });
   await panel.fill('#queue-input', 'crea HECHO.md con un saludo');
   await panel.selectOption('#queue-project', 'demo');
   await panel.press('#queue-input', 'Enter');
   await panel.waitForSelector('#claude-queue .q-run', { timeout: 5000 });
   await panel.click('#claude-queue .q-run');
   // Progreso en vivo mientras trabaja.
-  await panel.waitForFunction(() => /Editando/.test((document.querySelector('#claude-runs .run.running .run-progress') || {}).textContent || ''), null, { timeout: 15000 });
+  await panel.waitForFunction(() => /Editando/.test((document.querySelector('#claude-runs .run.running .run-progress') || {}).textContent || ''), null, { timeout: 15000, polling: 100 });
   await panel.waitForSelector('#claude-runs .run.review', { timeout: 30000 });
   assert.match(await panel.textContent('#claude-runs .run.review'), /Segunda opinión: todo bien/);
   const repo = path.join(reposDir, 'demo');
@@ -181,7 +181,7 @@ test('cola de Claude: corre los tests del repo antes de avisar y muestra si fall
   await panel.evaluate(() => pm.queueAdd('arregla la suma', 'api'));
   await panel.waitForSelector('#claude-queue .q-run', { timeout: 5000 });
   await panel.click('#claude-queue .q-run');
-  await panel.waitForFunction(() => [...document.querySelectorAll('#claude-runs .run.review')].some((r) => /npm test falla/.test(r.textContent)), null, { timeout: 60000 });
+  await panel.waitForFunction(() => [...document.querySelectorAll('#claude-runs .run.review')].some((r) => /npm test falla/.test(r.textContent)), null, { timeout: 60000, polling: 100 });
   const r = await panel.evaluate(() => {
     const run = [...document.querySelectorAll('#claude-runs .run.review')].find((x) => /npm test falla/.test(x.textContent));
     return { tail: run.querySelector('pre').textContent, pr: !!run.querySelector('.run-pr'), accept: !!run.querySelector('.run-accept') };
@@ -190,7 +190,7 @@ test('cola de Claude: corre los tests del repo antes de avisar y muestra si fall
   assert.deepEqual({ pr: r.pr, accept: r.accept }, { pr: false, accept: true }, 'sin token de GitHub ni origin no ofrece PR');
   await panel.evaluate(() => { window.confirm = () => true; });
   await panel.click('#claude-runs .run.review .run-discard');
-  await panel.waitForFunction(() => !document.querySelector('#claude-runs .run.review'), null, { timeout: 10000 });
+  await panel.waitForFunction(() => !document.querySelector('#claude-runs .run.review'), null, { timeout: 10000, polling: 100 });
 });
 
 test('ajustes: tickets, cola automática y avisos fuera del PC se pintan', async () => {
@@ -199,9 +199,9 @@ test('ajustes: tickets, cola automática y avisos fuera del PC se pintan', async
   assert.equal(await panel.evaluate(() => document.querySelector('#tickets').classList.contains('hidden')), true);
   await panel.evaluate(() => pm.openSettings('remote'));
   const st = await waitPage('settings');
-  await st.waitForFunction(() => !document.querySelector('#sec-remote').classList.contains('hidden'), null, { timeout: 8000 });
+  await st.waitForFunction(() => !document.querySelector('#sec-remote').classList.contains('hidden'), null, { timeout: 8000, polling: 100 });
   await st.evaluate(() => pm.remoteSave({ phoneOn: true, phoneVia: 'ntfy' }));
-  await st.waitForFunction(() => /^pm-[0-9a-f]{16}$/.test(document.querySelector('#ntfy-topic').textContent), null, { timeout: 5000 });
+  await st.waitForFunction(() => /^pm-[0-9a-f]{16}$/.test(document.querySelector('#ntfy-topic').textContent), null, { timeout: 5000, polling: 100 });
   const r = await st.evaluate(async () => {
     const bad = await pm.remoteSave({ teamWebhook: 'http://inseguro.example' });
     const s = await pm.getState();
@@ -230,7 +230,7 @@ test('Microsoft 365: al pegar el ID de aplicación aparece "Conectar" en Agenda'
   assert.equal(bad.ok, false);
   const ok = await panel.evaluate(() => pm.saveOauth({ microsoft: { clientId: '11111111-2222-3333-4444-555555555555', tenant: 'contoso.onmicrosoft.com' } }));
   assert.deepEqual(ok, { ok: true, ready: { microsoft: true, google: false } });
-  await panel.waitForFunction(() => !document.querySelector('#accounts').classList.contains('hidden'), null, { timeout: 5000 });
+  await panel.waitForFunction(() => !document.querySelector('#accounts').classList.contains('hidden'), null, { timeout: 5000, polling: 100 });
   assert.equal(await panel.evaluate(() => document.querySelector('.acc-btn.ms').disabled), false);
   assert.equal(fs.existsSync(path.join(dir, 'oauth.config.json')), true, 'se guarda en la carpeta de datos, no en la app');
 });
@@ -240,11 +240,11 @@ test('panel: agenda y centro de avisos (en sus propios archivos) funcionan', asy
   await panel.evaluate(() => pm.command('panel', 'agenda'));
   await sleep(300);
   // El proveedor de correo cambia la ayuda (código de panel-agenda.js).
-  await panel.waitForFunction(() => document.querySelectorAll('#mail-provider option').length > 1, null, { timeout: 5000 });
+  await panel.waitForFunction(() => document.querySelectorAll('#mail-provider option').length > 1, null, { timeout: 5000, polling: 100 });
   await panel.evaluate(() => { const s = document.querySelector('#mail-provider'); s.value = 'yahoo'; s.dispatchEvent(new Event('change')); });
   assert.match(await panel.innerHTML('#mail-help'), /Generar contraseña de app/);
   await panel.evaluate(() => pm.command('inbox'));
-  await panel.waitForFunction(() => !document.querySelector('#o-inbox').classList.contains('hidden'), null, { timeout: 5000 });
+  await panel.waitForFunction(() => !document.querySelector('#o-inbox').classList.contains('hidden'), null, { timeout: 5000, polling: 100 });
   const n = await panel.evaluate(() => document.querySelectorAll('#ib-list [data-id], #ib-list .ib').length);
   assert.ok(n > 0, 'el centro de avisos lista algo');
   await panel.click('#ib-close');
@@ -256,7 +256,10 @@ test('1.8: donación en "Acerca de", informe de errores oculto sin destino y aju
   const cmds = await panel.evaluate(() => pm.paletteList());
   assert.ok(cmds.some((c) => c.id === 'donate'), 'comando de donación en la paleta');
   // Clic real en el botón: se intercepta la apertura del navegador para no abrir PayPal.
-  await app.evaluate(({ shell }) => { global.__opened = []; shell.openExternal = async (u) => { global.__opened.push(u); }; });
+  // Playwright a veces pierde la promesa de evaluate en Electron ("garbage collected"): reintentar.
+  for (let i = 0; ; i++) {
+    try { await app.evaluate(({ shell }) => { global.__opened = []; shell.openExternal = async (u) => { global.__opened.push(u); }; return true; }); break; } catch (e) { if (i >= 3 || !/garbage collected/.test(e.message)) throw e; await sleep(300); }
+  }
   await panel.evaluate(() => pm.openAbout());
   const about = await waitPage('about');
   assert.match(await about.textContent('#donate'), /PayPal/);
@@ -270,7 +273,7 @@ test('1.8: donación en "Acerca de", informe de errores oculto sin destino y aju
   await about.evaluate(() => pm.closeAbout());
   await panel.evaluate(() => pm.openSettings('diag'));
   const st = await waitPage('settings');
-  await st.waitForFunction(() => !document.querySelector('#sec-diag').classList.contains('hidden'), null, { timeout: 8000 });
+  await st.waitForFunction(() => !document.querySelector('#sec-diag').classList.contains('hidden'), null, { timeout: 8000, polling: 100 });
   const r = await st.evaluate(async () => {
     await pm.updateSettings({ claudeParallel: 9, claudeMaxFixes: -3 });
     const s = await pm.getState();
@@ -284,20 +287,20 @@ test('2.0 alma: huerta, trucos, fechas, rasgo visible y truco en el pollito', as
   const panel = await waitPage('panel');
   const pet = await waitPage('pet');
   await panel.evaluate(() => pm.command('panel', 'pet'));
-  await panel.waitForFunction(() => document.querySelectorAll('#soul-garden .pot').length >= 3, null, { timeout: 8000 });
+  await panel.waitForFunction(() => document.querySelectorAll('#soul-garden .pot').length >= 3, null, { timeout: 8000, polling: 100 });
   const r = await panel.evaluate(() => ({ pots: document.querySelectorAll('#soul-garden .pot:not(.pot-buy)').length, tricks: document.querySelectorAll('#soul-tricks .trick').length, traits: document.querySelectorAll('#soul-traits .trait-chip').length }));
   assert.deepEqual(r, { pots: 3, tricks: 5, traits: 6 });
   // Una fecha importante desde el formulario.
   await panel.fill('#soul-date-label', 'Cumple de Ana');
   await panel.fill('#soul-date-date', '2026-12-24');
   await panel.click('#soul-date-form button[type=submit]');
-  await panel.waitForFunction(() => /Cumple de Ana/.test(document.querySelector('#soul-dates').textContent), null, { timeout: 5000 });
+  await panel.waitForFunction(() => /Cumple de Ana/.test(document.querySelector('#soul-dates').textContent), null, { timeout: 5000, polling: 100 });
   // Practicar un truco: el pollito lo intenta.
   await panel.click('#soul-tricks .trick[data-id="spin"] button');
-  await pet.waitForFunction(() => document.body.classList.contains('a-trick-spin'), null, { timeout: 5000 });
+  await pet.waitForFunction(() => document.body.classList.contains('a-trick-spin'), null, { timeout: 5000, polling: 100 });
   // Rasgo: con muchos commits de verdad le sale la cresta de hacker.
   await panel.evaluate(() => pm.soulAct('traits'));
-  await pet.waitForFunction(() => document.body.classList.contains('trait-hacker'), null, { timeout: 5000 });
+  await pet.waitForFunction(() => document.body.classList.contains('trait-hacker'), null, { timeout: 5000, polling: 100 });
   assert.equal(await pet.evaluate(() => getComputedStyle(document.querySelector('#tr-hacker')).display !== 'none'), true);
 });
 
@@ -305,15 +308,15 @@ test('2.0 presencia: estilo pixel, respiración guiada y ajustes de apariencia',
   const panel = await waitPage('panel');
   const pet = await waitPage('pet');
   await panel.evaluate(() => pm.updateSettings({ petStyle: 'pixel' }));
-  await pet.waitForFunction(() => document.body.classList.contains('style-pixel'), null, { timeout: 5000 });
+  await pet.waitForFunction(() => document.body.classList.contains('style-pixel'), null, { timeout: 5000, polling: 100 });
   assert.match(await pet.evaluate(() => getComputedStyle(document.querySelector('#flip')).filter), /fxPixel/);
   await panel.evaluate(() => pm.updateSettings({ petStyle: 'normal' }));
-  await pet.waitForFunction(() => !document.body.classList.contains('style-pixel'), null, { timeout: 5000 });
+  await pet.waitForFunction(() => !document.body.classList.contains('style-pixel'), null, { timeout: 5000, polling: 100 });
   await panel.evaluate(() => pm.command('breathe'));
-  await pet.waitForFunction(() => document.body.classList.contains('breathing') && /Inhala/.test(document.querySelector('#breath').textContent), null, { timeout: 5000 });
+  await pet.waitForFunction(() => document.body.classList.contains('breathing') && /Inhala/.test(document.querySelector('#breath').textContent), null, { timeout: 5000, polling: 100 });
   await panel.evaluate(() => pm.openSettings('appearance'));
   const st = await waitPage('settings');
-  await st.waitForFunction(() => document.querySelectorAll('#pet-style button').length === 4 && !!document.querySelector('#pet-perch'), null, { timeout: 8000 });
+  await st.waitForFunction(() => document.querySelectorAll('#pet-style button').length === 4 && !!document.querySelector('#pet-perch'), null, { timeout: 8000, polling: 100 });
   assert.equal(await st.evaluate(() => document.querySelector('#pet-perch').checked), true, 'sentarse en ventanas viene activado');
 });
 
@@ -321,55 +324,55 @@ test('2.0 productividad: mis proyectos, notas de reunión → tareas y modo pato
   const panel = await waitPage('panel');
   await panel.evaluate(() => pm.command('panel', 'day'));
   await panel.evaluate(() => { document.querySelector('#pj-section').open = true; });
-  await panel.waitForFunction(() => document.querySelectorAll('#pj-list .pj').length >= 2, null, { timeout: 8000 });
+  await panel.waitForFunction(() => document.querySelectorAll('#pj-list .pj').length >= 2, null, { timeout: 8000, polling: 100 });
   // Notas de reunión → tareas.
   await panel.evaluate(() => pm.command('meeting.notes'));
   await panel.waitForSelector('#o-meeting:not(.hidden)', { timeout: 5000 });
   await panel.fill('#mt-text', 'Ana: enviar el presupuesto el viernes\nYo reviso el PR del carrito\nHablamos del clima');
   await panel.click('#mt-go');
-  await panel.waitForFunction(() => document.querySelectorAll('#mt-list .mt-item').length === 2, null, { timeout: 8000 });
+  await panel.waitForFunction(() => document.querySelectorAll('#mt-list .mt-item').length === 2, null, { timeout: 8000, polling: 100 });
   assert.deepEqual(await panel.evaluate(() => [...document.querySelectorAll('#mt-list input')].map((c) => c.checked)), [false, true], 'solo la tuya marcada');
   await panel.click('#mt-add');
-  await panel.waitForFunction(() => [...document.querySelectorAll('#tasks .t')].some((x) => /Yo reviso el PR del carrito/.test(x.textContent)), null, { timeout: 5000 });
+  await panel.waitForFunction(() => [...document.querySelectorAll('#tasks .t')].some((x) => /Yo reviso el PR del carrito/.test(x.textContent)), null, { timeout: 5000, polling: 100 });
   // Pato de goma desde el chat.
   await panel.evaluate(() => pm.command('panel', 'chat'));
   await panel.fill('#chat-input', '/pato');
   await panel.press('#chat-input', 'Enter');
-  await panel.waitForFunction(() => !document.querySelector('#duck-banner').classList.contains('hidden'), null, { timeout: 5000 });
+  await panel.waitForFunction(() => !document.querySelector('#duck-banner').classList.contains('hidden'), null, { timeout: 5000, polling: 100 });
   await panel.fill('#chat-input', 'el total no suma el IVA');
   await panel.press('#chat-input', 'Enter');
-  await panel.waitForFunction(() => /¿Qué esperabas que pasara/.test(document.querySelector('#chat-log, #chat, body').innerText), null, { timeout: 5000 });
+  await panel.waitForFunction(() => /¿Qué esperabas que pasara/.test(document.querySelector('#chat-log, #chat, body').innerText), null, { timeout: 5000, polling: 100 });
   await panel.fill('#chat-input', 'listo');
   await panel.press('#chat-input', 'Enter');
-  await panel.waitForFunction(() => document.querySelector('#duck-banner').classList.contains('hidden'), null, { timeout: 5000 });
+  await panel.waitForFunction(() => document.querySelector('#duck-banner').classList.contains('hidden'), null, { timeout: 5000, polling: 100 });
 });
 
 test('2.0 Claude: modelo por petición, recurrentes, qué funciona y ajustes de límites', async () => {
   const panel = await waitPage('panel');
   await panel.evaluate(() => pm.command('panel', 'day'));
-  await panel.waitForFunction(() => document.querySelectorAll('#crec-project option').length > 1, null, { timeout: 8000 });
+  await panel.waitForFunction(() => document.querySelectorAll('#crec-project option').length > 1, null, { timeout: 8000, polling: 100 });
   await panel.fill('#queue-input', 'corrige el typo del título');
   await panel.selectOption('#queue-model', 'haiku');
   await panel.press('#queue-input', 'Enter');
-  await panel.waitForFunction(() => [...document.querySelectorAll('#claude-queue .qi')].some((q) => /corrige el typo[\s\S]*🧠 haiku/.test(q.textContent)), null, { timeout: 5000 });
+  await panel.waitForFunction(() => [...document.querySelectorAll('#claude-queue .qi')].some((q) => /corrige el typo[\s\S]*🧠 haiku/.test(q.textContent)), null, { timeout: 5000, polling: 100 });
   await panel.evaluate(() => { document.querySelector('#claude-recurring').open = true; document.querySelector('#claude-stats').open = true; });
   await panel.fill('#crec-text', 'Actualiza dependencias y abre PR');
   await panel.selectOption('#crec-project', 'demo');
   await panel.selectOption('#crec-days', '1');
   await panel.click('#crec-form button[type=submit]');
-  await panel.waitForFunction(() => /Actualiza dependencias[\s\S]*demo[\s\S]*lunes · 09:00/.test(document.querySelector('#crec-list').textContent), null, { timeout: 5000 });
+  await panel.waitForFunction(() => /Actualiza dependencias[\s\S]*demo[\s\S]*lunes · 09:00/.test(document.querySelector('#crec-list').textContent), null, { timeout: 5000, polling: 100 });
   // Las peticiones de los tests anteriores ya cuentan en "qué te funciona".
   const st = await panel.evaluate(() => ({ n: Number(document.querySelector('#cstats-count').textContent), rows: document.querySelectorAll('#cstats tbody tr').length }));
   assert.ok(st.n >= 2 && st.rows >= 1, JSON.stringify(st));
   await panel.evaluate(() => { document.querySelector('#crec-list .crec-del').click(); });
-  await panel.waitForFunction(() => document.querySelector('#crec-count').textContent === '0', null, { timeout: 5000 });
+  await panel.waitForFunction(() => document.querySelector('#crec-count').textContent === '0', null, { timeout: 5000, polling: 100 });
   await panel.evaluate(() => [...document.querySelectorAll('#claude-queue .qi')].find((q) => /corrige el typo/.test(q.textContent)).querySelector('.q-del').click());
   await panel.evaluate(() => pm.openSettings('integrations'));
   const s = await waitPage('settings');
-  await s.waitForFunction(() => !!document.querySelector('#run-limits') && document.querySelector('#run-limitpct').value === '85', null, { timeout: 8000 });
+  await s.waitForFunction(() => !!document.querySelector('#run-limits') && document.querySelector('#run-limitpct').value === '85', null, { timeout: 8000, polling: 100 });
   assert.deepEqual(await s.evaluate(() => ({ lim: document.querySelector('#run-limits').checked, auto: document.querySelector('#run-modelauto').checked })), { lim: true, auto: true });
   await s.evaluate(() => { const i = document.querySelector('#run-limitpct'); i.value = '120'; i.dispatchEvent(new Event('change')); });
-  await s.waitForFunction(async () => (await pm.getState()).claudeRunner.limitPct === 99, null, { timeout: 5000 });
+  await s.waitForFunction(async () => (await pm.getState()).claudeRunner.limitPct === 99, null, { timeout: 5000, polling: 100 });
   await s.evaluate(() => pm.updateSettings({ claudeLimitPct: 85 }));
 });
 
@@ -386,17 +389,17 @@ test('2.0 equipo: granja compartida, kudo con maíz y visita de un compañero', 
   fs.writeFileSync(path.join(g, 'beto.json'), JSON.stringify(tf.card({ id: 'beto', name: 'Beto', pet: { species: 'penguin' }, focusMode: true })));
   await panel.evaluate(() => pm.command('panel', 'pet'));
   await panel.evaluate(() => pm.farmRefresh());
-  await panel.waitForFunction(() => document.querySelectorAll('#farm-list .mate').length === 2, null, { timeout: 8000 });
+  await panel.waitForFunction(() => document.querySelectorAll('#farm-list .mate').length === 2, null, { timeout: 8000, polling: 100 });
   const r = await panel.evaluate(() => [...document.querySelectorAll('#farm-list .mate')].map((m) => [m.querySelector('b').textContent, m.className.includes('st-focus'), m.querySelector('.m-visit').disabled]));
   assert.deepEqual(r, [['Ana', false, false], ['Beto', true, true]], 'Beto en foco: dormido y sin visitas');
   assert.equal(await panel.evaluate(() => !document.querySelector('#farm-challenge').classList.contains('hidden')), true, 'reto de foco visible');
   // La visita de Ana llega al pollito.
-  await pet.waitForFunction(() => document.body.classList.contains('visiting') && /Pío · de Ana/.test(document.querySelector('#visitor-tag').textContent), null, { timeout: 5000 });
+  await pet.waitForFunction(() => document.body.classList.contains('visiting') && /Pío · de Ana/.test(document.querySelector('#visitor-tag').textContent), null, { timeout: 5000, polling: 100 });
   // Kudo a Ana con mensaje: queda en tu buzón de la carpeta.
   await panel.click('#farm-list .mate[data-id="ana"] .m-kudo');
   await panel.fill('#farm-list .kudo-msg', 'gracias por la review');
   await panel.click('#farm-list .kudo-form button[type=submit]');
-  await panel.waitForFunction(() => /2 kudos hoy/.test(document.querySelector('#farm-kudos-left').textContent), null, { timeout: 5000 });
+  await panel.waitForFunction(() => /2 kudos hoy/.test(document.querySelector('#farm-kudos-left').textContent), null, { timeout: 5000, polling: 100 });
   const out = JSON.parse(fs.readFileSync(path.join(g, 'yo-test.out.json'), 'utf8'));
   assert.deepEqual(out.map((e) => [e.type, e.to, e.msg]), [['kudo', 'ana', 'gracias por la review']]);
   const mine = JSON.parse(fs.readFileSync(path.join(g, 'yo-test.json'), 'utf8'));
@@ -407,7 +410,7 @@ test('2.0 equipo: granja compartida, kudo con maíz y visita de un compañero', 
 test('2.0 juego: misiones, pase, minijuegos nuevos, exclusivos en la tienda y tu año', async () => {
   const panel = await waitPage('panel');
   await panel.evaluate(() => pm.command('panel', 'pet'));
-  await panel.waitForFunction(() => document.querySelectorAll('#game-missions .mission').length === 3 && document.querySelectorAll('#game-pass .pass-tier').length === 20, null, { timeout: 8000 });
+  await panel.waitForFunction(() => document.querySelectorAll('#game-missions .mission').length === 3 && document.querySelectorAll('#game-pass .pass-tier').length === 20, null, { timeout: 8000, polling: 100 });
   assert.match(await panel.textContent('#game-eggs'), /Próximo huevo a los 7 días/);
   const shop = await panel.evaluate(() => [...document.querySelectorAll('#shop .item')].filter((i) => /galaxia|arcoíris/.test(i.textContent)).map((i) => i.querySelector('button').disabled));
   assert.deepEqual(shop, [true, true], 'los exclusivos no se compran');
@@ -416,7 +419,7 @@ test('2.0 juego: misiones, pase, minijuegos nuevos, exclusivos en la tienda y tu
   const game = await waitPage('game');
   await game.waitForSelector('#menu:not(.hidden) [data-mode="bugs"]', { timeout: 5000 });
   await game.click('[data-mode="bugs"]');
-  await game.waitForFunction(() => /Aplasta los bugs/.test(document.querySelector('#ov-title').textContent) && document.querySelector('#c').className === 'm-bugs', null, { timeout: 5000 });
+  await game.waitForFunction(() => /Aplasta los bugs/.test(document.querySelector('#ov-title').textContent) && document.querySelector('#c').className === 'm-bugs', null, { timeout: 5000, polling: 100 });
   await game.click('#play');
   await sleep(1500);
   // Un clic en cada pantalla: si había un bug, cuenta.
@@ -424,7 +427,7 @@ test('2.0 juego: misiones, pase, minijuegos nuevos, exclusivos en la tienda y tu
   const r = await game.evaluate(() => pm.gameEnd(7, 'snake'));
   assert.equal(r.best, 7);
   await game.evaluate(() => pm.gameClose());
-  await panel.waitForFunction(() => state.game.bestScores.snake === 7 && state.game.gamesToday >= 1 && state.game.season.pts >= 7, null, { timeout: 5000 });
+  await panel.waitForFunction(() => state.game.bestScores.snake === 7 && state.game.gamesToday >= 1 && state.game.season.pts >= 7, null, { timeout: 5000, polling: 100 });
   // Tu año: la tarjeta se dibuja.
   await panel.evaluate(() => pm.command('wrapped'));
   await panel.waitForSelector('#o-wrapped:not(.hidden)', { timeout: 5000 });
@@ -440,21 +443,21 @@ test('2.0 plataforma: plugin en utilityProcess, widget de escritorio y extensió
   await panel.evaluate(() => pm.pluginsExample());
   const r = await panel.evaluate(() => pm.pluginsEnable('hola-pollito', true));
   assert.equal(r.ok, true);
-  await panel.waitForFunction(async () => (await pm.getState()).plugins.list.some((p) => p.id === 'hola-pollito' && p.ready), null, { timeout: 10000 });
-  await panel.waitForFunction(async () => (await pm.paletteList()).some((c) => c.arg === 'hola-pollito:frase'), null, { timeout: 5000 });
+  await panel.waitForFunction(async () => (await pm.getState()).plugins.list.some((p) => p.id === 'hola-pollito' && p.ready), null, { timeout: 10000, polling: 100 });
+  await panel.waitForFunction(async () => (await pm.paletteList()).some((c) => c.arg === 'hola-pollito:frase'), null, { timeout: 5000, polling: 100 });
   await panel.evaluate(() => pm.command('plugin.run', 'hola-pollito:frase'));
   // Lo que dice un plugin queda en el centro de avisos (y sale en la burbuja si el pollito está visible).
-  await panel.waitForFunction(async () => (await pm.getState()).inbox.some((x) => /^🧩 /.test(x.text)), null, { timeout: 5000 });
+  await panel.waitForFunction(async () => (await pm.getState()).inbox.some((x) => /^🧩 /.test(x.text)), null, { timeout: 5000, polling: 100 });
   // Ajustes: la sección de plugins lo muestra funcionando; la extensión tiene su código.
   await panel.evaluate(() => pm.openSettings('plugins'));
   const st = await waitPage('settings');
-  await st.waitForFunction(() => /funcionando/.test(document.querySelector('#pl-list').textContent), null, { timeout: 8000 });
+  await st.waitForFunction(() => /funcionando/.test(document.querySelector('#pl-list').textContent), null, { timeout: 8000, polling: 100 });
   assert.match(await st.evaluate(() => document.querySelector('#bx-token').value), /^[0-9a-f]{32}$/);
   await panel.evaluate(() => pm.pluginsEnable('hola-pollito', false));
   // Widget de escritorio.
   await panel.evaluate(() => pm.command('widget.toggle'));
   const w = await waitPage('widget');
-  await w.waitForFunction(() => /Testito/.test(document.querySelector('#name').textContent) && /✅/.test(document.querySelector('#tasks').textContent), null, { timeout: 8000 });
+  await w.waitForFunction(() => /Testito/.test(document.querySelector('#name').textContent) && /✅/.test(document.querySelector('#tasks').textContent), null, { timeout: 8000, polling: 100 });
   await w.click('#w-close');
   await sleep(500);
   assert.equal(page('widget'), undefined, 'se cierra');
@@ -520,8 +523,8 @@ test('pulido 2: menú circular, caricia, pico al hablar y lanzar al pollito', as
   await pet.mouse.down();
   await sleep(750);
   await pet.mouse.up();
-  await pet.waitForFunction(() => document.querySelector('#radial').classList.contains('open') && document.querySelectorAll('#radial .rd').length === 6, null, { timeout: 3000 }).catch(async (e) => { throw new Error(e.message + ' · ' + await pet.evaluate(() => document.body.className + ' | radial=' + document.querySelector('#radial').className + ' | chick=' + getComputedStyle(document.querySelector('#chick')).display)); });
-  await pet.click('#radial .rd[data-i="2"]');
+  await pet.waitForFunction(() => document.querySelector('#radial').classList.contains('open') && document.querySelectorAll('#radial .rd').length === 6, null, { timeout: 3000, polling: 100 }).catch(async (e) => { throw new Error(e.message + ' · ' + await pet.evaluate(() => document.body.className + ' | radial=' + document.querySelector('#radial').className + ' | chick=' + getComputedStyle(document.querySelector('#chick')).display)); });
+  await pet.click('#radial .rd[data-i="2"]', { force: true }); // ventana oculta en los tests: sin cuadros, Playwright no puede comprobar que esté "estable"
   const cap = await waitPage('capture');
   assert.equal(await pet.evaluate(() => document.querySelector('#radial').classList.contains('open')), false);
   await cap.keyboard.press('Escape');
@@ -552,8 +555,8 @@ test('pulido 2: menú circular, caricia, pico al hablar y lanzar al pollito', as
     }
     document.querySelector('#chick').dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: cx, clientY: cy, pointerId: 7 }));
   }, [c.x, c.y, sx, sy]);
-  await pet.waitForFunction(() => document.body.classList.contains('flying'), null, { timeout: 3000 });
-  await pet.waitForFunction(() => !document.body.classList.contains('flying'), null, { timeout: 10000 });
+  await pet.waitForFunction(() => document.body.classList.contains('flying'), null, { timeout: 3000, polling: 100 });
+  await pet.waitForFunction(() => !document.body.classList.contains('flying'), null, { timeout: 10000, polling: 100 });
   const p1 = await getPos();
   const floor = await app.evaluate(({ screen }, b) => { const wa = screen.getDisplayNearestPoint({ x: b.pos[0] + b.size[0] / 2, y: b.pos[1] + b.size[1] / 2 }).workArea; return wa.y + wa.height - b.size[1]; }, p1);
   assert.notDeepEqual(p1.pos, p0.pos, 'se movió');
@@ -601,10 +604,10 @@ test('pulido 4: lista viva, completar con confeti y botones con estado', async (
   const panel = await waitPage('panel');
   await panel.evaluate(() => pm.command('panel', 'day'));
   await panel.evaluate(() => pm.addTask('Fila A pulido'));
-  await panel.waitForFunction(() => [...document.querySelectorAll('#tasks > li')].some((l) => /Fila A pulido/.test(l.textContent)), null, { timeout: 5000 });
+  await panel.waitForFunction(() => [...document.querySelectorAll('#tasks > li')].some((l) => /Fila A pulido/.test(l.textContent)), null, { timeout: 5000, polling: 100 });
   await panel.evaluate(() => { window.__rowA = [...document.querySelectorAll('#tasks > li')].find((l) => /Fila A pulido/.test(l.textContent)); });
   await panel.evaluate(() => pm.addTask('Fila B pulido'));
-  await panel.waitForFunction(() => [...document.querySelectorAll('#tasks > li')].some((l) => /Fila B pulido/.test(l.textContent)), null, { timeout: 5000 });
+  await panel.waitForFunction(() => [...document.querySelectorAll('#tasks > li')].some((l) => /Fila B pulido/.test(l.textContent)), null, { timeout: 5000, polling: 100 });
   const r = await panel.evaluate(() => {
     const rows = [...document.querySelectorAll('#tasks > li')];
     const a = rows.find((l) => /Fila A pulido/.test(l.textContent));
@@ -659,7 +662,7 @@ test('pulido 5: atajos visibles, menú de tarea, teclado, arrastrar a la cola y 
   await panel.evaluate(() => document.querySelector('#keys-close').click());
   // Tres tareas para jugar.
   for (const t of ['Menú uno', 'Menú dos', 'Menú tres']) await panel.evaluate((x) => pm.addTask(x), t);
-  await panel.waitForFunction(() => /Menú tres/.test(document.querySelector('#tasks').textContent), null, { timeout: 5000 });
+  await panel.waitForFunction(() => /Menú tres/.test(document.querySelector('#tasks').textContent), null, { timeout: 5000, polling: 100 });
   const row = (txt) => `[...document.querySelectorAll('#tasks > li[data-i]')].find((l) => l.textContent.includes('${txt}'))`;
   // Menú contextual → Pasar a mañana.
   await panel.evaluate((sel) => { const li = eval(sel); li.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 60, clientY: 200 })); }, row('Menú uno'));
@@ -667,7 +670,7 @@ test('pulido 5: atajos visibles, menú de tarea, teclado, arrastrar a la cola y 
   const items = await panel.evaluate(() => [...document.querySelectorAll('#ctx > button')].map((b) => b.dataset.a));
   assert.deepEqual(items, ['timer', 'claude', 'later', 'edit', 'del']);
   await panel.click('#ctx button[data-a="later"]');
-  await panel.waitForFunction(() => !/Menú uno/.test(document.querySelector('#tasks').textContent), null, { timeout: 5000 });
+  await panel.waitForFunction(() => !/Menú uno/.test(document.querySelector('#tasks').textContent), null, { timeout: 5000, polling: 100 });
   // Flechas y Supr.
   const kb = await panel.evaluate(async (sel) => {
     const dos = eval(sel);
@@ -689,14 +692,14 @@ test('pulido 5: atajos visibles, menú de tarea, teclado, arrastrar a la cola y 
     q.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }));
     li.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer: dt }));
   }, row('Menú dos'));
-  await panel.waitForFunction(() => (state.claudeQueue || []).some((q) => q.text === 'Menú dos'), null, { timeout: 5000 });
+  await panel.waitForFunction(() => (state.claudeQueue || []).some((q) => q.text === 'Menú dos'), null, { timeout: 5000, polling: 100 });
   // Soltar un enlace sobre el panel → tarea.
   await panel.evaluate(() => {
     const dt = new DataTransfer();
     dt.setData('text/uri-list', 'https://example.com/docs/guia');
     document.querySelector('#card').dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }));
   });
-  await panel.waitForFunction(() => /Revisar example\.com\/docs\/guia https:\/\/example\.com\/docs\/guia/.test(document.querySelector('#tasks').textContent), null, { timeout: 5000 });
+  await panel.waitForFunction(() => /Revisar example\.com\/docs\/guia https:\/\/example\.com\/docs\/guia/.test(document.querySelector('#tasks').textContent), null, { timeout: 5000, polling: 100 });
   // …y un texto sobre el pollito.
   const pet = await waitPage('pet');
   await pet.evaluate(() => {
@@ -704,7 +707,7 @@ test('pulido 5: atajos visibles, menú de tarea, teclado, arrastrar a la cola y 
     dt.setData('text/plain', 'Llamar a soporte');
     document.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }));
   });
-  await panel.waitForFunction(() => /Llamar a soporte/.test(document.querySelector('#tasks').textContent), null, { timeout: 5000 });
+  await panel.waitForFunction(() => /Llamar a soporte/.test(document.querySelector('#tasks').textContent), null, { timeout: 5000, polling: 100 });
 });
 
 test('pulido 6: íconos coherentes, traducción sin emojis, tema suave y fondo translúcido', async () => {
@@ -728,14 +731,14 @@ test('pulido 6: íconos coherentes, traducción sin emojis, tema suave y fondo t
   // Fondo translúcido: interruptor en Apariencia (experimental).
   await panel.evaluate(() => pm.openSettings('appearance'));
   const st = await waitPage('settings');
-  await st.waitForFunction(() => !!document.querySelector('#win-material'), null, { timeout: 8000 });
+  await st.waitForFunction(() => !!document.querySelector('#win-material'), null, { timeout: 8000, polling: 100 });
   const okWin = await st.evaluate(async () => (await pm.getState()).winMaterialOk);
   assert.equal(await st.evaluate(() => document.querySelector('#win-material').disabled), !okWin);
   if (okWin) {
     await st.evaluate(() => pm.updateSettings({ winMaterial: true }));
-    await st.waitForFunction(() => document.documentElement.classList.contains('acrylic'), null, { timeout: 5000 });
+    await st.waitForFunction(() => document.documentElement.classList.contains('acrylic'), null, { timeout: 5000, polling: 100 });
     await st.evaluate(() => pm.updateSettings({ winMaterial: false }));
-    await st.waitForFunction(() => !document.documentElement.classList.contains('acrylic'), null, { timeout: 5000 });
+    await st.waitForFunction(() => !document.documentElement.classList.contains('acrylic'), null, { timeout: 5000, polling: 100 });
   }
 });
 
@@ -805,6 +808,7 @@ test('ChickRig: en reposo no anima a 60 fps, sigue al cursor con las pupilas y l
     const clean = () => { for (const c of [...document.body.classList]) if (/^(a-|walking|music|dragged|flying|petting|user-away|breathing|breathe-|visiting|visit-)/.test(c)) document.body.classList.remove(c); };
     clean();
     hideBubble();
+    busyUntil = Date.now() + 60000; // sin gestos espontáneos ni paseos durante la prueba
     // Una burbuja de otra prueba lo deja fluido unos segundos: esperar a que se calme.
     for (let i = 0; i < 40 && ChickRig.stats().mode !== 'idle'; i++) { clean(); await wait(200); }
     await wait(300);
@@ -834,6 +838,7 @@ test('ChickRig: en reposo no anima a 60 fps, sigue al cursor con las pupilas y l
     // La colita de la burbuja es un "seguidor" mientras la burbuja está abierta.
     say({ text: 'Hola', ms: 2000 });
     const tail = ChickRig.stats().followers.includes('tail');
+    busyUntil = 0;
     return { cls, idle: idle.mode, idleFps: idle.fps, pausedIdle, advanced, away: away.mode, awayFps: away.fps, walking: walking.mode, runningWalking, pupilX: (m ? Number(m[1]) : 0) * (document.body.classList.contains('left') ? -1 : 1), tail }; // en pantalla (el SVG se espeja al mirar a la izquierda)
   });
   assert.equal(r.idle, 'idle', r.cls);
@@ -848,11 +853,43 @@ test('ChickRig: en reposo no anima a 60 fps, sigue al cursor con las pupilas y l
   assert.ok(r.tail);
 });
 
+test('horario: "trabajaré el domingo de 8 a 12" desde el chat, días y comidas en Ajustes, y el pollito come o descansa', async () => {
+  const panel = await waitPage('panel');
+  const r = await panel.evaluate(() => pm.chat('trabajaré el domingo de 8 a 12 de la tarde'));
+  assert.match(r.text, /Anotado: .*domingo.* de 08:00 a 12:00/);
+  const ot = await panel.evaluate(() => pm.chat('horas extra'));
+  assert.match(ot.text, /Hoy/);
+  // Ajustes → General: el día especial aparece y los días laborales son chips.
+  await panel.evaluate(() => pm.openSettings('general'));
+  const st = await waitPage('settings');
+  await st.waitForFunction(() => document.querySelector('#s-extras').textContent.includes('08:00'), null, { timeout: 8000, polling: 100 });
+  const days = await st.evaluate(() => [...document.querySelectorAll('#s-workdays button.on')].length);
+  assert.equal(days, 7);
+  // Quitar el día especial desde Ajustes.
+  await st.click('#s-extras button[data-date]');
+  await st.waitForFunction(() => !document.querySelector('#s-extras').textContent.includes('08:00'), null, { timeout: 8000, polling: 100 });
+  // Pausa por los días con un texto que no se entiende: no se anota nada.
+  const bad = await st.evaluate(() => pm.workExtra({ text: 'mañana como pizza' }));
+  assert.equal(bad.ok, false);
+  // El pollito según la rutina (sin esperar a que sea la hora): almuerzo y plan de fin de semana.
+  const pet = await waitPage('pet');
+  const cls = await pet.evaluate(() => {
+    applyRoutine({ phase: { kind: 'meal', meal: 'lunch', label: 'almuerzo' }, leisure: null }, false);
+    const lunch = document.body.classList.contains('meal-lunch') && getComputedStyle(document.querySelector('#meal')).display !== 'none' && getComputedStyle(document.querySelector('#meal .food-lunch')).display !== 'none';
+    applyRoutine({ phase: { kind: 'rest', weekend: true }, leisure: { id: 'series', emoji: '📺' } }, false);
+    const series = document.body.classList.contains('leisure-series') && getComputedStyle(document.querySelector('#lz-tv')).display !== 'none' && getComputedStyle(document.querySelector('#badge')).display === 'none';
+    applyRoutine({ phase: { kind: 'work' }, leisure: null }, false);
+    const clean = !/meal-|leisure-|resting/.test(document.body.className);
+    return { lunch, series, clean };
+  });
+  assert.deepEqual(cls, { lunch: true, series: true, clean: true });
+});
+
 test('ajustes: diagnóstico sin errores de la app', async () => {
   const panel = await waitPage('panel');
   await panel.evaluate(() => pm.command('diag'));
   const st = await waitPage('settings');
-  await st.waitForFunction(() => document.querySelector('#dg-mem').textContent.includes('MB'), null, { timeout: 8000 });
+  await st.waitForFunction(() => document.querySelector('#dg-mem').textContent.includes('MB'), null, { timeout: 8000, polling: 100 });
   const d = await st.evaluate(() => pm.diagGet());
   const own = d.errors.filter((e) => !/Autofill|DevTools|Electron Security Warning|Comando desconocido: no-existe-todavia/i.test(e.msg)); // el último lo provoca un test a propósito
   assert.deepEqual(own.map((e) => e.msg.slice(0, 160)), []);

@@ -120,7 +120,7 @@ module.exports = function install(M) {
   function ritualTick() {
     if (set().closingRitual === false || !S().pet.name || M.TEST) return;
     const now = new Date();
-    if (set().workdaysOnly && (now.getDay() === 0 || now.getDay() === 6)) return;
+    if (M.routine && !M.routine.isWorkday()) return; // el finde (o tu día libre) no hay ritual de cierre
     const k = lib.keyOf(now);
     const day = M.today();
     if (day.ritual || now.getHours() * 60 + now.getMinutes() < lib.toMin(endTime()) || (day.ritualSnooze || 0) > Date.now()) return;

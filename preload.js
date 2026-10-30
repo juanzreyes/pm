@@ -46,6 +46,7 @@ contextBridge.exposeInMainWorld('pm', {
   removeTask: (index) => ipcRenderer.invoke('task:remove', index),
   snooze: (kind) => ipcRenderer.invoke('snooze', kind),
   updateSettings: (patch) => ipcRenderer.invoke('settings:update', patch),
+  workExtra: (req) => ipcRenderer.invoke('schedule:extra', req),
   setToken: (t) => ipcRenderer.invoke('token:set', t),
   refreshUsage: () => ipcRenderer.invoke('usage:refresh'),
   openExternal: (url) => ipcRenderer.send('open-external', url),

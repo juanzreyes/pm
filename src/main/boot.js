@@ -254,9 +254,9 @@ module.exports = function install(M) {
     if (!M.SAFE) M.plan.start();
     M.pl = M.petlifeMod.create(common);
     if (!M.SAFE) M.pl.start();
-    M.soul = require('../petsoul').create({ ...common, levelInfo: M.levelInfo, aiTone: () => M.pl.aiTone(), log: (e) => M.diag.log('main', 'Alma del pollito: ' + e.message) });
+    M.soul = require('../petsoul').create({ ...common, isWorkTime: () => M.routine.isWorkTime(), levelInfo: M.levelInfo, aiTone: () => M.pl.aiTone(), log: (e) => M.diag.log('main', 'Alma del pollito: ' + e.message) });
     if (!M.SAFE) M.soul.start();
-    if (!M.SAFE) { M.presence.start(); M.coach.start(); M.farm.start(); M.gz.start(); }
+    if (!M.SAFE) { M.presence.start(); M.coach.start(); M.farm.start(); M.gz.start(); M.routine.start(); }
     if (!M.TEST) M.widget.start();
     if (!M.SAFE) M.plugins.start(); // solo los que activaste (en modo seguro, ninguno)
     if (!M.SAFE) { M.work.start(); M.remote.start(); setTimeout(() => M.team.applyBundled(), 8000); }
