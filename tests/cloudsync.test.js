@@ -24,6 +24,8 @@ test('código de vinculación: enlace del QR y código corto', () => {
   assert.deepEqual(C.parsePairing(C.pairingLink(s)), { ...s, url: C.DEFAULT_URL });
   assert.deepEqual(C.parsePairing(C.shortCode(s)), { ...s, url: C.DEFAULT_URL });
   assert.deepEqual(C.parsePairing(C.pairingLink({ ...s, url: 'https://mio.example.workers.dev' })), { ...s, url: 'https://mio.example.workers.dev' });
+  // Con guiones dentro del espacio y de la llave el código corto se sigue separando bien.
+  for (let i = 0; i < 200; i++) { const x = C.newSpace(); assert.deepEqual(C.parsePairing(C.shortCode(x)), { ...x, url: C.DEFAULT_URL }); }
   assert.equal(C.parsePairing('hola'), null);
   assert.equal(C.parsePairing('pmpollito://pair?s=corto&k=corto'), null);
   assert.equal(C.parsePairing(C.pairingLink({ ...s, url: 'http://inseguro.example' })).url, C.DEFAULT_URL, 'solo https');

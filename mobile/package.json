@@ -1,0 +1,29 @@
+{
+  "name": "pm-pollito-android",
+  "private": true,
+  "version": "2.2.0",
+  "description": "PM Pollito para Android: el mismo código de la PC (main.js, src/, renderer/) sobre Capacitor, con una capa que imita Node y Electron.",
+  "scripts": {
+    "build": "node build.mjs",
+    "serve": "node build.mjs --serve",
+    "sync": "node build.mjs && npx cap sync android",
+    "apk": "node build.mjs && npx cap sync android && cd android && gradlew.bat assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor-mlkit/barcode-scanning": "^8.1.0",
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/browser": "^8.0.0",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/local-notifications": "^8.2.0",
+    "buffer": "^6.0.3",
+    "events": "^3.3.0",
+    "hash.js": "^1.1.7",
+    "js-md5": "^0.8.3",
+    "path-browserify": "^1.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.4.1",
+    "esbuild": "^0.25.0"
+  }
+}

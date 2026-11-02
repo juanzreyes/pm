@@ -77,7 +77,9 @@
   /** Acepta el enlace del QR o el código corto "PM1-<espacio>-<llave>". */
   function parsePairing(text) {
     const t = String(text || '').trim();
-    const m = /^PM1-([A-Za-z0-9_-]{22,64})-([A-Za-z0-9_-]{40,64})$/.exec(t);
+    // Largos fijos (24 y 43): el espacio y la llave también pueden llevar "-", así que el guion solo
+    // no sirve para separarlos.
+    const m = /^PM1-([A-Za-z0-9_-]{24})-([A-Za-z0-9_-]{43})$/.exec(t);
     if (m) return { space: m[1], key: m[2], url: DEFAULT_URL };
     const q = /^pmpollito:\/\/pair\?(.+)$/.exec(t);
     if (!q) return null;

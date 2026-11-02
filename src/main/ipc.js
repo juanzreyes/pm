@@ -316,6 +316,7 @@ module.exports = function install(M) {
       try { const r = await M.cloud.create(); return { ...r, qr: await require('qrcode').toDataURL(r.link, { margin: 1, width: 220 }) }; } catch (e) { return { ok: false, error: e.message }; }
     });
     M.ipcMain.handle('cloud:join', (_e, code) => M.cloud.join(String(code || '').slice(0, 300)));
+    M.ipcMain.handle('cloud:scan', () => M.cloud.scanAndJoin());
     M.ipcMain.handle('cloud:pairing', async () => {
       const r = M.cloud.pairing();
       return r ? { ...r, qr: await require('qrcode').toDataURL(r.link, { margin: 1, width: 220 }) } : null;

@@ -749,3 +749,10 @@ kbd {
 .dragging-task #claude-queue::after { content: attr(data-drop-label); position: absolute; right: 8px; top: -11px; font-size: 11px; font-weight: 800; background: var(--orange); color: #fff; border-radius: 99px; padding: 1px 8px; }
 .drop-hot { outline-style: solid !important; transform: scale(1.04); transition: transform var(--d-fast) var(--spring); }
 .drop-ext #card::after { content: "📌 Suelta para anotarlo en tus tareas"; position: absolute; inset: 8px; z-index: 50; display: grid; place-items: center; border: 3px dashed var(--orange); border-radius: 18px; background: rgba(255, 216, 74, .25); font-weight: 900; font-size: 15px; color: var(--ink); pointer-events: none; }
+
+/* Bienvenida: unirse a un ecosistema existente (2.3) */
+.onb-join { margin: 10px 0 4px; display: flex; flex-direction: column; gap: 6px; }
+.onb-join-row input { flex: 1; min-width: 0; }
+.android-only { display: none !important; }
+html.android .android-only { display: inline-flex !important; justify-content: center; }
+html.android .pc-only { display: none !important; }

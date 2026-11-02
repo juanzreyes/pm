@@ -1,0 +1,20 @@
+/* Ajustes de las pantallas de la PC cuando corren en el teléfono (html.android lo pone la capa de
+   Electron del teléfono). En la PC este archivo no se carga. */
+html.android, html.android body { -webkit-tap-highlight-color: transparent; }
+/* El panel ocupa todo el ancho y alto disponibles (en la PC es una ventana de 380×560). */
+html.android body.panel-page, html.android #app { width: 100% !important; max-width: none !important; height: 100% !important; }
+/* Dedos en vez de ratón: objetivos táctiles de al menos 40 px. */
+html.android button, html.android .tab, html.android input[type=checkbox] { min-height: 36px; }
+html.android input, html.android select, html.android textarea { font-size: 16px; } /* sin zoom automático al escribir */
+/* Ajustes: el menú lateral pasa a ser una fila desplazable arriba. */
+@media (max-width: 700px) {
+  html.android .settings-layout, html.android #layout { flex-direction: column !important; }
+  html.android #snav { display: flex !important; flex-direction: row !important; overflow-x: auto; width: auto !important; max-width: 100vw; gap: 4px; padding: 6px !important; border-right: 0 !important; border-bottom: 1.5px solid var(--line); }
+  html.android #snav button { flex: none; white-space: nowrap; }
+  html.android .opt.row { flex-wrap: wrap; }
+}
+
+/* Panel: pantalla completa (sin el marco de la ventana de la PC) y sin la X de cerrar ventana. */
+html.android #card { inset: 0 !important; border-radius: 0 !important; border: 0 !important; box-shadow: none !important; }
+html.android #card.closing { animation: none !important; }
+html.android #close { display: none !important; }

@@ -1,0 +1,45 @@
+/* Anfitrión de la app de Android: el pollito arriba, el panel debajo, hojas encima. */
+:root {
+  --bg: #fff7e6; --ink: #3b2f2f; --line: #ecdcb8; --orange: #ff9f1c; --card: #fffdf6;
+  --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1a1714; --ink: #f3ead9; --line: #3a332b; --card: #24201c; }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: "Segoe UI", Roboto, system-ui, sans-serif; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+body { display: flex; flex-direction: column; padding-top: var(--safe-top); }
+
+#stage {
+  position: relative; flex: 0 0 auto; height: min(34vh, 300px); overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 100%, rgba(255, 216, 74, .18), transparent 60%);
+}
+#stage .view, #main .view { position: absolute; inset: 0; }
+#stage iframe { position: absolute; left: 50%; top: 0; width: 240px; height: 300px; border: 0; transform-origin: 50% 0; background: transparent; }
+#main { position: relative; flex: 1 1 auto; min-height: 0; border-top: 1.5px solid var(--line); padding-bottom: var(--safe-bottom); }
+#main iframe { width: 100%; height: 100%; border: 0; display: block; background: var(--bg); }
+
+/* Hojas: ajustes, captura, juegos… */
+#sheets .view { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; background: var(--bg); padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); animation: sheetIn .22s cubic-bezier(.2, .8, .2, 1); }
+#sheets .view[hidden] { display: none; }
+@keyframes sheetIn { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.sheet-bar { flex: none; display: flex; align-items: center; gap: 6px; height: 48px; padding: 0 6px; border-bottom: 1.5px solid var(--line); }
+.sheet-back { width: 44px; height: 44px; border: 0; background: transparent; color: var(--ink); font: 700 30px/1 system-ui; border-radius: 12px; }
+.sheet-back:active { background: var(--line); }
+.sheet-title { font-weight: 800; font-size: 17px; }
+#sheets iframe { flex: 1; width: 100%; border: 0; background: var(--bg); }
+
+/* Diálogos */
+.msgbox { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, .35); display: grid; place-items: center; padding: 24px; }
+.msgbox-card { background: var(--card); border: 2.5px solid var(--ink); border-radius: 18px; box-shadow: 0 4px 0 var(--ink); padding: 18px; max-width: 360px; width: 100%; }
+.msgbox-card b { font-size: 16px; display: block; }
+.msgbox-card p { margin-top: 8px; font-size: 14px; opacity: .8; white-space: pre-line; }
+.msgbox-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
+.msgbox-row button { border: 2px solid var(--ink); background: var(--card); color: var(--ink); border-radius: 12px; padding: 10px 14px; font-weight: 800; font-size: 14px; }
+.msgbox-row button.primary { background: var(--orange); color: #fff; }
+
+/* Arranque */
+#boot { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: var(--bg); font-weight: 700; transition: opacity .3s; }
+#boot img { animation: bob 1.6s ease-in-out infinite; }
+#boot.gone { opacity: 0; pointer-events: none; }
+@keyframes bob { 50% { transform: translateY(-8px); } }

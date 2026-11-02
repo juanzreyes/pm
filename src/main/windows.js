@@ -299,6 +299,7 @@ module.exports = function install(M) {
   let closing = null;
   /** Oculta el panel con su animación (150 ms). instant: sin animar (presentaciones, etc.). */
   function hidePanel(instant = false) {
+    if (process.platform === 'android') return; // en el teléfono el panel ES la pantalla principal: no se cierra
     if (!M.panelWin || M.panelWin.isDestroyed() || !M.panelWin.isVisible()) return;
     if (instant) { clearTimeout(closing); closing = null; M.panelWin.hide(); return; }
     if (closing) return;
@@ -324,6 +325,7 @@ module.exports = function install(M) {
   }
 
   function togglePanel() {
+    if (process.platform === 'android') return openPanel();
     if (!M.panelWin || M.panelWin.isDestroyed()) return openPanel();
     if (M.panelWin.isVisible() && !closing) hidePanel();
     else openPanel();

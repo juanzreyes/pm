@@ -482,6 +482,13 @@
       <div class="hero">🥚➜🐣</div>
       <h2>¡Pío! Acabo de nacer</h2>
       <p>Seré tu <b>Project Manager</b>: vigilaré cuánto gastas de Claude, te avisaré cuando te acerques al límite y cada mañana te preguntaré qué vas a hacer.</p>
+      <div id="onb-join" class="box small onb-join">
+        <b>¿Ya tienes PM en otro dispositivo?</b>
+        <p class="muted small">Únete a tu ecosistema y trae tu pollito, su nivel, tus tareas y tu horario.</p>
+        <button type="button" id="onb-scan" class="primary android-only">Escanear el código de tu PC</button>
+        <div class="row gap onb-join-row"><input id="onb-code" placeholder="o escribe el código PM1-…" maxlength="200" spellcheck="false" aria-label="Código de vinculación" /><button type="button" id="onb-join-go" class="soft">Unirme</button></div>
+        <div id="onb-join-msg" class="small muted" role="status"></div>
+      </div>
       <form id="onb-form">
         <label>¿Cómo me vas a llamar?</label>
         <input id="onb-name" maxlength="24" placeholder="Ej: Pollito, Kiwi, Sr. Pío…" required />

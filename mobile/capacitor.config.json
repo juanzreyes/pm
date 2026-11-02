@@ -1,0 +1,10 @@
+{
+  "appId": "com.pm.pollito",
+  "appName": "PM Pollito",
+  "webDir": "www",
+  "server": { "androidScheme": "https" },
+  "plugins": {
+    "CapacitorHttp": { "enabled": true },
+    "LocalNotifications": { "smallIcon": "ic_stat_pm", "iconColor": "#FF9F1C" }
+  }
+}

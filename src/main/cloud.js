@@ -30,6 +30,7 @@ module.exports = function install(M) {
   let status = { state: 'off', at: 0, error: '' };
 
   const deviceId = () => M.device().id;
+  const KIND = process.platform === 'android' ? 'phone' : 'pc';
   const deviceName = () => (cfg() && cfg().name) || M.os.hostname();
   function getClient() {
     const c = cfg();
@@ -40,6 +41,8 @@ module.exports = function install(M) {
     return client;
   }
   function away() {
+    // En el teléfono, "lejos" es tener la app en segundo plano: mirarla sin tocar la pantalla cuenta.
+    if (KIND === 'phone') return typeof document !== 'undefined' && document.hidden;
     try {
       const { powerMonitor } = require('electron');
       return powerMonitor.getSystemIdleTime() >= 300 || powerMonitor.getSystemIdleState(60) === 'locked';
@@ -75,7 +78,7 @@ module.exports = function install(M) {
     }
     M.store.save();
     const r = await syncNow({ force: true });
-    await send('*', { type: 'activity', kind: 'joined', text: `🖥️ ${deviceName()} se unió a tu ecosistema` });
+    await send('*', { type: 'activity', kind: 'joined', text: `${KIND === 'phone' ? '📱' : '🖥️'} ${deviceName()} se unió a tu ecosistema` });
     M.broadcast();
     return { ok: true, devices: r && r.devices };
   }
@@ -121,6 +124,7 @@ module.exports = function install(M) {
         if (!b.data || b.data.app !== 'pm-pollito') continue;
         M.store.data = sync.merge(M.store.data, b.data.data);
         changed = true;
+        if (b.data.live && b.data.live.usage) adoptLive(b.data.live);
       }
       if (changed) sync.stamp(M.store.data, me);
       const cc = M.store.data.cloud || c;
@@ -137,7 +141,9 @@ module.exports = function install(M) {
       const sig = JSON.stringify(snap);
       const now = Date.now();
       if (sig !== lastSig && (force || dirtyImportant || now - lastPushAt > PUSH_MIN_MS)) {
-        await getClient().push({ app: 'pm-pollito', v: 1, at: now, device: { id: me, name: deviceName(), kind: 'pc' }, data: snap }, { name: deviceName(), kind: 'pc', app: M.app.getVersion() });
+        // "live": lo que solo sabe este dispositivo y los demás quieren ver (los límites de Claude de la PC).
+        const live = KIND === 'pc' && M.usage && M.usage.limits && M.usage.limits.length ? { usage: M.usage, at: now } : null;
+        await getClient().push({ app: 'pm-pollito', v: 1, at: now, device: { id: me, name: deviceName(), kind: KIND }, data: snap, live }, { name: deviceName(), kind: KIND, app: M.app.getVersion() });
         lastSig = sig;
         lastPushAt = now;
         dirtyImportant = false;
@@ -169,7 +175,7 @@ module.exports = function install(M) {
   async function send(to, msg) {
     if (!on()) return null;
     try {
-      const r = await getClient().send(to, { ...msg, fromName: deviceName(), fromKind: 'pc', at: Date.now() });
+      const r = await getClient().send(to, { ...msg, fromName: deviceName(), fromKind: KIND, at: Date.now() });
       hotUntil = Date.now() + 10 * 60e3;
       return r;
     } catch (e) {
@@ -181,6 +187,10 @@ module.exports = function install(M) {
   function onMessage(m) {
     if (m.type === 'notify') {
       M.say(`${icon(m)} ${m.fromName || 'Otro dispositivo'}: ${m.text}`, m.anim || 'peck', 10000, { cat: m.cat || 'ecosystem', remote: false });
+      // En el teléfono, además, como notificación (sin sonar si estás frente a la PC).
+      if (KIND === 'phone') {
+        try { new (require('electron').Notification)({ title: `${icon(m)} ${m.fromName || 'Tu PC'}`, body: m.text, silent: !!m.pcActive }).show(); } catch { /* sin notificaciones */ }
+      }
     } else if (m.type === 'activity') {
       // Lo que hiciste en el otro dispositivo: al centro de avisos, y si es algo para celebrar, en voz alta.
       const loud = /level|achievement|joined|streak/.test(m.kind || '');
@@ -243,9 +253,10 @@ module.exports = function install(M) {
   /** Lo que la PC dice en voz alta: lo importante también va al teléfono (igual que Teams/Telegram). */
   const recent = new Map();
   function onSay(raw, cat, opts = {}) {
-    if (!on() || opts.remote === false || M.TEST) return;
+    if (!on() || opts.remote === false || M.TEST || KIND !== 'pc') return;
     if (!(cfg().devices || []).some((d) => d.kind === 'phone')) return;
-    const r = require('../outbound').route(cat, raw, { phone: true, phoneWhen: 'always', phoneCats: ['claude', 'meeting', 'reminder', 'usage'] }, true);
+    // Solo lo que el teléfono no puede saber por su cuenta (los recordatorios ya están sincronizados y suenan allí).
+    const r = require('../outbound').route(cat, raw, { phone: true, phoneWhen: 'always', phoneCats: ['claude', 'meeting', 'usage'] }, true);
     if (!r.phone) return;
     const now = Date.now();
     if (recent.get(raw) > now - 60e3) return;
@@ -260,7 +271,8 @@ module.exports = function install(M) {
   // ---------------------------------------------------------------------------
   function loop() {
     clearTimeout(timer);
-    const ms = !on() ? NORMAL_MS : Date.now() < hotUntil ? FAST_MS : away() ? IDLE_MS : NORMAL_MS;
+    const phone = KIND === 'phone';
+    const ms = !on() ? NORMAL_MS : Date.now() < hotUntil ? (phone ? 20e3 : FAST_MS) : away() ? IDLE_MS : phone ? 45e3 : NORMAL_MS;
     timer = setTimeout(async () => { await syncNow(); loop(); }, ms);
   }
   function start() {
@@ -268,10 +280,27 @@ module.exports = function install(M) {
     setTimeout(() => { syncNow(); loop(); }, 12e3);
     try { require('electron').powerMonitor.on('resume', () => setTimeout(() => syncNow(), 5000)); } catch { /* sin powerMonitor */ }
   }
+  /** Los límites de Claude de la PC, si este dispositivo no tiene los suyos (el teléfono). */
+  function adoptLive(live) {
+    if (KIND !== 'phone') return;
+    const mine = M.usage && M.usage.connection && M.usage.connection.ok;
+    if (mine) return;
+    const prev = M.store.data.cloud && M.store.data.cloud.live;
+    if (prev && prev.at >= live.at) return;
+    if (M.store.data.cloud) M.store.data.cloud.live = { at: live.at };
+    M.usage = { ...live.usage, fromPc: true, fromPcAt: live.at };
+  }
+  /** En el teléfono: escanear el QR de la PC y unirse. */
+  async function scanAndJoin() {
+    if (typeof globalThis.__pmScan !== 'function') return { ok: false, error: 'Escanear solo está disponible en el teléfono.' };
+    const r = await globalThis.__pmScan();
+    if (!r || r.status !== 'success') return { ok: false, error: r && r.status === 'installing' ? 'Instalando el lector de códigos de Google… vuelve a tocar en unos segundos.' : r && r.status === 'cancelled' ? '' : 'No pude leer el código.' };
+    return join(r.value);
+  }
   function snapshot() {
     const c = cfg();
-    if (!c) return { on: false };
-    return { on: on(), owner: !!c.owner, url: c.url, devices: c.devices || [], status, me: deviceId(), name: deviceName() };
+    if (!c) return { on: false, canScan: typeof globalThis.__pmScan === 'function', kind: KIND };
+    return { on: on(), owner: !!c.owner, url: c.url, devices: c.devices || [], status, me: deviceId(), name: deviceName(), kind: KIND, canScan: typeof globalThis.__pmScan === 'function' };
   }
   function rename(name) {
     if (!cfg()) return false;
@@ -282,5 +311,5 @@ module.exports = function install(M) {
     return true;
   }
 
-  return { create, join, leave, wipe, pairing, syncNow, soon, send, onSay, activity, start, snapshot, rename, runCommand };
+  return { create, join, scanAndJoin, leave, wipe, pairing, syncNow, soon, send, onSay, activity, start, snapshot, rename, runCommand };
 };

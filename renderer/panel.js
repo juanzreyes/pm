@@ -928,6 +928,18 @@ $('#checklist').addEventListener('click', (e) => {
 });
 
 // ---------- onboarding ----------
+// Unirse a un ecosistema que ya existe (otra PC o el teléfono): trae el pollito y todo lo demás.
+async function onbJoin(fn) {
+  const msg = $('#onb-join-msg');
+  msg.textContent = 'Conectando…';
+  const r = await fn();
+  if (r && r.ok) {
+    msg.textContent = '¡Listo! Ya está todo aquí.';
+    setTimeout(() => $('#o-onboarding').classList.add('hidden'), 700);
+  } else msg.textContent = (r && r.error) || '';
+}
+$('#onb-join-go').addEventListener('click', () => { const c = $('#onb-code').value.trim(); if (c) onbJoin(() => pm.cloudJoin(c)); });
+$('#onb-scan').addEventListener('click', () => onbJoin(() => pm.cloudScan()));
 function openOnboarding() {
   $('#o-onboarding').classList.remove('hidden');
   const c = state && state.usage.connection;

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PM Pollito</string>
+    <string name="title_activity_main">PM Pollito</string>
+    <string name="package_name">com.pm.pollito</string>
+    <string name="custom_url_scheme">com.pm.pollito</string>
+</resources>

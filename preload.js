@@ -49,6 +49,7 @@ contextBridge.exposeInMainWorld('pm', {
   workExtra: (req) => ipcRenderer.invoke('schedule:extra', req),
   cloudCreate: () => ipcRenderer.invoke('cloud:create'),
   cloudJoin: (code) => ipcRenderer.invoke('cloud:join', code),
+  cloudScan: () => ipcRenderer.invoke('cloud:scan'),
   cloudPairing: () => ipcRenderer.invoke('cloud:pairing'),
   cloudSync: () => ipcRenderer.invoke('cloud:sync'),
   cloudLeave: () => ipcRenderer.invoke('cloud:leave'),

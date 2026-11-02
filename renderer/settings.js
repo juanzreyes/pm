@@ -247,6 +247,12 @@ $('#cl-create').addEventListener('click', async (e) => {
   $('#cl-msg').textContent = '';
   showPairing(r);
 });
+$('#cl-scan').addEventListener('click', async (e) => {
+  e.target.disabled = true;
+  const r = await pm.cloudScan();
+  e.target.disabled = false;
+  $('#cl-msg').textContent = r && r.ok ? '¡Listo! Ya está todo sincronizado.' : (r && r.error) || '';
+});
 $('#cl-join').addEventListener('click', async (e) => {
   const code = $('#cl-code').value.trim();
   if (!code) return;
