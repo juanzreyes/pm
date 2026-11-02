@@ -350,7 +350,10 @@ function updateTail() {
   // Centro real del pollito (también a mitad de un paseo), no el destino.
   const r = chick.getBoundingClientRect();
   const center = r.width ? r.left + r.width / 2 : 120 + posX;
-  bubble.style.setProperty('--tail-x', Math.max(22, Math.min(200, center - 8)).toFixed(1) + 'px');
+  // Relativo a la burbuja (en el teléfono va centrada y es más ancha que en la PC).
+  const left = bubble.offsetLeft || 8;
+  const max = Math.max(40, (bubble.offsetWidth || 224) - 24);
+  bubble.style.setProperty('--tail-x', Math.max(22, Math.min(max, center - left)).toFixed(1) + 'px');
 }
 // La colita se recalcula solo cuando el pollito se mueve (ChickRig), no en cada cuadro.
 function followTail() { ChickRig.follow('tail', updateTail); }

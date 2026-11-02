@@ -29,6 +29,39 @@ mobile/
   el panel no se cierra, el dispositivo se presenta como teléfono…
 - Las peticiones salen por CapacitorHttp (nativo, sin CORS).
 
+## Avisos con la app cerrada
+
+Lo nativo (`android/app/src/main/java/com/pm/pollito/`) revisa el buzón del ecosistema sin la
+parte web: `PmCloud.java` es el mismo protocolo que `src/cloudsync.js` (HKDF + AES-256-GCM +
+gzip), descifra los avisos en el teléfono y los muestra una sola vez (`notifyOnce`, también
+para los que muestra la parte web).
+
+| Cuándo | Cómo |
+|---|---|
+| App abierta | la parte web (cada 45 s, 20 s con actividad) |
+| Pollito flotante activo | `PetOverlayService` revisa cada minuto (servicio en primer plano) |
+| App cerrada | `PmSyncWorker` (WorkManager) cada 15 min, lo mínimo de Android |
+| Con Firebase | la PC manda un mensaje → el Worker manda una push de "despierta" → revisión al instante |
+
+### Activar las push al instante (Firebase)
+
+1. En la consola de Firebase (el proyecto de eshoy sirve: `eshoy-c9074`) → **Agregar app →
+   Android** con el paquete `com.pm.pollito`. Bajar `google-services.json` y ponerlo en
+   `mobile/android/app/` (Gradle aplica el plugin solo si el archivo existe).
+2. **Cuenta de servicio** (Configuración del proyecto → Cuentas de servicio → Generar clave):
+   `cd cloud && npx wrangler secret put FCM_SERVICE_ACCOUNT < clave.json` y borrar el .json.
+   Si es el mismo proyecto que eshoy, sirve la misma clave.
+3. Recompilar el APK. La app registra su token sola (`PUT /v1/s/:space/push`).
+
+La push no lleva el aviso (todo va cifrado): solo despierta al teléfono para que revise.
+
+## Pollito flotante
+
+`PetOverlayService`: ventana sobre las demás apps (permiso "Mostrar sobre otras apps"), con la
+foto del pollito actual (`host/overlay.js` la saca del SVG con sus estilos), arrastrable, se pega
+al borde, un toque abre PM y la burbuja dice los avisos. Se activa en Ajustes → Apariencia →
+Pollito flotante; aparece al salir de PM y se esconde al volver.
+
 ## Compilar en esta PC
 
 ```bash
@@ -40,6 +73,7 @@ cd android
 export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"
 export JAVA_TOOL_OPTIONS="-Djdk.net.unixdomain.tmpdir=C:\\Desarrollo\\pm\\mobile\\.jtmp"
 ./gradlew.bat assembleDebug -Dorg.gradle.jvmargs="-Xmx2g -Djdk.net.unixdomain.tmpdir=C:\\Desarrollo\\pm\\mobile\\.jtmp"
+# -PphoneOnly: sin librerías de emulador (x86): más liviano, para repartir a teléfonos
 ```
 
 El `tmpdir` propio es obligatorio en esta máquina: sin él Gradle falla con "Unable to

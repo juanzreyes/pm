@@ -18,3 +18,25 @@ html.android input, html.android select, html.android textarea { font-size: 16px
 html.android #card { inset: 0 !important; border-radius: 0 !important; border: 0 !important; box-shadow: none !important; }
 html.android #card.closing { animation: none !important; }
 html.android #close { display: none !important; }
+
+/* ---------- Ajustes en el teléfono ---------- */
+/* La ventana de la PC mide 760×600: aquí ocupa la pantalla y el menú lateral pasa a pestañas arriba. */
+html.android:has(.win), html.android:has(.win) body { width: 100% !important; height: 100% !important; }
+html.android .win { inset: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; flex-direction: column !important; animation: none !important; }
+html.android aside { width: auto !important; flex: none; flex-direction: column; gap: 8px !important; padding: 10px 12px 8px !important; border-right: 0 !important; border-bottom: 2px solid var(--line); }
+html.android aside .brand { display: none !important; }
+html.android #snav { flex-direction: row !important; overflow-x: auto; gap: 6px !important; scrollbar-width: none; padding-bottom: 2px; }
+html.android #snav::-webkit-scrollbar { display: none; }
+html.android #snav button { flex: none; white-space: nowrap; padding: 8px 12px !important; border: 1.5px solid var(--line) !important; border-radius: 99px !important; }
+html.android #snav button.active { border-color: var(--ink) !important; }
+html.android .titlebar { display: none !important; }
+html.android .scroll { padding: 12px 14px 28px !important; }
+html.android .sec h2 { font-size: 20px; }
+html.android .opt.row { flex-wrap: wrap; gap: 10px !important; }
+html.android .opt.row > div:first-child { flex: 1 1 200px; min-width: 0; }
+
+/* ---------- Escenario del pollito en el teléfono ---------- */
+/* La ventana de la PC mide 240 de ancho; aquí la página ocupa el ancho del escenario y el pollito va al centro. */
+html.android:has(#walker), html.android:has(#walker) body { width: 100% !important; }
+html.android #walker { left: calc(50% - 60px) !important; }
+html.android #bubble { left: 12px !important; right: 12px !important; margin: 0 auto; max-width: 340px; }

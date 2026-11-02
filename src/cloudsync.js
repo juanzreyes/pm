@@ -142,6 +142,8 @@
         const { cryptoKey } = await k();
         return call('POST', `/v1/s/${o.space}/msg`, { from: o.device, to, data: await seal(msg, cryptoKey) });
       },
+      /** Token de Firebase de este teléfono (vacío = borrarlo): la PC lo "despierta" con cada mensaje. */
+      registerPush: (token) => call('PUT', `/v1/s/${o.space}/push`, { device: o.device, token: token || '' }),
       unlink: (device = o.device) => call('DELETE', `/v1/s/${o.space}/d/${device}`),
       wipe: () => call('DELETE', `/v1/s/${o.space}`),
     };

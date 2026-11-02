@@ -78,6 +78,8 @@ module.exports = function install(M) {
     }
     M.store.save();
     const r = await syncNow({ force: true });
+    shareWithNative();
+    registerPush();
     await send('*', { type: 'activity', kind: 'joined', text: `${KIND === 'phone' ? '📱' : '🖥️'} ${deviceName()} se unió a tu ecosistema` });
     M.broadcast();
     return { ok: true, devices: r && r.devices };
@@ -89,6 +91,7 @@ module.exports = function install(M) {
     client = null;
     status = { state: 'off', at: Date.now(), error: '' };
     M.store.save();
+    shareWithNative();
     M.broadcast();
     return { ok: true };
   }
@@ -99,8 +102,23 @@ module.exports = function install(M) {
     client = null;
     status = { state: 'off', at: Date.now(), error: '' };
     M.store.save();
+    shareWithNative();
     M.broadcast();
     return { ok: true };
+  }
+  /** Teléfono: lo nativo revisa el buzón con la app cerrada; necesita la config (o null al desvincular). */
+  function shareWithNative() {
+    if (KIND !== 'phone' || typeof globalThis.__pmNativeCloud !== 'function') return;
+    const c = cfg();
+    try { globalThis.__pmNativeCloud(c && c.space ? { url: c.url, space: c.space, key: c.key, device: deviceId(), after: c.after || 0 } : null); } catch { /* sin parte nativa */ }
+  }
+  /** Teléfono: registra el token de Firebase (si la app lo trae) para que la PC lo despierte al instante. */
+  async function registerPush() {
+    if (KIND !== 'phone' || !on()) return;
+    const token = globalThis.__pmPushToken;
+    const c = cfg();
+    if (!token || c.pushToken === token) return;
+    try { await getClient().registerPush(token); c.pushToken = token; M.store.save(); } catch (e) { M.diag.log('main', 'Push del ecosistema: ' + e.message); }
   }
   function pairing() {
     const c = cfg();
@@ -189,7 +207,11 @@ module.exports = function install(M) {
       M.say(`${icon(m)} ${m.fromName || 'Otro dispositivo'}: ${m.text}`, m.anim || 'peck', 10000, { cat: m.cat || 'ecosystem', remote: false });
       // En el teléfono, además, como notificación (sin sonar si estás frente a la PC).
       if (KIND === 'phone') {
-        try { new (require('electron').Notification)({ title: `${icon(m)} ${m.fromName || 'Tu PC'}`, body: m.text, silent: !!m.pcActive }).show(); } catch { /* sin notificaciones */ }
+        const title = `${icon(m)} ${m.fromName || 'Tu PC'}`;
+        try {
+          if (typeof globalThis.__pmNotifyOnce === 'function') globalThis.__pmNotifyOnce(m.id, title, m.text, !!m.pcActive);
+          else new (require('electron').Notification)({ title, body: m.text, silent: !!m.pcActive }).show();
+        } catch { /* sin notificaciones */ }
       }
     } else if (m.type === 'activity') {
       // Lo que hiciste en el otro dispositivo: al centro de avisos, y si es algo para celebrar, en voz alta.
@@ -277,7 +299,7 @@ module.exports = function install(M) {
   }
   function start() {
     if (M.TEST && !process.env.PM_CLOUD_TEST) return;
-    setTimeout(() => { syncNow(); loop(); }, 12e3);
+    setTimeout(() => { syncNow(); loop(); shareWithNative(); registerPush(); }, 12e3);
     try { require('electron').powerMonitor.on('resume', () => setTimeout(() => syncNow(), 5000)); } catch { /* sin powerMonitor */ }
   }
   /** Los límites de Claude de la PC, si este dispositivo no tiene los suyos (el teléfono). */

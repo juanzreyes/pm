@@ -1,5 +1,7 @@
 // Lo nativo del teléfono (Capacitor), con alternativas de navegador para probar en la PC.
-const { Capacitor } = require('@capacitor/core');
+const { Capacitor, registerPlugin } = require('@capacitor/core');
+// Plugin propio (android/.../PmNativePlugin.java): buzón con la app cerrada, avisos sin duplicar, push y pollito flotante.
+const PmNative = registerPlugin('PmNative');
 const { LocalNotifications } = require('@capacitor/local-notifications');
 const { App } = require('@capacitor/app');
 const { Browser } = require('@capacitor/browser');
@@ -21,8 +23,15 @@ async function ensureNotifications() {
 }
 async function notify({ title, body, silent, extra }) {
   const id = ++nid;
+  // En el teléfono, por el plugin propio: notificación inmediata, sin "alarma exacta". El de Capacitor
+  // marca todo como alarma exacta por defecto y, sin ese permiso, abre solo la pantalla de
+  // "Alarmas y recordatorios" de Android cada vez.
+  if (isNative()) {
+    try { await PmNative.notifyOnce({ id: 0, title: String(title || 'PM Pollito').slice(0, 80), body: String(body || '').slice(0, 400), silent: !!silent }); } catch (e) { console.warn('Notificación:', e.message); }
+    return id;
+  }
   try {
-    await LocalNotifications.schedule({ notifications: [{ id, title: String(title || 'PM Pollito').slice(0, 80), body: String(body || '').slice(0, 400), channelId: silent ? 'pm-quiet' : 'pm', smallIcon: 'ic_stat_pm', ...(extra ? { extra } : {}) }] });
+    await LocalNotifications.schedule({ notifications: [{ id, title: String(title || 'PM Pollito').slice(0, 80), body: String(body || '').slice(0, 400), channelId: silent ? 'pm-quiet' : 'pm', smallIcon: 'ic_stat_pm', isExactNotification: false, ...(extra ? { extra } : {}) }] });
   } catch (e) { console.warn('Notificación:', e.message); }
   return id;
 }
@@ -73,4 +82,13 @@ async function scanQR() {
   }
 }
 
-module.exports = { scanQR, isNative, ensureNotifications, notify, onNotificationTap, cancelNotification, openExternal, copy, minimize, onBack, onPause, onResume, info, deviceName };
+const nativeOnly = (fn, fallback) => async (...a) => { if (!isNative()) return fallback; try { return await fn(...a); } catch (e) { console.warn('PmNative:', e.message); return fallback; } };
+const configureCloud = nativeOnly((cfg) => PmNative.configure({ cfg }), null);
+const notifyOnce = nativeOnly(async (id, title, body, silent) => (await PmNative.notifyOnce({ id: Number(id) || 0, title, body, silent: !!silent })).shown, false);
+const pushToken = nativeOnly(async () => (await PmNative.pushToken()).token || null, null);
+const canDrawOverlays = nativeOnly(async () => (await PmNative.canDrawOverlays()).granted, false);
+const requestOverlay = nativeOnly(() => PmNative.requestOverlay(), null);
+const overlayShow = nativeOnly((o) => PmNative.overlayShow(o), null);
+const overlayHide = nativeOnly(() => PmNative.overlayHide(), null);
+
+module.exports = { configureCloud, notifyOnce, pushToken, canDrawOverlays, requestOverlay, overlayShow, overlayHide, scanQR, isNative, ensureNotifications, notify, onNotificationTap, cancelNotification, openExternal, copy, minimize, onBack, onPause, onResume, info, deviceName };

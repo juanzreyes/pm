@@ -15,7 +15,7 @@ body { display: flex; flex-direction: column; padding-top: var(--safe-top); }
   background: radial-gradient(120% 90% at 50% 100%, rgba(255, 216, 74, .18), transparent 60%);
 }
 #stage .view, #main .view { position: absolute; inset: 0; }
-#stage iframe { position: absolute; left: 50%; top: 0; width: 240px; height: 300px; border: 0; transform-origin: 50% 0; background: transparent; }
+#stage iframe { position: absolute; left: 0; top: 0; width: 100%; height: 300px; border: 0; transform-origin: 0 0; background: transparent; }
 #main { position: relative; flex: 1 1 auto; min-height: 0; border-top: 1.5px solid var(--line); padding-bottom: var(--safe-bottom); }
 #main iframe { width: 100%; height: 100%; border: 0; display: block; background: var(--bg); }
 

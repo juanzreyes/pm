@@ -68,12 +68,12 @@ $('#ib-clear').addEventListener('click', () => pm.inboxClear());
 // ---------- tour de bienvenida ----------
 const TOUR = [
   { view: 'chat', sel: 'header', text: '👋 ¡Hola! Soy tu pollito PM. Aquí arriba ves mi ánimo y cuánto llevas de tu sesión de Claude.' },
-  { view: 'chat', sel: '.hbtns', text: '🔍 Busca cualquier acción, 🔔 revisa tus avisos y ⚙️ abre los ajustes. Truco: Ctrl+Alt+Espacio abre la paleta desde cualquier app.' },
-  { view: 'chat', sel: 'nav', text: '📑 Estas son mis pestañas. También puedes cambiar con las teclas 1 a 5.' },
-  { view: 'chat', sel: '#chat-form', text: '💬 Pregúntame lo que quieras: “¿cuánto llevo?”, “mis tareas”, “recuérdame a las 3…”. Pulsa / para escribir aquí.' },
+  { view: 'chat', sel: '.hbtns', text: '🔍 Busca cualquier acción, 🔔 revisa tus avisos y ⚙️ abre los ajustes. Truco: Ctrl+Alt+Espacio abre la paleta desde cualquier app.', android: '🔍 Busca cualquier acción, 🔔 revisa tus avisos y ⚙️ abre los ajustes. Ahí está «Tus dispositivos» para unirte a tu PC.' },
+  { view: 'chat', sel: 'nav', text: '📑 Estas son mis pestañas. También puedes cambiar con las teclas 1 a 5.', android: '📑 Estas son mis pestañas: chat, uso de Claude, tu día, agenda y mi perfil.' },
+  { view: 'chat', sel: '#chat-form', text: '💬 Pregúntame lo que quieras: “¿cuánto llevo?”, “mis tareas”, “recuérdame a las 3…”. Pulsa / para escribir aquí.', android: '💬 Pregúntame lo que quieras: “¿cuánto llevo?”, “mis tareas”, “recuérdame a las 3…”, “trabajaré el domingo de 8 a 12”.' },
   { view: 'usage', sel: '#limits', text: '📊 Tus límites de Claude y cuándo se reinician. Te aviso al 50, 75, 90 y 100%.' },
   { view: 'day', sel: '#pomo-box', text: '🍅 Pomodoro: 25 min de concentración. Mientras dura me pongo mi bandana y te vigilo más de cerca.' },
-  { view: 'day', sel: '#tasks', text: '✅ Tus tareas del día. Doble clic para editar, arrástralas para ordenar, el puntito cambia la prioridad y el 🕒 pone hora.' },
+  { view: 'day', sel: '#tasks', text: '✅ Tus tareas del día. Doble clic para editar, arrástralas para ordenar, el puntito cambia la prioridad y el 🕒 pone hora.', android: '✅ Tus tareas del día. Toca para marcarlas, mantén presionado para más opciones. Lo que anotes aquí aparece también en tu PC.' },
   { view: 'agenda', sel: '#meetings', text: '📅 Reuniones, GitHub, tus sitios y correo. Conecta tu calendario para que te avise antes de cada reunión.' },
   { view: 'pet', sel: '#checklist-box', text: '🚀 Completa estos pasos para sacarme todo el partido. ¡Y compra accesorios en la tienda con tu maíz 🌽!' },
 ];
@@ -93,7 +93,7 @@ function tourShow() {
       card.style.top = (below ? r.bottom + 12 : Math.max(10, r.top - 150)) + 'px';
     }
     $('#tour-step').textContent = `${tourI + 1} / ${TOUR.length}`;
-    $('#tour-text').textContent = state ? I18N.tr(st.text, state.lang) : st.text;
+    $('#tour-text').textContent = state ? I18N.tr((document.documentElement.classList.contains('android') && st.android ? st.android : st.text), state.lang) : (document.documentElement.classList.contains('android') && st.android ? st.android : st.text);
     $('#tour-prev').classList.toggle('hidden', tourI === 0);
     $('#tour-next').textContent = tourI === TOUR.length - 1 ? '¡Listo! 🎉' : 'Siguiente';
     card.classList.remove('hidden');

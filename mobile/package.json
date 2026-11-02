@@ -1,7 +1,7 @@
 {
   "name": "pm-pollito-android",
   "private": true,
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "PM Pollito para Android: el mismo código de la PC (main.js, src/, renderer/) sobre Capacitor, con una capa que imita Node y Electron.",
   "scripts": {
     "build": "node build.mjs",

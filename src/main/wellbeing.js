@@ -114,9 +114,15 @@ module.exports = function install(M) {
       { id: 'claude', label: 'Conectar tu cuenta de Claude', done: M.usage.connection && M.usage.connection.status === 'ok', cmd: 'panel.usage' },
       { id: 'daily', label: 'Hacer tu primer daily', done: everDay((x) => x.standup), cmd: 'daily' },
       { id: 'pomo', label: 'Completar un pomodoro', done: everDay((x) => (x.pomodoros || 0) > 0), cmd: 'pomo.start' },
-      { id: 'capture', label: 'Anotar algo con Ctrl+Alt+P', done: !!(d.flags && d.flags.usedCapture), cmd: 'capture' },
-      { id: 'palette', label: 'Abrir la paleta con Ctrl+Alt+Espacio', done: !!(d.flags && d.flags.usedPalette), cmd: 'palette' },
-      { id: 'hooks', label: 'Conectar Claude Code', done: !!hooksInstalled, cmd: 'settings.integrations' },
+      // En el teléfono no hay atajos de teclado ni Claude Code: allí, unirse a la PC y el pollito flotante.
+      ...(process.platform === 'android' ? [
+        { id: 'ecosystem', label: 'Unirte al ecosistema de tu PC', done: !!(d.cloud && d.cloud.space), cmd: 'settings.devices' },
+        { id: 'overlay', label: 'Activar el pollito flotante', done: !!d.settings.petOverlay, cmd: 'settings.appearance' },
+      ] : [
+        { id: 'capture', label: 'Anotar algo con Ctrl+Alt+P', done: !!(d.flags && d.flags.usedCapture), cmd: 'capture' },
+        { id: 'palette', label: 'Abrir la paleta con Ctrl+Alt+Espacio', done: !!(d.flags && d.flags.usedPalette), cmd: 'palette' },
+        { id: 'hooks', label: 'Conectar Claude Code', done: !!hooksInstalled, cmd: 'settings.integrations' },
+      ]),
       { id: 'style', label: 'Comprarme un accesorio', done: (d.pet.owned || []).length > 0, cmd: 'panel.profile' },
     ];
   }

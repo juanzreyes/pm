@@ -1,5 +1,12 @@
 # Novedades de PM Pollito
 
+## 2.4.0 — Tu pollito, también fuera de PM
+**📱 Android**
+- Avisos de la PC con la app cerrada: el teléfono revisa solo (cada 15 min, cada minuto con el pollito flotante, y al instante si se configura Firebase). Todo se descifra en el teléfono.
+- Pollito flotante: al salir de PM se queda sobre tus otras apps, como las burbujas de chat, con su especie y cosméticos de ese momento. Se arrastra, se pega al borde, un toque abre PM y te dice en su burbuja lo que pase en tu PC. Ajustes → Apariencia → Pollito flotante.
+- Pantallas pensadas para el teléfono: Ajustes con pestañas arriba y sin las opciones que solo existen en la PC, panel a pantalla completa, pollito centrado y burbuja ancha, tutorial y primeros pasos sin atajos de teclado.
+- Ya no se abre sola la pantalla de «Alarmas y recordatorios» de Android.
+
 ## 2.3.0 — Tu ecosistema: PC + Android
 **📱 PM Pollito para Android**
 - La misma app de la PC en tu teléfono: el pollito HD, tareas, daily, horario, comidas, chat, juego, tienda y colección. Lo que se agregue en la PC llega también al teléfono.

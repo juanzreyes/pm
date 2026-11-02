@@ -13,7 +13,14 @@ const views = require('./views');
     native.onBack(() => views.back());
     native.onPause(() => fs.__flush());
     native.ensureNotifications();
-    if (native.isNative()) globalThis.__pmScan = native.scanQR;
+    if (native.isNative()) {
+      globalThis.__pmScan = native.scanQR;
+      // Lo que usa src/main/cloud.js en el teléfono (ver PmNativePlugin.java).
+      globalThis.__pmNativeCloud = (cfg) => native.configureCloud(cfg);
+      globalThis.__pmNotifyOnce = (id, title, body, silent) => native.notifyOnce(id, title, body, silent);
+      native.pushToken().then((t) => { globalThis.__pmPushToken = t; });
+    }
+    require('./overlay').install();
     require('../../main.js');
   } catch (e) {
     console.error('Arranque:', e);

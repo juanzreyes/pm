@@ -12,6 +12,9 @@
 //   POST   /v1/s/:space/msg             manda un mensaje a un dispositivo o a todos ('*')
 //   DELETE /v1/s/:space/d/:device       desvincula un dispositivo
 //   DELETE /v1/s/:space                 borra todo el espacio ("borrar mis datos del servidor")
+//   PUT    /v1/s/:space/push            token de Firebase del teléfono (para "despertarlo" con cada mensaje)
+
+import { wake } from './fcm.js';
 
 const VERSION = 1;
 const MAX_BLOB = 1_500_000; // caracteres base64 (~1.1 MB cifrado y comprimido; una foto típica pesa ~60 KB)
@@ -69,7 +72,7 @@ async function authorize(env, space, token, { create = false } = {}) {
   return { ok: true, now, created: !row };
 }
 
-async function handle(req, env) {
+async function handle(req, env, ctx) {
   const url = new URL(req.url);
   const parts = url.pathname.split('/').filter(Boolean); // v1 s :space d :device
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
@@ -107,6 +110,7 @@ async function handle(req, env) {
   // Desvincular un dispositivo.
   if (sub === 'd' && parts[4] && req.method === 'DELETE') {
     await env.DB.batch([
+      env.DB.prepare('DELETE FROM push_tokens WHERE space = ? AND device = ?').bind(space, parts[4]),
       env.DB.prepare('DELETE FROM blobs WHERE space = ? AND device = ?').bind(space, parts[4]),
       env.DB.prepare('DELETE FROM messages WHERE space = ? AND target = ?').bind(space, parts[4]),
     ]);
@@ -139,14 +143,33 @@ async function handle(req, env) {
     if (!DEV.test(b.from || '') || !(b.to === '*' || DEV.test(b.to || ''))) return fail(400, 'remitente o destino inválido');
     if (typeof b.data !== 'string' || !b.data || b.data.length > MAX_MSG) return fail(413, 'mensaje demasiado grande');
     const r = await env.DB.prepare('INSERT INTO messages (space, sender, target, created_at, data) VALUES (?, ?, ?, ?, ?) RETURNING id').bind(space, b.from, b.to, now, b.data).first();
+    // Los teléfonos con push revisan ya (no esperan a su próxima revisión).
+    if (ctx && ctx.waitUntil) ctx.waitUntil(wake(env, space, b.from, b.to));
     // Buzón acotado: si se llena, se van los más viejos.
     await env.DB.prepare('DELETE FROM messages WHERE space = ? AND id <= ?').bind(space, r.id - MAX_MSGS_PER_SPACE).run();
     return json({ ok: true, id: r.id, at: now });
   }
 
+  // Token de push del teléfono (o borrarlo con token vacío).
+  if (sub === 'push' && req.method === 'PUT') {
+    const b = await body(req, 4096);
+    if (!DEV.test(b.device || '')) return fail(400, 'dispositivo inválido');
+    if (!b.token) {
+      await env.DB.prepare('DELETE FROM push_tokens WHERE space = ? AND device = ?').bind(space, b.device).run();
+      return json({ ok: true, removed: true });
+    }
+    if (typeof b.token !== 'string' || b.token.length > 400) return fail(400, 'token inválido');
+    await env.DB.batch([
+      env.DB.prepare('DELETE FROM push_tokens WHERE token = ? AND NOT (space = ? AND device = ?)').bind(b.token, space, b.device), // un token es de un solo dispositivo
+      env.DB.prepare('INSERT INTO push_tokens (space, device, token, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT (space, device) DO UPDATE SET token = excluded.token, updated_at = excluded.updated_at').bind(space, b.device, b.token, now),
+    ]);
+    return json({ ok: true, push: !!env.FCM_SERVICE_ACCOUNT });
+  }
+
   // Borrar todo el espacio.
   if (!sub && req.method === 'DELETE') {
     await env.DB.batch([
+      env.DB.prepare('DELETE FROM push_tokens WHERE space = ?').bind(space),
       env.DB.prepare('DELETE FROM blobs WHERE space = ?').bind(space),
       env.DB.prepare('DELETE FROM messages WHERE space = ?').bind(space),
       env.DB.prepare('DELETE FROM rate WHERE space = ?').bind(space),
@@ -159,9 +182,9 @@ async function handle(req, env) {
 }
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     try {
-      return await handle(req, env);
+      return await handle(req, env, ctx);
     } catch (e) {
       return fail(e.status || 500, e.status ? e.message : 'error interno');
     }
@@ -175,7 +198,7 @@ export default {
       env.DB.prepare('DELETE FROM rate WHERE bucket < ?').bind(Math.floor(now / 3600e3) - 2),
     ];
     for (const { id } of old.results) {
-      stmts.push(env.DB.prepare('DELETE FROM blobs WHERE space = ?').bind(id), env.DB.prepare('DELETE FROM messages WHERE space = ?').bind(id), env.DB.prepare('DELETE FROM spaces WHERE id = ?').bind(id));
+      stmts.push(env.DB.prepare('DELETE FROM push_tokens WHERE space = ?').bind(id), env.DB.prepare('DELETE FROM blobs WHERE space = ?').bind(id), env.DB.prepare('DELETE FROM messages WHERE space = ?').bind(id), env.DB.prepare('DELETE FROM spaces WHERE id = ?').bind(id));
     }
     await env.DB.batch(stmts);
   },

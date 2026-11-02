@@ -119,3 +119,6 @@ html.dark .sched-days button.on, html.contrast .sched-days button.on { backgroun
 .cl-devices .entry { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; border-radius: 10px; border: 1.5px solid var(--line); }
 .android-only { display: none !important; }
 html.android .android-only { display: inline-flex !important; justify-content: center; margin-bottom: 8px; }
+.android-row { display: none !important; }
+html.android .android-row { display: flex !important; }
+html.android .pc-only { display: none !important; }

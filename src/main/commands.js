@@ -149,6 +149,8 @@ module.exports = function install(M) {
     } },
     { id: 'lang-reload', hidden: true, run: () => M.reloadUi() },
     { id: 'settings.integrations', hidden: true, run: () => M.openSettings('integrations') },
+    { id: 'settings.devices', hidden: true, run: () => M.openSettings('devices') },
+    { id: 'settings.appearance', hidden: true, run: () => M.openSettings('appearance') },
     // Solo para botones de los avisos (no aparecen en la paleta):
     { id: 'focus.allow', hidden: true, run: () => M.say(M.allowCurrentDistraction(), 'judge', 7000, { log: false }) },
     { id: 'focus.ok', hidden: true, run: () => { M.fx.distractSince = Date.now(); M.fx.scoldLevel = 0; M.say('👍 ¡Confío en ti! 💪', 'hop', 4000, { log: false }); } },

@@ -92,6 +92,7 @@ function render() {
   $('#auto-hide').checked = state.autoHide !== false;
   $('#reduced').checked = !!s.reducedMotion;
   $('#s-petfps').value = s.petFps || 'balanced';
+  $('#s-overlay').checked = !!s.petOverlay;
   $('#s-sounds').checked = !!s.sounds;
   $('#voice').checked = s.voice !== false;
   if (document.activeElement !== $('#volume')) $('#volume').value = s.volume ?? 70;
@@ -364,6 +365,14 @@ $('#size').addEventListener('click', async (e) => { const b = e.target.closest('
 $('#discreet').addEventListener('change', async (e) => { state = await pm.setAppearance({ discreet: e.target.checked }); render(); });
 $('#auto-hide').addEventListener('change', (e) => pm.updateSettings({ autoHide: e.target.checked }));
 $('#reduced').addEventListener('change', async (e) => { state = await pm.setAppearance({ reducedMotion: e.target.checked }); render(); });
+// Pollito flotante (solo Android): el permiso "Mostrar sobre otras apps" lo da Android, no PM.
+$('#s-overlay').addEventListener('change', async (e) => {
+  const on = e.target.checked;
+  await pm.updateSettings({ petOverlay: on });
+  const ov = window.parent && window.parent !== window && window.parent.__pmOverlay;
+  if (ov && on && !(await ov.enable(true))) $('#s-overlay-info').textContent = 'Activa "Mostrar sobre otras apps" para PM Pollito en la pantalla que se abrió y vuelve aquí.';
+  if (ov && !on) ov.enable(false);
+});
 $('#s-petfps').addEventListener('change', async (e) => { state = await pm.setAppearance({ petFps: e.target.value }); render(); });
 $('#s-sounds').addEventListener('change', (e) => pm.updateSettings({ sounds: e.target.checked }));
 $('#voice').addEventListener('change', (e) => pm.updateSettings({ voice: e.target.checked }));

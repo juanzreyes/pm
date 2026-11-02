@@ -89,13 +89,16 @@ function back() {
   return false;
 }
 
-// El pollito vive en 240×300 (como su ventana de la PC): se escala para llenar el escenario.
+// El pollito vive en 300 px de alto (como su ventana de la PC): se escala por la altura del
+// escenario y su página ocupa TODO el ancho (mobile.css la centra), así al pasear o con la tele
+// del rato libre no se corta en los bordes.
 function fitPet() {
   for (const v of views.values()) {
     if (v.role !== 'pet' || !v.frame) continue;
     const stage = document.getElementById('stage');
-    const s = Math.min(stage.clientWidth / 240, stage.clientHeight / 300);
-    v.frame.style.transform = `translate(-50%, 0) scale(${s})`;
+    const s = stage.clientHeight / 300;
+    v.frame.style.width = Math.ceil(stage.clientWidth / s) + 'px';
+    v.frame.style.transform = `scale(${s})`;
   }
 }
 addEventListener('resize', fitPet);
