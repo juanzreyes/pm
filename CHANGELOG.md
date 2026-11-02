@@ -1,5 +1,17 @@
 # Novedades de PM Pollito
 
+## 2.3.0 — Tu ecosistema: PC + Android
+**📱 PM Pollito para Android**
+- La misma app de la PC en tu teléfono: el pollito HD, tareas, daily, horario, comidas, chat, juego, tienda y colección. Lo que se agregue en la PC llega también al teléfono.
+- Notificaciones de Android para lo que pasa en la PC: Claude terminó o te necesita, reuniones, consumo.
+
+**🔗 Ecosistema sincronizado**
+- Ajustes → Tus dispositivos → Crear ecosistema: aparece un código QR; en el teléfono, Escanear el código de tu PC. También sirve el código PM1-… para una segunda PC.
+- El mismo pollito en todos: nivel, maíz, experiencia, cosméticos, especie, trucos y huerta. Lo que ganas o gastas en el teléfono y en la PC a la vez se suma, no se pisa.
+- Tareas, notas, recordatorios, horario, días especiales y ajustes compartidos (personalidad, estilo, comidas…) viajan solos.
+- Desde el teléfono puedes pedirle a la PC: anotar una tarea, modo foco, encolar o ejecutar una tarea para Claude, o cómo va todo. El teléfono ve tus límites de Claude.
+- Cifrado de punta a punta: el servidor solo guarda paquetes ilegibles. El código es la llave: no lo compartas. Borrar mis datos del servidor, cuando quieras.
+
 ## 2.2.0 — Más liviano, con horario y en HD
 **⚡ Ya no se traba**
 - El pollito ya no anima a 60 cuadros por segundo todo el día. Un motor de animación propio (ChickRig) mueve lo de reposo a pocos cuadros por segundo y solo va fluido cuando lo tocas o lo miras de cerca. Medido con datos reales (pollito + GPU + proceso principal, % de un núcleo): usando la PC 31.6 → 16.2, sin tocar la PC 25.4 → 4.5.
