@@ -150,6 +150,7 @@ module.exports = function install(M) {
         }
         M.pushChat('pet', `¡Nivel ${after.level}: ${after.title}! 🎉`);
         M.broadcast();
+        if (M.cloud) { M.cloud.activity('level', `🎉 ${M.store.data.pet.name || 'Tu pollito'} subió a nivel ${after.level} (${after.title})`); M.cloud.soon(); }
         checkAchievements();
       }, 2500);
     }

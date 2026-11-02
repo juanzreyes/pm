@@ -246,7 +246,9 @@ module.exports = function install(M) {
         M.work.onTaskDone(t); // si viene de un ticket: se cierra en su gestor y se cargan las horas
         if (M.soul) M.soul.onTaskDone(t, all); // riega la huerta y, si es la última, un truco
         if (M.plugins) M.plugins.emit('task:done', { text: t.text, all });
+        if (M.cloud) M.cloud.activity('task', all ? `🎉 Terminaste todas las tareas de hoy en la PC` : `✅ Completaste "${t.text}" en la PC`);
       }
+      if (M.cloud) M.cloud.soon();
       M.store.save();
       M.broadcast();
       return true;
@@ -308,6 +310,20 @@ module.exports = function install(M) {
       M.say('¡Vale! Te vuelvo a preguntar en 30 minutos ⏰', 'peck');
       return true;
     });
+
+    // Ecosistema en la nube (PC + Android).
+    M.ipcMain.handle('cloud:create', async () => {
+      try { const r = await M.cloud.create(); return { ...r, qr: await require('qrcode').toDataURL(r.link, { margin: 1, width: 220 }) }; } catch (e) { return { ok: false, error: e.message }; }
+    });
+    M.ipcMain.handle('cloud:join', (_e, code) => M.cloud.join(String(code || '').slice(0, 300)));
+    M.ipcMain.handle('cloud:pairing', async () => {
+      const r = M.cloud.pairing();
+      return r ? { ...r, qr: await require('qrcode').toDataURL(r.link, { margin: 1, width: 220 }) } : null;
+    });
+    M.ipcMain.handle('cloud:sync', () => M.cloud.syncNow({ force: true }));
+    M.ipcMain.handle('cloud:leave', () => M.cloud.leave());
+    M.ipcMain.handle('cloud:wipe', () => M.cloud.wipe());
+    M.ipcMain.handle('cloud:rename', (_e, name) => { M.cloud.rename(name); M.broadcast(); return true; });
 
     // Días especiales: "trabajaré el domingo de 8 a 12", "el lunes es feriado" (o quitar uno).
     M.ipcMain.handle('schedule:extra', (_e, req) => {

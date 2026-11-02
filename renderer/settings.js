@@ -73,6 +73,7 @@ function render() {
   if (document.activeElement !== $('#s-morning')) $('#s-morning').value = s.morningTime;
   if (document.activeElement !== $('#s-evening')) $('#s-evening').value = s.eveningTime;
   renderSchedule();
+  renderCloud();
   $('#s-chatter').checked = !!s.chatter;
   $('#s-focus-blocks').checked = s.focusDuringBlocks !== false;
   $('#s-personality').value = s.personality || 'motivador';
@@ -222,6 +223,80 @@ $('#s-breaks').addEventListener('click', (e) => {
 $('#s-break-add').addEventListener('click', () => pm.updateSettings({ breaks: [...readBreaks(), { at: '15:00', min: 15 }] }));
 $('#s-mealrem').addEventListener('change', (e) => pm.updateSettings({ mealReminders: e.target.checked, breakReminders: e.target.checked }));
 $('#s-leisure').addEventListener('change', (e) => pm.updateSettings({ leisure: e.target.checked }));
+// ---------- Tus dispositivos (ecosistema en la nube) ----------
+let pairHide = null;
+function renderCloud() {
+  const c = state.cloud || { on: false };
+  $('#cl-off').classList.toggle('hidden', !!c.on);
+  $('#cl-on').classList.toggle('hidden', !c.on);
+  if (!c.on) return;
+  const st = c.status || {};
+  const pill = $('#cl-status');
+  pill.textContent = st.state === 'ok' ? 'Al día' : st.state === 'error' ? 'Sin conexión' : 'Conectando…';
+  pill.title = st.error || (st.at ? 'Última vez: ' + new Date(st.at).toLocaleTimeString() : '');
+  const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'ahora' : m < 60 ? `hace ${m} min` : m < 1440 ? `hace ${Math.round(m / 60)} h` : `hace ${Math.round(m / 1440)} d`; };
+  $('#cl-devices').innerHTML = (c.devices || []).map((d) => `<div class="entry"><span>${d.kind === 'phone' ? '📱' : '🖥️'} <b>${esc(d.name)}</b>${d.me ? ' <span class="muted">(este)</span>' : ''}</span><span class="muted small">${d.at ? ago(d.at) : ''}</span></div>`).join('') || '<span class="muted small">Solo este dispositivo por ahora.</span>';
+  if (document.activeElement !== $('#cl-name')) $('#cl-name').value = c.name || '';
+}
+$('#cl-create').addEventListener('click', async (e) => {
+  e.target.disabled = true;
+  $('#cl-msg').textContent = 'Creando…';
+  const r = await pm.cloudCreate();
+  e.target.disabled = false;
+  if (!r || !r.ok) { $('#cl-msg').textContent = 'No pude crearlo: ' + ((r && r.error) || 'sin conexión'); return; }
+  $('#cl-msg').textContent = '';
+  showPairing(r);
+});
+$('#cl-join').addEventListener('click', async (e) => {
+  const code = $('#cl-code').value.trim();
+  if (!code) return;
+  e.target.disabled = true;
+  $('#cl-msg').textContent = 'Conectando…';
+  const r = await pm.cloudJoin(code);
+  e.target.disabled = false;
+  $('#cl-msg').textContent = r && r.ok ? '¡Listo! Ya está todo sincronizado.' : (r && r.error) || 'No pude unirme.';
+  if (r && r.ok) $('#cl-code').value = '';
+});
+function showPairing(r) {
+  $('#cl-qr').src = r.qr;
+  $('#cl-shortcode').textContent = r.code;
+  $('#cl-pair').classList.remove('hidden');
+  $('#cl-show').textContent = 'Ocultar código';
+  let left = 120;
+  clearInterval(pairHide);
+  $('#cl-pair-left').textContent = 'Se oculta en 2 min';
+  pairHide = setInterval(() => {
+    left -= 1;
+    if (left <= 0) hidePairing();
+    else $('#cl-pair-left').textContent = `Se oculta en ${left} s`;
+  }, 1000);
+}
+function hidePairing() {
+  clearInterval(pairHide);
+  $('#cl-pair').classList.add('hidden');
+  $('#cl-qr').removeAttribute('src');
+  $('#cl-shortcode').textContent = '';
+  $('#cl-show').textContent = 'Mostrar código';
+}
+$('#cl-show').addEventListener('click', async () => {
+  if (!$('#cl-pair').classList.contains('hidden')) { hidePairing(); return; }
+  const r = await pm.cloudPairing();
+  if (r) showPairing(r);
+});
+$('#cl-copy').addEventListener('click', () => { pm.copy($('#cl-shortcode').textContent); $('#cl-copy').textContent = '¡Copiado!'; setTimeout(() => { $('#cl-copy').textContent = 'Copiar código'; }, 1500); });
+$('#cl-sync').addEventListener('click', async (e) => { e.target.disabled = true; await pm.cloudSync(); e.target.disabled = false; });
+$('#cl-name').addEventListener('change', (e) => pm.cloudRename(e.target.value));
+$('#cl-leave').addEventListener('click', async () => {
+  if (!confirm('¿Desvincular este dispositivo? Tus datos se quedan aquí, pero dejan de sincronizarse.')) return;
+  await pm.cloudLeave();
+  hidePairing();
+});
+$('#cl-wipe').addEventListener('click', async () => {
+  if (!confirm('¿Borrar tus datos del servidor? Se desvinculan TODOS tus dispositivos (cada uno conserva sus datos locales).')) return;
+  await pm.cloudWipe();
+  hidePairing();
+});
+
 async function addWorkExtra() {
   const t = $('#s-extra-text').value.trim();
   if (!t) return;

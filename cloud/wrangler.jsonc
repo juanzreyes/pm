@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pm-sync",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-13",
+
+  // Sin database_id: `wrangler deploy` aprovisiona la base automáticamente (igual que eshoy).
+  // Después de crearla: `npm run db:migrate:remote`.
+  "d1_databases": [
+    { "binding": "DB", "database_name": "pm-sync", "migrations_dir": "migrations" }
+  ],
+
+  // Limpieza diaria (03:00 UTC): mensajes de más de 14 días, contadores de límite y espacios
+  // sin uso en 6 meses.
+  "triggers": { "crons": ["0 3 * * *"] },
+
+  "observability": { "enabled": true }
+}

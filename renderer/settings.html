@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" />
   <title>PM · Ajustes</title>
   <link rel="stylesheet" href="panel.css" />
   <link rel="stylesheet" href="settings.css" />
@@ -15,6 +15,7 @@
       <label class="search"><span data-icon="search"></span><input id="search" placeholder="Buscar ajuste…" autocomplete="off" /></label>
       <nav id="snav">
         <button data-sec="general" data-icon="settings">General</button>
+        <button data-sec="devices" data-icon="phone">Tus dispositivos</button>
         <button data-sec="appearance" data-icon="brush">Apariencia</button>
         <button data-sec="health" data-icon="activity">Salud</button>
         <button data-sec="privacy" data-icon="shield">Privacidad y datos</button>
@@ -299,6 +300,34 @@
           <div id="pl-list" class="col gap"></div>
           <p class="muted small">Cómo escribir uno: <b>PLUGINS.md</b> en el proyecto de PM Pollito. ⚠️ El código de un plugin corre en tu PC como cualquier programa: instala solo plugins de personas en las que confíes.</p>
         </div>
+        <div class="sec" id="sec-devices" data-title="Tus dispositivos">
+          <h2>Tus dispositivos</h2>
+          <p class="muted small">Conecta tus PCs y tu teléfono Android: el mismo pollito (nivel, maíz y cosméticos), tareas, horario y avisos en todos. Lo que pasa en uno se entera el otro. Todo viaja cifrado de punta a punta: el servidor no puede leer nada.</p>
+          <div id="cl-off" class="opt box">
+            <b>Crear tu ecosistema</b>
+            <p class="muted small">Este dispositivo será el principal: los que vincules después adoptan su pollito y sus ajustes.</p>
+            <button id="cl-create" class="primary" type="button">Crear ecosistema</button>
+            <div class="cl-sep"></div>
+            <b>¿Ya tienes uno?</b>
+            <p class="muted small">Escribe el código que muestra tu otro dispositivo (empieza con <code>PM1-</code>).</p>
+            <div class="row gap"><input id="cl-code" placeholder="PM1-…" maxlength="200" aria-label="Código de vinculación" spellcheck="false" /><button id="cl-join" class="soft" type="button">Unirme</button></div>
+            <div id="cl-msg" class="small muted" role="status"></div>
+          </div>
+          <div id="cl-on" class="hidden">
+            <div class="opt box">
+              <div class="row between"><b>Vincular otro dispositivo</b><button id="cl-show" class="soft" type="button">Mostrar código</button></div>
+              <p class="muted small">En la app de Android: <b>Tus dispositivos → Escanear código</b>. El código es la llave de tu ecosistema: no lo compartas ni lo muestres en una reunión.</p>
+              <div id="cl-pair" class="row gap hidden"><img id="cl-qr" width="160" height="160" alt="Código QR para vincular" /><div><code id="cl-shortcode" class="cl-code"></code><div class="row gap" style="margin-top:6px"><button id="cl-copy" class="ghost mini" type="button">Copiar código</button><span class="muted small" id="cl-pair-left"></span></div></div></div>
+            </div>
+            <div class="opt box">
+              <div class="row between"><b>Dispositivos conectados</b><span id="cl-status" class="pill"></span></div>
+              <div id="cl-devices" class="cl-devices"></div>
+              <div class="row gap" style="margin-top:8px"><input id="cl-name" placeholder="Nombre de este dispositivo" maxlength="40" aria-label="Nombre de este dispositivo" /><button id="cl-sync" class="soft" data-icon="refresh" type="button">Sincronizar ahora</button></div>
+            </div>
+            <div class="opt row gap wrap"><button id="cl-leave" class="ghost" type="button">Desvincular este dispositivo</button><button id="cl-wipe" class="danger" type="button">Borrar mis datos del servidor</button></div>
+          </div>
+        </div>
+
         <div class="sec" id="sec-remote" data-title="Avisos fuera del PC">
           <h2>Avisos fuera del PC</h2>
           <div class="opt box small">

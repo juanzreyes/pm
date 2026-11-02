@@ -306,6 +306,7 @@ function equipItem(id) {
   store.save();
   M.broadcast();
   animate('flap');
+  if (mods.cloud) mods.cloud.soon();
   return { ok: true };
 }
 function unequipSlot(slot) {
@@ -314,6 +315,7 @@ function unequipSlot(slot) {
   delete p.equipped[slot];
   store.save();
   M.broadcast();
+  if (mods.cloud) mods.cloud.soon();
   return { ok: true };
 }
 
@@ -499,6 +501,7 @@ function say(text, anim, ms, opts = {}) {
   const cat = opts.cat || inferCat(raw);
   // Lo importante también sale del PC: canal del equipo y celular (src/main/remote.js).
   try { if (mods.remote) mods.remote.onSay(raw, cat, opts); } catch (e) { diag.log('main', 'Avisos fuera del PC: ' + e.message); }
+  try { if (mods.cloud) mods.cloud.onSay(raw, cat, opts); } catch (e) { diag.log('main', 'Ecosistema: ' + e.message); }
   if (!petWin || petWin.isDestroyed()) return;
   const actions = (opts.actions || inferActions(raw, cat) || []).map((a) => ({ ...a, label: T(a.label) }));
   text = T(raw);
@@ -555,6 +558,7 @@ function addTask(text) {
   day.standup.today.push({ text, done: false });
   store.save();
   M.broadcast();
+  if (mods.cloud) mods.cloud.soon();
 }
 
 function pushChat(from, text) {
@@ -1193,6 +1197,8 @@ mods.whereami = require('./src/main/whereami')(M);
 M.whereami = mods.whereami;
 mods.coach = require('./src/main/coach')(M);
 M.coach = mods.coach;
+mods.cloud = require('./src/main/cloud')(M);
+M.cloud = mods.cloud;
 mods.routine = require('./src/main/routine')(M);
 M.routine = mods.routine;
 mods.proc = require('./src/main/proc')(M);

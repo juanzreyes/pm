@@ -247,6 +247,7 @@ module.exports = function install(M) {
       chat: M.store.data.chat.slice(-60),
       autoStart: M.app.getLoginItemSettings().openAtLogin,
       routine: M.routine ? M.routine.snapshot() : null,
+      cloud: M.cloud ? M.cloud.snapshot() : { on: false },
       life: { angryUntil: M.store.data.life.angryUntil, closes: M.store.data.life.closes, crashes: M.store.data.life.crashes, lastView: M.store.data.life.lastView },
       web: { connected: !!M.store.data.web.orgId, orgName: M.store.data.web.orgName },
       focusNow: { cat: M.fx.cat, label: M.fx.label, scoldLevel: M.fx.scoldLevel },
